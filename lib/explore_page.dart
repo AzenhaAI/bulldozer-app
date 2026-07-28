@@ -4,9 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
+import 'bivariate.dart';
 import 'catalog_store.dart';
 import 'palette.dart';
 import 'theme.dart';
+import 'widgets/choropleth.dart';
 import 'widgets/region_legend.dart';
 import 'widgets/search_sheet.dart';
 
@@ -19,6 +21,8 @@ class ExplorePage extends StatefulWidget {
 }
 
 class _ExplorePageState extends State<ExplorePage> {
+  bool _mapView = false; // false = scatter, true = bivariate choropleth
+
   CatalogEntry? _x;
   CatalogEntry? _y;
   Dataset? _xDs;
@@ -134,19 +138,112 @@ class _ExplorePageState extends State<ExplorePage> {
                       style: TextStyle(color: kTextDim))),
             )
           else ...[
-            AspectRatio(
-              aspectRatio: 1,
-              child: _scatter(points),
+            // Same two indicators, two ways to read them: dots (correlation)
+            // or a bivariate map (geography of the combination).
+            Row(
+              children: [
+                _viewPill(Icons.scatter_plot, 'Dots', !_mapView,
+                    () => setState(() => _mapView = false)),
+                const SizedBox(width: 8),
+                _viewPill(Icons.public, 'Bivariate map', _mapView,
+                    () => setState(() => _mapView = true)),
+              ],
             ),
-            RegionLegend(regions: points.map((p) => p.$4)),
-            const SizedBox(height: 10),
-            Text(
-                '${points.length} countries · tap a dot for its name and values',
-                style: TextStyle(fontSize: 11, color: kTextDim)),
+            const SizedBox(height: 12),
+            if (_mapView) ...[
+              ..._bivariate(xv, yv),
+            ] else ...[
+              AspectRatio(
+                aspectRatio: 1,
+                child: _scatter(points),
+              ),
+              RegionLegend(regions: points.map((p) => p.$4)),
+              const SizedBox(height: 10),
+              Text(
+                  '${points.length} countries · tap a dot for its name and values',
+                  style: TextStyle(fontSize: 11, color: kTextDim)),
+            ],
           ],
         ],
       ),
     );
+  }
+
+  Widget _viewPill(
+      IconData icon, String label, bool selected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? kAmber : kBgCard,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? kAmber : kBorder, width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: selected ? kBg : kTextDim),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? kBg : kText)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bivariate choropleth: both indicators split into terciles and blended
+  /// (X = amber, Y = blue), exactly like the site's BivariateMap.
+  List<Widget> _bivariate(
+      Map<String, ({double value, String name, String region})> xv,
+      Map<String, ({double value, String name, String region})> yv) {
+    final common = xv.keys.where(yv.containsKey).toList();
+    if (common.length < 6) {
+      return [
+        Text('Not enough overlapping countries for a map.',
+            style: TextStyle(fontSize: 12, color: kTextDim))
+      ];
+    }
+    final tx = terciles([for (final i in common) xv[i]!.value]);
+    final ty = terciles([for (final i in common) yv[i]!.value]);
+    final colors = <String, Color>{
+      for (final i in common)
+        i: bivColor(classify(xv[i]!.value, tx), classify(yv[i]!.value, ty))
+    };
+    return [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Choropleth(
+          values: {for (final i in common) i: 1.0},
+          colorOverride: colors,
+          onTap: (iso, name) {
+            final x = xv[iso], y = yv[iso];
+            if (x == null || y == null) return;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: kBgCard,
+              duration: const Duration(seconds: 3),
+              content: Text(
+                  '$name · ${_x?.title ?? 'X'} ${formatValue(x.value)} · '
+                  '${_y?.title ?? 'Y'} ${formatValue(y.value)}',
+                  style: TextStyle(color: kText, fontSize: 12)),
+            ));
+          },
+        ),
+      ),
+      const SizedBox(height: 10),
+      BivariateLegend(
+          xLabel: _x?.title ?? 'X', yLabel: _y?.title ?? 'Y'),
+      const SizedBox(height: 8),
+      Text(
+          '${common.length} countries · brightest = high on both · tap a country',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, color: kTextDim)),
+    ];
   }
 
   Widget _axisPicker(String axis, CatalogEntry? ind, VoidCallback onTap) {

@@ -10,7 +10,9 @@ import 'widgets/choropleth.dart';
 import 'widgets/entrance.dart';
 import 'widgets/featured_card.dart';
 import 'brands_page.dart';
+import 'csv_export.dart';
 import 'cultural_map_page.dart';
+import 'explore_page.dart';
 import 'widgets/freshness.dart';
 import 'widgets/hero_extras.dart';
 import 'widgets/skeleton.dart';
@@ -188,6 +190,10 @@ class _ChartsPageState extends State<ChartsPage> {
         title: 'The world in superlatives',
         footer: 'Tap a record for the full ranking →',
         onTap: onTap,
+        chipLabel: 'Bivariate map',
+        chipIcon: Icons.grid_view,
+        onChipTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const ExplorePage())),
         child: RecordsHero(
           facts: _records,
           onTapFact: (f) {
@@ -458,6 +464,14 @@ class _DatasetPageState extends State<DatasetPage> {
         title: Text(widget.entry.title,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.download_outlined),
+            tooltip: 'Download CSV',
+            onPressed: _ds == null
+                ? null
+                : () => CsvExport.dataset(
+                    context, widget.entry.slug, widget.entry.title),
+          ),
           IconButton(
             icon: const Icon(Icons.ios_share),
             tooltip: 'Share as image',

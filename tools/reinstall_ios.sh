@@ -30,7 +30,7 @@ days_since_success() {
 warn_if_stale() {
   local d; d=$(days_since_success)
   if [ "$d" -ge "$DANGER_DAYS" ]; then
-    osascript -e "display notification \"Не обновлялось $d дн. — подключи и разблокируй iPhone (или запусти tools/reinstall_ios.sh вручную).\" with title \"BullDozer: приложение скоро протухнет\"" 2>/dev/null
+    osascript -e "display notification \"Not refreshed for $d days - connect and unlock the iPhone (or run tools/reinstall_ios.sh by hand).\" with title \"BullDozer: signature expiring soon\"" 2>/dev/null
     echo "$(ts) ⚠️ notified user (stale ${d}d)" >>"$LOG"
   fi
 }
@@ -55,17 +55,59 @@ fi
 
 cd "$APP" || { echo "$(ts) no project dir" >>"$LOG"; exit 1; }
 echo "$(ts) building release…" >>"$LOG"
-if flutter build ios --release >>"$LOG" 2>&1; then
+
+# `flutter build ios` targets a generic "Any iOS Device", which signs fine but
+# cannot register a device with the team. When the team has no devices on file
+# (fresh Apple ID, or the account was removed and re-added) every build fails with
+# "no devices from which to generate a provisioning profile" until one build is
+# aimed at this exact UDID. Own DerivedData dir — the sibling Flutter apps also
+# produce a Runner.app and would otherwise be indistinguishable.
+build_out=$(flutter build ios --release 2>&1); rc=$?
+echo "$build_out" >>"$LOG"
+
+if [ "$rc" -ne 0 ] && grep -q "no devices from which to generate" <<<"$build_out"; then
+  echo "$(ts) team has no registered devices — registering this iPhone, then retrying" >>"$LOG"
+  xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+    -destination "id=$DEVICE" -derivedDataPath build/ios-provision \
+    -allowProvisioningUpdates build >>"$LOG" 2>&1
+  build_out=$(flutter build ios --release 2>&1); rc=$?
+  echo "$build_out" >>"$LOG"
+fi
+
+if [ "$rc" -eq 0 ]; then
   echo "$(ts) installing to device…" >>"$LOG"
+  # devicectl upgrades in place and KEEPS the app container. `flutter install`
+  # uninstalls first, which wipes favorites, the theme choice and the offline
+  # cache — unacceptable for a script that runs every day. Flutter stays only
+  # as a loud fallback.
+  if xcrun devicectl device install app --device "$DEVICE" \
+       "$APP/build/ios/iphoneos/Runner.app" >>"$LOG" 2>&1; then
+    date +%s > "$STAMP"
+    echo "$(ts) ✅ reinstall OK (devicectl — app data preserved)" >>"$LOG"
+    exit 0
+  fi
+  # Apple caps free-provisioned apps at 3 per device. When AlfaCat/PapaGaio/
+  # PapaShopa already hold the slots, BullDozer simply cannot install — no
+  # amount of retrying helps, so say it plainly instead of nagging about staleness.
+  if grep -q "MIFreeProfileValidatedAppTracker" "$LOG"; then
+    osascript -e 'display notification "Free-provisioning limit: only 3 sideloaded apps fit on the iPhone. Delete one (AlfaCat / PapaGaio / PapaShopa) or go paid Apple Developer." with title "BullDozer: no free app slot"' 2>/dev/null
+    echo "$(ts) ❌ blocked by the 3-app free-provisioning limit" >>"$LOG"
+    exit 0
+  fi
+  echo "$(ts) devicectl failed — falling back to flutter install (WIPES app data)" >>"$LOG"
   if flutter install -d "$DEVICE" --release >>"$LOG" 2>&1; then
     date +%s > "$STAMP"
-    echo "$(ts) ✅ reinstall OK" >>"$LOG"
+    echo "$(ts) ⚠️ reinstall OK via flutter — favorites/theme/cache were reset" >>"$LOG"
     exit 0
   fi
   echo "$(ts) ❌ install failed" >>"$LOG"
 else
-  # Most common cause: Xcode can't reach the Apple ID from launchd, so the
-  # 7-day profile can't be reissued. Needs a manual run / Xcode sign-in.
-  echo "$(ts) ❌ build failed (often: Xcode has no Apple ID in this context)" >>"$LOG"
+  echo "$(ts) ❌ build failed" >>"$LOG"
+  # One failure a human must clear: the Apple ID is simply not in Xcode. Say so
+  # instead of leaving it to the generic staleness nag days later.
+  if grep -q "No Accounts" <<<"$build_out"; then
+    osascript -e 'display notification "No Apple ID in Xcode - Settings > Apple Accounts > + (needs your password and 2FA)." with title "BullDozer: signing blocked"' 2>/dev/null
+    echo "$(ts) ⚠️ notified user (no Apple ID in Xcode)" >>"$LOG"
+  fi
 fi
 warn_if_stale

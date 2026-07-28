@@ -91,6 +91,9 @@ class CapitalMarker {
 /// amber ramp; grey where there's no data. Tap a country to drill in.
 class Choropleth extends StatefulWidget {
   final Map<String, double> values;
+  /// Pre-computed fill per ISO. When set it wins over the amber ramp — used by
+  /// the bivariate map, which blends two indicators into one colour.
+  final Map<String, Color>? colorOverride;
   final String? highlightIso;
   final String? zoomIso; // zoom the view to this country (locator map)
   final CapitalMarker? capital; // labelled dot, like the site's CountryPanel
@@ -98,6 +101,7 @@ class Choropleth extends StatefulWidget {
   const Choropleth(
       {super.key,
       required this.values,
+      this.colorOverride,
       this.highlightIso,
       this.zoomIso,
       this.capital,
@@ -200,7 +204,7 @@ class _ChoroplethState extends State<Choropleth> {
             },
             child: CustomPaint(
               size: Size(cons.maxWidth, cons.maxHeight),
-              painter: _MapPainter(geo, widget.values, minV, maxV,
+              painter: _MapPainter(geo, widget.values, widget.colorOverride, minV, maxV,
                   widget.highlightIso, rx0, ry0, zs, widget.capital),
             ),
           );
@@ -213,6 +217,7 @@ class _ChoroplethState extends State<Choropleth> {
 class _MapPainter extends CustomPainter {
   final WorldGeo geo;
   final Map<String, double> values;
+  final Map<String, Color>? colorOverride;
   final double minV;
   final double maxV;
   final String? highlight;
@@ -220,8 +225,8 @@ class _MapPainter extends CustomPainter {
   final double ry0;
   final double zs;
   final CapitalMarker? capital;
-  _MapPainter(this.geo, this.values, this.minV, this.maxV, this.highlight,
-      this.rx0, this.ry0, this.zs, this.capital);
+  _MapPainter(this.geo, this.values, this.colorOverride, this.minV, this.maxV,
+      this.highlight, this.rx0, this.ry0, this.zs, this.capital);
 
   // Visible "land" grey so countries read on the background even with no
   // data. Not static — the palette flips with the theme.
@@ -266,9 +271,12 @@ class _MapPainter extends CustomPainter {
         }
       }
       final v = values[c.iso];
+      final override = colorOverride?[c.iso];
       final Paint fill;
       if (c.iso == highlight) {
         fill = Paint()..color = kAmber; // selected country pops (locator map)
+      } else if (override != null) {
+        fill = Paint()..color = override; // bivariate blend
       } else if (v == null || !v.isFinite) {
         fill = _noData;
       } else {
@@ -332,6 +340,7 @@ class _MapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MapPainter old) =>
+      old.colorOverride != colorOverride ||
       old.values != values ||
       old.highlight != highlight ||
       old.zs != zs ||

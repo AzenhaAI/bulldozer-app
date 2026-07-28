@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'charts_page.dart' show topicLabels, topicRank;
 import 'compare_page.dart';
+import 'csv_export.dart';
 import 'favorites_store.dart';
 import 'flags.dart';
 import 'theme.dart';
@@ -260,6 +261,10 @@ const _priority = <String, List<List<String>>>{
 
 class _CountryPageState extends State<CountryPage> {
   String? _wiki;
+  // Mirrors the site's country panel controls: group by topic (default) or
+  // sort by world rank, plus a free-text filter over indicator titles.
+  String _sort = 'topic'; // 'topic' | 'rank' | 'rankw'
+  String _filter = '';
   bool _wikiOpen = false; // Wikipedia blurb collapsed to a few lines
   CountryMeta? _meta; // capital / coat of arms / currency / ISO-2
   final Set<String> _expanded = {}; // 'kind:topic' groups shown in full
@@ -353,7 +358,33 @@ class _CountryPageState extends State<CountryPage> {
   /// Statistics then Surveys, each grouped by topic; every topic shows a
   /// curated top-3 with a "Show all" toggle revealing the full alphabetical
   /// list.
-  List<Widget> _sections(List<CountryItem> rest) {
+  List<Widget> _sections(List<CountryItem> all) {
+    final q = _filter.trim().toLowerCase();
+    final rest = q.isEmpty
+        ? all
+        : all.where((it) => it.title.toLowerCase().contains(q)).toList();
+    if (rest.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+              child: Text('No indicators match.',
+                  style: TextStyle(color: kTextDim))),
+        )
+      ];
+    }
+    // Rank views are a flat list across topics — like the site's rank sort.
+    if (_sort == 'rank' || _sort == 'rankw') {
+      final dir = _sort == 'rank' ? 1 : -1;
+      final sorted = [...rest]..sort((a, b) => dir *
+          ((a.total == 0 ? 1 : a.rank / a.total)
+              .compareTo(b.total == 0 ? 1 : b.rank / b.total)));
+      return [
+        const SizedBox(height: 10),
+        for (final it in sorted)
+          _IndicatorRow(item: it, onTap: () => _showIndicatorTrend(it)),
+      ];
+    }
     final out = <Widget>[];
     for (final sec in _sectionMeta) {
       final secItems = rest.where((it) => it.kind == sec.$1).toList();
@@ -373,7 +404,9 @@ class _CountryPageState extends State<CountryPage> {
         final rows = byTopic[t]!
           ..sort((a, b) => a.title.compareTo(b.title));
         final key = '${sec.$1}:$t';
-        final expanded = _expanded.contains(key);
+        // an active filter shows everything it matched — collapsing would hide
+        // the very rows the user searched for
+        final expanded = _expanded.contains(key) || q.isNotEmpty;
         final shown = expanded ? rows : _collapsedRows(t, rows);
         out.add(Padding(
           padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
@@ -558,6 +591,11 @@ class _CountryPageState extends State<CountryPage> {
         title: Text('${flagFromIso(country.iso)}  ${country.name}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.download_outlined),
+            tooltip: 'Download country CSV',
+            onPressed: () => CsvExport.country(context, country),
+          ),
           // Star — pin this country to the Favorites block on Home.
           ValueListenableBuilder(
             valueListenable: favoritesNotifier,
@@ -648,6 +686,80 @@ class _CountryPageState extends State<CountryPage> {
               ),
             ),
           ],
+          // Controls mirroring the site: filter by name, group by topic or
+          // sort by world rank (best/worst first).
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 38,
+                  child: TextField(
+                    onChanged: (v) => setState(() => _filter = v),
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Filter indicators…',
+                      hintStyle: TextStyle(color: kTextDim, fontSize: 13),
+                      prefixIcon: Icon(Icons.search, color: kTextDim, size: 18),
+                      isDense: true,
+                      filled: true,
+                      fillColor: kBgCard,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: kBorder, width: 0.5),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: kBorder, width: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                initialValue: _sort,
+                onSelected: (v) => setState(() => _sort = v),
+                color: kBgElev,
+                tooltip: 'Sort',
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                      value: 'topic', child: Text('Group by topic')),
+                  const PopupMenuItem(
+                      value: 'rank', child: Text('Rank — best first')),
+                  const PopupMenuItem(
+                      value: 'rankw', child: Text('Rank — worst first')),
+                ],
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: kBgCard,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: kBorder, width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                          _sort == 'topic'
+                              ? Icons.category_outlined
+                              : Icons.sort,
+                          size: 16,
+                          color: kAmber),
+                      const SizedBox(width: 6),
+                      Text(
+                          _sort == 'topic'
+                              ? 'Topics'
+                              : (_sort == 'rank' ? 'Best' : 'Worst'),
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           ..._sections(rest),
           if (similar.isNotEmpty) ...[
             Padding(

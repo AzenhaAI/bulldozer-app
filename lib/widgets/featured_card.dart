@@ -13,6 +13,11 @@ class HeroShell extends StatelessWidget {
   final String footer;
   final VoidCallback? onTap;
   final Widget? child;
+  /// Optional chip on the footer row — a second, narrower action (e.g. the
+  /// bivariate map) that lives next to the hero without competing with it.
+  final String? chipLabel;
+  final IconData? chipIcon;
+  final VoidCallback? onChipTap;
 
   const HeroShell(
       {super.key,
@@ -20,7 +25,10 @@ class HeroShell extends StatelessWidget {
       required this.title,
       required this.footer,
       this.onTap,
-      this.child});
+      this.child,
+      this.chipLabel,
+      this.chipIcon,
+      this.onChipTap});
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +63,45 @@ class HeroShell extends StatelessWidget {
                     fontSize: 17, fontWeight: FontWeight.w700, height: 1.2)),
             if (child != null) ...[const SizedBox(height: 12), child!],
             const SizedBox(height: 10),
-            Text(footer,
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600, color: kAmber)),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(footer,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: kAmber)),
+                ),
+                if (chipLabel != null)
+                  InkWell(
+                    onTap: onChipTap,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: kBgCard,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: kBorder, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (chipIcon != null) ...[
+                            Icon(chipIcon, size: 13, color: kAmber),
+                            const SizedBox(width: 5),
+                          ],
+                          Text(chipLabel!,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: kText)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
