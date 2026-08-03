@@ -8,7 +8,7 @@ account: the `.ipa` is produced at Archive time once a paid team is selected.
 | Bundle ID | `com.shpara.bulldozerApp` |
 | Display name | BullDozer |
 | App Store name | BullDozer — World in Numbers |
-| Version | 1.27.0+43 |
+| Version | 1.28.0+44 |
 | Deployment target | iOS 13.0 |
 | Devices | iPhone only (iPad dropped for the first release) |
 | Category | Education |

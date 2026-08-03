@@ -1,0 +1,13 @@
+BullDozer: World in Numbers is a fully native Flutter app — there is no webview anywhere in the binary. Every chart, the flat world choropleth and the spinning globe, the values scatter, the animated bubble player, country profiles, data stories and the quiz are rendered natively. There is no account, no login, no in-app purchase, no advertising and no user-generated content; no demo credentials are needed — every screen is reachable from a cold launch.
+
+DATA AND LICENSING
+Figures come from public statistical datasets (WHO, World Bank, Eurostat, international surveys), served through our own open feed at shpara.com/bulldozer and credited on the screens where they appear. Country summaries are fetched from the Wikipedia REST API and labelled "Wikipedia · CC BY-SA" with a link to the article. Brand values on the business screens are credited to Kantar BrandZ / Forbes; brand logos come from Wikimedia Commons and are used for identification only. Coat-of-arms images likewise come from Wikimedia Commons.
+
+AGE RATING
+The catalog includes WHO public-health statistics such as alcohol consumption, tobacco use and suicide rates — numerical, educational data with no depiction or promotion; the questionnaire is answered accordingly.
+
+PRIVACY
+The app collects no data. All requests are anonymous GETs for public JSON/CSV; favourites, quiz progress and the theme choice are stored on the device only. Privacy policy: https://shpara.com/bulldozer/privacy/ — also linked from the app's side menu.
+
+TESTING NOTE
+First launch needs a connection to load the catalog; data is then cached for offline use. Notifications are only requested when the user taps the bell on a data release, never at launch.

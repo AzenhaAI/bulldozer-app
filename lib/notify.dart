@@ -45,7 +45,13 @@ Future<void> initNotify() async {
     tz.setLocalLocation(tz.getLocation('Europe/Lisbon'));
   }
   const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const ios = DarwinInitializationSettings();
+  // Don't ask for notification permission on a cold first launch — the user has
+  // no idea yet what the app would notify about. The bell on a data release is
+  // the moment the request makes sense, and _ensurePermission() asks there.
+  const ios = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false);
   await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: ios));
   _ready = true;

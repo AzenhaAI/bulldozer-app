@@ -34,13 +34,21 @@ Future<dynamic> fetchJson(String path) async {
       throw Exception('HTTP ${r.statusCode} for $path');
     }
     final body = utf8.decode(r.bodyBytes);
+    // Decode BEFORE caching: a captive portal or CDN error page served as 200
+    // used to get persisted first, and every offline launch after that threw
+    // from the fallback below until a fresh valid response overwrote it.
+    final parsed = jsonDecode(body);
     if (file != null) {
       file.writeAsString(body).ignore(); // cache for offline, fire-and-forget
     }
-    return jsonDecode(body);
+    return parsed;
   } catch (e) {
     if (file != null && await file.exists()) {
-      return jsonDecode(await file.readAsString()); // offline fallback
+      try {
+        return jsonDecode(await file.readAsString()); // offline fallback
+      } on FormatException {
+        file.delete().ignore(); // poisoned by an older, less careful version
+      }
     }
     rethrow;
   }

@@ -87,7 +87,7 @@ class _CitiesPageState extends State<CitiesPage> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: Text(m.summary,
+          child: Text('${m.summary}\n${d.source} · CC BY 4.0',
               style: TextStyle(fontSize: 12, color: kTextDim, height: 1.35)),
         ),
         Expanded(

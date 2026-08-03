@@ -19,8 +19,8 @@ Note: the site deploys via the **shpara1 monorepo**, not the (currently dead)
 Action goes green but silently skips deploy. To publish a site change:
 ```sh
 cd ~/Projects/bulldozer && npm run build
-cp -R dist/<page> ~/shpara1/bulldozer/<page>        # or rsync the whole dist
-cd ~/shpara1 && git add bulldozer && git commit -m "..." && git push   # CF Pages serves
+cp -R dist/<page> ~/Projects/shpara1/bulldozer/<page>        # or rsync the whole dist
+cd ~/Projects/shpara1 && git add bulldozer && git commit -m "..." && git push   # CF Pages serves
 ```
 
 ## Sequence — first publish

@@ -6,6 +6,7 @@ import 'api.dart';
 import 'theme.dart';
 
 const _rounds = 10;
+int _roundsThisGame = _rounds;
 const _maxHints = 5;
 
 class QuizPage extends StatefulWidget {
@@ -42,7 +43,10 @@ class _QuizPageState extends State<QuizPage> {
     try {
       _pool ??= await fetchQuizPool();
       final pool = List<QuizCountry>.from(_pool!)..shuffle(_rng);
+      // A short pool used to under-fill answers while progress still assumed
+      // ten rounds; play the rounds that actually exist.
       _answers = pool.take(_rounds).toList();
+      _roundsThisGame = _answers!.length;
       _round = 0;
       _score = 0;
       _results.clear();
@@ -89,9 +93,9 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _next() {
-    if (_round + 1 >= _rounds) {
+    if (_round + 1 >= _roundsThisGame) {
       if (_score > _best) _best = _score;
-      setState(() => _round = _rounds); // finished screen
+      setState(() => _round = _roundsThisGame); // finished screen
     } else {
       setState(() {
         _round++;
@@ -126,7 +130,7 @@ class _QuizPageState extends State<QuizPage> {
       return Center(child: CircularProgressIndicator(color: kAmber));
     }
     if (_answers == null) return _startScreen();
-    if (_round >= _rounds) return _endScreen();
+    if (_round >= _roundsThisGame) return _endScreen();
     return _gameScreen();
   }
 

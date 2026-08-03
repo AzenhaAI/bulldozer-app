@@ -178,7 +178,8 @@ class _ChartsPageState extends State<ChartsPage> {
       return HeroShell(
         tag: 'Most valuable brands',
         title: '${_brands.first.name} — the world’s top brand',
-        footer: 'All 96 brands with logos →',
+        footer:
+            'All 96 brands with logos → · values: Kantar BrandZ / Forbes',
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const BrandsPage())),
         child: BrandPodium(top3: _brands),

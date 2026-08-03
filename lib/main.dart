@@ -217,6 +217,8 @@ class _HomeShellState extends State<HomeShell> {
                 'Glossary — metric reference', '/glossary'),
             _linkItem(
                 context, Icons.open_in_new, 'Open full website', '/'),
+            _linkItem(context, Icons.privacy_tip_outlined,
+                'Privacy policy', '/privacy/'),
             ListTile(
               leading: Icon(Icons.code, color: kTextDim, size: 22),
               title: Text('GitHub — app source',
@@ -499,16 +501,9 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 10),
             brandWordmark,
             const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: kAmber.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text('beta',
-                  style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w700, color: kAmber)),
-            ),
+            // No 'beta' badge: App Review Guideline 2.2 treats an app that
+            // labels itself beta as unfinished — a rejection on sight, and the
+            // badge sat in the header of every store screenshot.
             // Light/dark toggle — same sun as the site header.
             IconButton(
               onPressed: toggleTheme,
@@ -875,7 +870,7 @@ class _StatBox extends StatelessWidget {
           children: [
             // count up 0 → value; keep any non-numeric suffix ("190+")
             Builder(builder: (_) {
-              final mNum = RegExp(r'^(\d+)(.*)\$').firstMatch(value);
+              final mNum = RegExp(r'^(\d+)(.*)$').firstMatch(value);
               final style = TextStyle(
                   fontSize: 20, fontWeight: FontWeight.w800, color: kAmber);
               if (mNum == null) return Text(value, style: style);

@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
@@ -628,7 +629,7 @@ class _CountryPageState extends State<CountryPage> {
               values: {country.iso: 1},
               highlightIso: country.iso,
               zoomIso: country.iso,
-              capital: _meta?.capX != null
+              capital: _meta?.capX != null && _meta?.capY != null
                   ? CapitalMarker(_meta!.capital, _meta!.capX!, _meta!.capY!)
                   : null,
             ),
@@ -670,8 +671,17 @@ class _CountryPageState extends State<CountryPage> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text('Wikipedia',
-                            style: TextStyle(fontSize: 10, color: kTextDim)),
+                        GestureDetector(
+                          onTap: () => launchUrl(
+                              Uri.parse(
+                                  'https://en.wikipedia.org/wiki/${Uri.encodeComponent(widget.country.name)}'),
+                              mode: LaunchMode.externalApplication),
+                          child: Text('Wikipedia · CC BY-SA',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: kTextDim,
+                                  decoration: TextDecoration.underline)),
+                        ),
                         const Spacer(),
                         Icon(
                             _wikiOpen

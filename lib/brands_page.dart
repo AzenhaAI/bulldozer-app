@@ -58,7 +58,8 @@ class _BrandsPageState extends State<BrandsPage> {
           return Padding(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
             child: Text(
-                'Most valuable global brands${year > 0 ? ' · $year' : ''} · brand value US\$ bn',
+                'Most valuable global brands${year > 0 ? ' · $year' : ''} · brand value US\$ bn\n'
+                'Values: Kantar BrandZ / Forbes, via Wikipedia · logos are trademarks of their owners',
                 style: TextStyle(fontSize: 12, color: kTextDim)),
           );
         }

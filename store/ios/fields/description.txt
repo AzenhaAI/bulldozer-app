@@ -1,0 +1,33 @@
+BullDozer turns the world into numbers you can actually explore. Compare countries across 150+ indicators covering the economy, society, business and the environment — with fast charts, world maps, country profiles and a data quiz. Free, with no account, no ads and no tracking.
+
+CHARTS & RANKINGS
+Browse 150+ indicators, search them, filter by topic and rank every country on any of them. Switch periods to see how the ranking changes, and tap any country bar to open its trend over time.
+
+COUNTRY PROFILES
+Pick a country from a searchable list with flags and get the full picture: a map zoomed to the country, headline macro figures, a short encyclopedic summary, and every available indicator grouped into Statistics and Surveys.
+
+COMPARE
+Put up to 5 countries side by side on any indicator and see who leads, who lags and how the gap has changed.
+
+EXPLORE
+Plot any indicator against any other across all countries in a scatter view — a quick way to spot how wealth, health, demography and values relate.
+
+WORLD MAPS
+Every dataset has a world choropleth coloured by the data. Tap a country on the map to see its trend line.
+
+DATA STORIES
+A feed of featured stories with live mini charts and quick facts — a fresh angle on the numbers every time you open the app.
+
+QUIZ
+"Guess the Country": data facts are your hints, and the fewer hints you use, the higher your score. A painless way to build real data literacy — for students, teachers and anyone who loves world facts.
+
+MADE FOR EXPLORING
+• Fast and lightweight, works offline once data is loaded
+• Light and dark themes
+• Clear, readable charts on every screen
+
+PRIVACY FIRST
+No account, no sign-up, no ads, no tracking. The app simply shows you the data.
+
+ABOUT THE DATA
+Figures come from public datasets and international surveys, credited on screen, with country summaries from Wikipedia (CC BY-SA), served through the open BullDozer feed at shpara.com/bulldozer.
