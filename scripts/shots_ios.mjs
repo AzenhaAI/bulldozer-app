@@ -23,7 +23,7 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 // slot it offers depends on the app record — so both are buildable:
 //   node scripts/shots_ios.mjs 6.9   ->  1320x2868 (iPhone 16/17 Pro Max)
 //   node scripts/shots_ios.mjs 6.5   ->  1284x2778 (iPhone 13/14 Pro Max)
-const SIZES = { '6.9': [440, 956], '6.5': [428, 926] };
+const SIZES = { '6.9': [440, 956], '6.5': [428, 926], 'play': [360, 640] };
 const SIZE = process.argv[2] ?? '6.9';
 if (!SIZES[SIZE]) throw new Error(`unknown size ${SIZE}; use 6.9 or 6.5`);
 const [VW, VH] = SIZES[SIZE];
