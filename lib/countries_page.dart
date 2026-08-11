@@ -7,6 +7,7 @@ import 'compare_page.dart';
 import 'csv_export.dart';
 import 'favorites_store.dart';
 import 'flags.dart';
+import 'responsive.dart';
 import 'theme.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/skeleton.dart';
@@ -100,10 +101,16 @@ class _CountriesPageState extends State<CountriesPage> {
             onRefresh: _load,
             color: kAmber,
             backgroundColor: kBgCard,
-            child: ListView.builder(
+            // 190-odd countries in one narrow column wasted most of a tablet
+            // screen; the flag tiles are short, so they run multiple abreast.
+            child: LayoutBuilder(builder: (context, box) {
+            final cols = columnsFor(box.maxWidth);
+            final head = q.isEmpty ? 1 : 0;
+            final rows = (shown.length + cols - 1) ~/ cols;
+            return ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            itemCount: shown.length + (q.isEmpty ? 1 : 0),
+            itemCount: rows + head,
             itemBuilder: (_, idx) {
               // tappable world map on top — poke a country to open it
               if (q.isEmpty && idx == 0) {
@@ -137,9 +144,8 @@ class _CountriesPageState extends State<CountriesPage> {
                   ),
                 );
               }
-              final i = idx - (q.isEmpty ? 1 : 0);
-              final c = shown[i];
-              return Card(
+              final start = (idx - head) * cols;
+              Widget card(Country c) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 3),
                 child: ListTile(
                   dense: true,
@@ -157,8 +163,22 @@ class _CountriesPageState extends State<CountriesPage> {
                           country: c, allCountries: _countries ?? const []))),
                 ),
               );
+              if (cols == 1) return card(shown[start]);
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var j = 0; j < cols; j++) ...[
+                    if (j > 0) const SizedBox(width: 10),
+                    Expanded(
+                        child: start + j < shown.length
+                            ? card(shown[start + j])
+                            : const SizedBox.shrink()),
+                  ],
+                ],
+              );
             },
-            ),
+            );
+            }),
           ),
         ),
       ],
@@ -516,6 +536,12 @@ class _CountryPageState extends State<CountryPage> {
       backgroundColor: kBgElev,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      // A fixed-height sheet clipped its last rows the moment the window was
+      // shorter than a phone — which is exactly what App Review saw on an iPad
+      // in the sibling app. Scroll instead of hiding, and don't span a 13" slab.
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9, maxWidth: 700),
       builder: (_) => FutureBuilder<Dataset>(
         future: fetchDataset(item.slug),
         builder: (ctx, snap) {

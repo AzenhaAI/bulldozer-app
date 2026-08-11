@@ -272,3 +272,87 @@ class RecordFact {
       required this.value,
       required this.slug});
 }
+
+/// The ranking that sits beside a map or globe on a wide screen.
+///
+/// The site shows its maps with the leaderboard next to them; on a phone
+/// there is only room for one, so the app dropped the list. On a tablet the
+/// hero was a map with half the card empty beside it — this is what fills it,
+/// drawn from the same observations the map is already coloured by.
+class RankBars extends StatelessWidget {
+  final List<Observation> rows;
+  final void Function(String iso)? onTap;
+
+  /// Shown above the list, e.g. "Top 6 · 2024".
+  final String? caption;
+
+  const RankBars({super.key, required this.rows, this.onTap, this.caption});
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    final maxV = rows.map((o) => o.value.abs()).reduce(max);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (caption != null) ...[
+          Text(caption!.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  fontWeight: FontWeight.w700,
+                  color: kTextDim)),
+          const SizedBox(height: 8),
+        ],
+        for (final (i, o) in rows.indexed)
+          InkWell(
+            borderRadius: BorderRadius.circular(6),
+            onTap: onTap == null || o.iso.isEmpty ? null : () => onTap!(o.iso),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              child: Row(
+                children: [
+                  SizedBox(
+                      width: 22,
+                      child: Text('${i + 1}',
+                          style: TextStyle(fontSize: 11, color: kTextDim))),
+                  Text(flagFromIso(o.iso),
+                      style: const TextStyle(fontSize: 15)),
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 104,
+                    child: Text(o.entity,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: maxV == 0 ? 0 : (o.value.abs() / maxV),
+                        minHeight: 7,
+                        backgroundColor: kBorder,
+                        valueColor: AlwaysStoppedAnimation(kAmber),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 64,
+                    child: Text(formatValue(o.value),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}

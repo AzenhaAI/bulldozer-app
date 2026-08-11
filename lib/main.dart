@@ -17,8 +17,10 @@ import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
 import 'widgets/entrance.dart';
 import 'widgets/globe.dart';
+import 'widgets/hero_extras.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
+import 'responsive.dart';
 import 'search_page.dart';
 import 'story_page.dart';
 import 'theme.dart';
@@ -30,6 +32,39 @@ void main() {
   loadFavorites(); // starred countries/indicators from disk
   initNotify(); // local release reminders (Ativa-style, no push server)
   loadTheme(); // light/dark preference from disk
+}
+
+/// Caps how wide the body grows and centres it.
+///
+/// This is a data app: charts, maps and the globe genuinely use a big screen,
+/// so the cap is generous — but without one, a 13" iPad stretched dataset rows
+/// and paragraphs edge to edge, which is what App Review called "laid out in a
+/// way that made it difficult to use" when it rejected the sibling app.
+///
+/// The cap alone was never the answer, though. It was 760 for one release —
+/// matching the sibling app — and that produced a phone column adrift in the
+/// middle of a 13" display: capped, but not an iPad layout. What makes it one
+/// is inside: decks flow into columns (see responsive.dart) and the heroes
+/// gain a leaderboard beside the map. The cap only stops the longest lines
+/// from running the full 1366 of a landscape iPad, where text stops tracking.
+class AdaptiveBody extends StatelessWidget {
+  final Widget child;
+
+  /// Wide enough to hold three columns of cards with comfortable gutters, and
+  /// short of edge-to-edge on a 13" landscape iPad (1366), where a full-bleed
+  /// line of text is too long to track. It was 760 for one release — a phone
+  /// column adrift in the middle of the display, which is exactly what the
+  /// pages inside now fill instead.
+  final double maxWidth;
+  const AdaptiveBody({super.key, required this.child, this.maxWidth = 1280});
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: child,
+        ),
+      );
 }
 
 class BulldozerApp extends StatelessWidget {
@@ -70,7 +105,8 @@ class _HomeShellState extends State<HomeShell> {
     return Scaffold(
       endDrawer: _buildMenu(context),
       body: SafeArea(
-        child: ValueListenableBuilder(
+        child: AdaptiveBody(
+          child: ValueListenableBuilder(
           valueListenable: catalogNotifier,
           builder: (_, _, _) => IndexedStack(
             index: _tab,
@@ -114,6 +150,7 @@ class _HomeShellState extends State<HomeShell> {
               const EduPage(),
             ],
           ),
+        ),
         ),
       ),
       bottomNavigationBar: NavigationBar(
@@ -499,7 +536,17 @@ class _HomePageState extends State<HomePage> {
             // Brand mark + two-tone wordmark — same logo as the site and icon.
             brandMark(40),
             const SizedBox(width: 10),
-            brandWordmark,
+            // Shrinks instead of overflowing. The mark, the wordmark and three
+            // icon buttons fit at 440pt (16 Pro Max, what the store shots are
+            // taken at) but run 33pt over at 390 — an iPhone 14 — and worse on
+            // a 13 mini or SE, where the wordmark was clipped off the edge.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: brandWordmark,
+              ),
+            ),
             const Spacer(),
             // No 'beta' badge: App Review Guideline 2.2 treats an app that
             // labels itself beta as unfinished — a rejection on sight, and the
@@ -543,9 +590,18 @@ class _HomePageState extends State<HomePage> {
               : '${_happyTop.first.entity} leads the happiness ranking',
           footer: 'Read the story →',
           onTap: () => _openStory('happiest-countries'),
+          // The bubble chart was reachable only from the drawer, so nobody
+          // found it. A preview in the hero would cost three dataset
+          // downloads on every launch; a chip costs nothing and fixes the
+          // actual problem, which was discovery.
+          chipLabel: 'Bubble chart',
+          chipIcon: Icons.bubble_chart_outlined,
+          onChipTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const BubblePage())),
           child: _happyValues.isEmpty
               ? null
-              : Column(
+              : Builder(builder: (context) {
+                  final visual = Column(
                   children: [
                     // 🌍 spinning globe by default; 🗺️ keeps the flat map —
                     // both coloured by happiness, both tappable.
@@ -563,6 +619,9 @@ class _HomePageState extends State<HomePage> {
                     if (_globeHero)
                       Globe(
                           values: _happyValues,
+                          // The globe is a fixed height, so on a tablet the
+                          // phone-sized 240 left it a marble in a wide card.
+                          height: isWide(context) ? 360 : 240,
                           onTap: (iso, _) => _openCountry(iso))
                     else
                       ClipRRect(
@@ -580,9 +639,33 @@ class _HomePageState extends State<HomePage> {
                             : 'Tap a country for its full profile',
                         style: TextStyle(fontSize: 11, color: kTextDim)),
                   ],
-                ),
+                );
+                  if (!isWide(context)) return visual;
+                  // The site shows its maps with the leaderboard beside them;
+                  // on a phone there is only room for one, so the app kept the
+                  // map. On a tablet the other half of the card was empty.
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(flex: 3, child: visual),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        flex: 2,
+                        child: RankBars(
+                            rows: _happyTop,
+                            caption: 'Happiest countries',
+                            onTap: _openCountry),
+                      ),
+                    ],
+                  );
+                }),
         )),
         const SizedBox(height: 10),
+        // Quiz strip and the three counters: stacked on a phone, shoulder to
+        // shoulder on a tablet, where each on its own line left most of the
+        // row as empty background.
+        SideBySide(
+          a:
         // Country quiz entry — a bright amber strip so it pops off the feed.
         FadeIn(delayMs: 90, child: Material(
           color: Colors.transparent,
@@ -639,8 +722,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         )),
-        const SizedBox(height: 16),
-        FadeIn(delayMs: 180, child: Row(
+          b: FadeIn(delayMs: 180, child: Row(
           children: [
             _StatBox(value: '${catalog.length}', label: 'indicators'),
             const SizedBox(width: 8),
@@ -649,6 +731,7 @@ class _HomePageState extends State<HomePage> {
             const _StatBox(value: '190+', label: 'countries'),
           ],
         )),
+        ),
         // Starred countries & indicators — shown once anything is starred.
         ValueListenableBuilder(
           valueListenable: favoritesNotifier,
@@ -696,6 +779,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                 if (favDatasets.isNotEmpty) ...[
                   if (favCountries.isNotEmpty) const SizedBox(height: 8),
+                  // Two abreast at most: these are two-line tiles, and a third
+                  // column makes them narrower than their own titles.
+                  CardGrid(maxColumns: 2, spacing: 6, children: [
                   for (final e in favDatasets)
                     Card(
                       margin: const EdgeInsets.symmetric(vertical: 3),
@@ -713,6 +799,7 @@ class _HomePageState extends State<HomePage> {
                                 builder: (_) => DatasetPage(entry: e))),
                       ),
                     ),
+                  ]),
                 ],
               ],
             );
@@ -735,7 +822,9 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
           ValueListenableBuilder(
             valueListenable: reminders,
-            builder: (_, rems, _) => Column(
+            builder: (_, rems, _) => CardGrid(
+              maxColumns: 2,
+              spacing: 6,
               children: [
                 for (final r in _releases.take(4))
                   Card(
@@ -783,8 +872,13 @@ class _HomePageState extends State<HomePage> {
                 child: CircularProgressIndicator(color: kAmber, strokeWidth: 2)),
           )
         else
-          for (final s in _stories.where((s) => s.slug != 'happiest-countries'))
-            _StoryCard(story: s, onTap: () => _openStory(s.slug)),
+          CardGrid(
+            children: [
+              for (final s
+                  in _stories.where((s) => s.slug != 'happiest-countries'))
+                _StoryCard(story: s, onTap: () => _openStory(s.slug)),
+            ],
+          ),
         const SizedBox(height: 16),
         // Live freshness from the site manifest — proves the data is current.
         ValueListenableBuilder(

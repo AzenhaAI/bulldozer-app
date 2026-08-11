@@ -49,7 +49,15 @@ class EduPage extends StatelessWidget {
       ),
     ];
 
-    return ListView(
+    // Five links and nothing else — this is the one tab a wide layout cannot
+    // help. Stretched to the full 1280 the cards became long thin strips over a
+    // field of empty black; held to a reading column they read as a deliberate
+    // index, which is what they are. The rest of the app fills the width; this
+    // page earns its margins.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text('Edu', style: pageTitleStyle),
@@ -101,6 +109,8 @@ class EduPage extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ),
       ],
+        ),
+      ),
     );
   }
 }

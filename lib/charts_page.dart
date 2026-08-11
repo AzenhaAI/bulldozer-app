@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'favorites_store.dart';
+import 'responsive.dart';
 import 'share_card.dart';
 import 'flags.dart';
 import 'theme.dart';
@@ -169,11 +170,92 @@ class _ChartsPageState extends State<ChartsPage> {
     }
   }
 
+  /// World average per period for the featured dataset — the site's "how has
+  /// this moved" line. Empty when there is nothing to draw a line through.
+  List<(String, double)> _worldAverage() {
+    final ds = _featDs;
+    if (ds == null) return const [];
+    final byPeriod = <String, List<double>>{};
+    for (final o in ds.data) {
+      byPeriod.putIfAbsent(o.period, () => []).add(o.value);
+    }
+    final periods = byPeriod.keys.toList()..sort();
+    if (periods.length < 2) return const [];
+    return [
+      for (final p in periods)
+        (p, byPeriod[p]!.reduce((a, b) => a + b) / byPeriod[p]!.length)
+    ];
+  }
+
+  /// The wide-screen companion for a hero that is a snapshot: where the
+  /// snapshot says who leads today, this says which way the world has moved.
+  /// Null when the dataset has a single period, and the ranking runs instead.
+  Widget? _trendCompanion(CatalogEntry e) {
+    final avg = _worldAverage();
+    if (avg.length < 2) return null;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('WORLD ${e.title.toUpperCase()}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1,
+                fontWeight: FontWeight.w700,
+                color: kTextDim)),
+        const SizedBox(height: 2),
+        Text(
+            '${formatValue(avg.first.$2)} → ${formatValue(avg.last.$2)}'
+            '  ·  ${avg.first.$1}–${avg.last.$1}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        TrendChart(
+            points: avg, highlightPeriod: avg.last.$1, height: 170),
+      ],
+    );
+  }
+
   /// Distinct hero per tab: Stats a world trend line, Biz a brand podium,
   /// Polls a world-average gauge — no more identical "mattresses".
   Widget _buildHero(CatalogEntry featEntry) {
     void onTap() => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => DatasetPage(entry: featEntry)));
+
+    /// Pairs a hero visual with the featured dataset's leaderboard when the
+    /// screen is wide enough. On a phone these heroes fill the card; on a
+    /// tablet each one was a small graphic with a field of empty card beside
+    /// it, so the ranking the site always shows alongside comes back.
+    Widget paired(Widget visual, String caption,
+        {int flexA = 3, Widget? companion}) {
+      if (!isWide(context) || (companion == null && _featTop.isEmpty)) {
+        return visual;
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(flex: flexA, child: visual),
+          const SizedBox(width: 18),
+          Expanded(
+            flex: 2,
+            child: companion ??
+                RankBars(
+                  rows: _featTop,
+                  caption: caption,
+                  onTap: (iso) {
+                    final e = catalogBySlug[widget.featuredSlug];
+                    if (e != null) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => DatasetPage(entry: e)));
+                    }
+                  },
+                ),
+          ),
+        ],
+      );
+    }
+
     if (widget.featuredStyle == 'podium' && _brands.length >= 3) {
       return HeroShell(
         tag: 'Most valuable brands',
@@ -182,7 +264,7 @@ class _ChartsPageState extends State<ChartsPage> {
             'All 96 brands with logos → · values: Kantar BrandZ / Forbes',
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const BrandsPage())),
-        child: BrandPodium(top3: _brands),
+        child: paired(BrandPodium(top3: _brands), featEntry.title, flexA: 2),
       );
     }
     if (widget.featuredStyle == 'records' && _records.isNotEmpty) {
@@ -195,15 +277,19 @@ class _ChartsPageState extends State<ChartsPage> {
         chipIcon: Icons.grid_view,
         onChipTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const ExplorePage())),
-        child: RecordsHero(
-          facts: _records,
-          onTapFact: (f) {
-            final e = catalogBySlug[f.slug];
-            if (e != null) {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => DatasetPage(entry: e)));
-            }
-          },
+        child: paired(
+          RecordsHero(
+            facts: _records,
+            onTapFact: (f) {
+              final e = catalogBySlug[f.slug];
+              if (e != null) {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => DatasetPage(entry: e)));
+              }
+            },
+          ),
+          featEntry.title,
+          companion: _trendCompanion(featEntry),
         ),
       );
     }
@@ -214,7 +300,7 @@ class _ChartsPageState extends State<ChartsPage> {
         footer: 'Explore the map — tap any country →',
         onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const CulturalMapPage())),
-        child: const MiniCulturalMap(),
+        child: paired(const MiniCulturalMap(), featEntry.title),
       );
     }
     if (widget.featuredStyle == 'gauge' && _featDs != null) {
@@ -229,21 +315,14 @@ class _ChartsPageState extends State<ChartsPage> {
           title: featEntry.title,
           footer: 'See every country →',
           onTap: onTap,
-          child: GaugeHero(avg: avg, top: rows.first, low: rows.last),
+          child: paired(
+              GaugeHero(avg: avg, top: rows.first, low: rows.last),
+              featEntry.title),
         );
       }
     }
     if (widget.featuredStyle == 'trend' && _featDs != null) {
-      // world average per period — a line that actually moves
-      final byPeriod = <String, List<double>>{};
-      for (final o in _featDs!.data) {
-        byPeriod.putIfAbsent(o.period, () => []).add(o.value);
-      }
-      final points = byPeriod.keys.toList()..sort();
-      final avg = [
-        for (final p in points)
-          (p, byPeriod[p]!.reduce((a, b) => a + b) / byPeriod[p]!.length)
-      ];
+      final avg = _worldAverage(); // a line that actually moves
       if (avg.length >= 2) {
         return HeroShell(
           tag: 'Featured · ${featEntry.source}',
@@ -365,30 +444,54 @@ class _ChartsPageState extends State<ChartsPage> {
                 featEntry != null && _featTop.isNotEmpty && unfiltered;
             // entry cards (Brands/Cities on Biz) only in the unfiltered view
             final topN = unfiltered ? widget.topCards.length : 0;
-            final headers = topN + (showFeatured ? 1 : 0);
             return RefreshIndicator(
               onRefresh: () => Future.wait([loadCatalog(), _loadFeatured(), if (widget.featuredStyle == 'records') _loadRecords()]),
               color: kAmber,
               backgroundColor: kBgCard,
-              child: ListView.builder(
+              // The dataset deck runs two or three abreast on a tablet. Rows
+              // are still built lazily — each list item is one row of cards,
+              // not the whole grid.
+              child: LayoutBuilder(builder: (context, box) {
+              final cols = columnsFor(box.maxWidth);
+              final rows = (shown.length + cols - 1) ~/ cols;
+              // Wide: the entry cards share one row instead of stacking as
+              // full-width strips above the hero. Narrow: one per row, as before.
+              final topRows = cols == 1 ? topN : (topN > 0 ? 1 : 0);
+              final heads = topRows + (showFeatured ? 1 : 0);
+              return ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-              itemCount: shown.length + headers,
+              itemCount: rows + heads,
               itemBuilder: (_, idx) {
-                if (idx < topN) {
+                if (idx < topRows) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                    child: widget.topCards[idx],
+                    child: cols == 1
+                        ? widget.topCards[idx]
+                        // stretch alone asks for infinite height inside a
+                        // scroll view; IntrinsicHeight measures the tallest
+                        // card first so both end up level.
+                        : IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (var j = 0; j < topN; j++) ...[
+                                  if (j > 0) const SizedBox(width: 10),
+                                  Expanded(child: widget.topCards[j]),
+                                ],
+                              ],
+                            ),
+                          ),
                   );
                 }
-                if (showFeatured && idx == topN) {
+                if (showFeatured && idx == topRows) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
                     child: FadeIn(child: _buildHero(featEntry)),
                   );
                 }
-                final e = shown[idx - headers];
-                return Card(
+                final start = (idx - heads) * cols;
+                Widget card(CatalogEntry e) => Card(
                 margin: const EdgeInsets.symmetric(vertical: 3),
                 child: ListTile(
                   dense: true,
@@ -414,8 +517,22 @@ class _ChartsPageState extends State<ChartsPage> {
                       builder: (_) => DatasetPage(entry: e))),
                 ),
               );
+                if (cols == 1) return card(shown[start]);
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var j = 0; j < cols; j++) ...[
+                      if (j > 0) const SizedBox(width: 10),
+                      Expanded(
+                          child: start + j < shown.length
+                              ? card(shown[start + j])
+                              : const SizedBox.shrink()),
+                    ],
+                  ],
+                );
               },
-              ),
+              );
+              }),
             );
           }),
         ),
@@ -676,6 +793,12 @@ class _DatasetPageState extends State<DatasetPage> {
       backgroundColor: kBgElev,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      // A fixed-height sheet clipped its last rows the moment the window was
+      // shorter than a phone — which is exactly what App Review saw on an iPad
+      // in the sibling app. Scroll instead of hiding, and don't span a 13" slab.
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9, maxWidth: 700),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
