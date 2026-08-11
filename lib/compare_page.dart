@@ -8,11 +8,21 @@ import 'widgets/search_sheet.dart';
 const _maxCountries = 5;
 
 /// Compare up to 5 countries on one indicator — ranked bars of their latest
-/// values. Reached from a country profile (that country is pre-selected).
+/// values. Reached from a country profile (that country is pre-selected), and
+/// hosted directly inside the Geo tab, which is where the site puts it too.
 class ComparePage extends StatefulWidget {
   final Country? initial;
   final List<Country> allCountries;
-  const ComparePage({super.key, this.initial, this.allCountries = const []});
+
+  /// True when the Geo tab hosts this as one of its views: the page then drops
+  /// its own Scaffold and app bar, which would otherwise stack a second title
+  /// under the tab's own.
+  final bool embedded;
+  const ComparePage(
+      {super.key,
+      this.initial,
+      this.allCountries = const [],
+      this.embedded = false});
 
   @override
   State<ComparePage> createState() => _ComparePageState();
@@ -28,10 +38,20 @@ class _ComparePageState extends State<ComparePage> {
   void initState() {
     super.initState();
     if (widget.initial != null) _selected.add(widget.initial!);
-    // Default indicator: the first one on the initial country, else catalog[0].
+    // Default indicator: the first one on the initial country when we came
+    // from a country profile. Otherwise the first of these that the catalog
+    // actually carries — not catalog[0], which is alphabetical and landed the
+    // Geo tab on "Acceptance of Homosexuality (EVS)" as its opening view. A
+    // headline economic measure is the neutral thing to compare first.
+    const preferred = [
+      'imf-gdp-per-capita-ppp',
+      'gapminder-life-expectancy',
+      'gapminder-income',
+    ];
     final slug = widget.initial?.items.isNotEmpty == true
         ? widget.initial!.items.first.slug
-        : (catalog.isNotEmpty ? catalog.first.slug : null);
+        : (preferred.where(catalogBySlug.containsKey).firstOrNull ??
+            (catalog.isNotEmpty ? catalog.first.slug : null));
     _indicator = slug != null ? catalogBySlug[slug] : null;
     if (_indicator != null) _load();
   }
@@ -94,12 +114,7 @@ class _ComparePageState extends State<ComparePage> {
         .map((r) => (r.$2 ?? 0).abs())
         .fold<double>(0, (a, b) => a > b ? a : b);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Compare',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-      ),
-      body: ListView(
+    final body = ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Indicator selector
@@ -182,7 +197,14 @@ class _ComparePageState extends State<ComparePage> {
                 negative: (r.$2 ?? 0) < 0,
               ),
         ],
+    );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Compare',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
       ),
+      body: body,
     );
   }
 }

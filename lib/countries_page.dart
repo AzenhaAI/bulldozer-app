@@ -5,6 +5,7 @@ import 'api.dart';
 import 'charts_page.dart' show topicLabels, topicRank;
 import 'compare_page.dart';
 import 'csv_export.dart';
+import 'explore_page.dart';
 import 'favorites_store.dart';
 import 'flags.dart';
 import 'responsive.dart';
@@ -20,11 +21,53 @@ class CountriesPage extends StatefulWidget {
   State<CountriesPage> createState() => _CountriesPageState();
 }
 
+/// The three things the site's /geo page offers, in the order it offers them:
+/// a country profile, country-vs-country, and the two-indicator map.
+enum GeoView { countries, compare, explore }
+
 class _CountriesPageState extends State<CountriesPage> {
   static List<Country>? _cache; // survives tab switches
   List<Country>? _countries = _cache;
   String? _error;
   String _query = '';
+
+  // Compare and Explore existed already but were buried — Compare only opened
+  // from inside a country profile, Explore from a chip on another tab. On the
+  // site they are peers of the country list, so here they are too.
+  GeoView _view = GeoView.countries;
+
+  Widget _viewSwitch() {
+    const labels = {
+      GeoView.countries: ('Countries', Icons.flag_outlined),
+      GeoView.compare: ('Compare', Icons.compare_arrows),
+      GeoView.explore: ('Two indicators', Icons.grid_view),
+    };
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          for (final v in GeoView.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                avatar: Icon(labels[v]!.$2,
+                    size: 16, color: _view == v ? kBg : kTextDim),
+                label: Text(labels[v]!.$1),
+                selected: _view == v,
+                showCheckmark: false,
+                labelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _view == v ? kBg : kText),
+                onSelected: (_) => setState(() => _view = v),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -70,8 +113,17 @@ class _CountriesPageState extends State<CountriesPage> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text('Countries', style: pageTitleStyle),
+          child: Text('Geo', style: pageTitleStyle),
         ),
+        _viewSwitch(),
+        const SizedBox(height: 8),
+        if (_view == GeoView.compare)
+          Expanded(
+              child: ComparePage(
+                  allCountries: _countries ?? const [], embedded: true))
+        else if (_view == GeoView.explore)
+          const Expanded(child: ExplorePage(embedded: true))
+        else ...[
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: TextField(
@@ -181,6 +233,7 @@ class _CountriesPageState extends State<CountriesPage> {
             }),
           ),
         ),
+        ],
       ],
     );
   }

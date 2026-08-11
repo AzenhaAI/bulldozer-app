@@ -14,7 +14,10 @@ import 'widgets/search_sheet.dart';
 
 /// Explore — scatter one indicator against another across all countries.
 class ExplorePage extends StatefulWidget {
-  const ExplorePage({super.key});
+  /// True when the Geo tab hosts this as one of its views, in which case the
+  /// page drops its own Scaffold and app bar — the tab already has a title.
+  final bool embedded;
+  const ExplorePage({super.key, this.embedded = false});
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -113,12 +116,7 @@ class _ExplorePageState extends State<ExplorePage> {
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Explore',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-      ),
-      body: ListView(
+    final body = ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _axisPicker('Y', _y, () => _pick(false)),
@@ -165,7 +163,14 @@ class _ExplorePageState extends State<ExplorePage> {
             ],
           ],
         ],
+    );
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Explore',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
       ),
+      body: body,
     );
   }
 
