@@ -256,14 +256,22 @@ class _HomeShellState extends State<HomeShell> {
                 context, Icons.open_in_new, 'Open full website', '/'),
             _linkItem(context, Icons.privacy_tip_outlined,
                 'Privacy policy', '/privacy/'),
+            // The source link is gone: the account name in that URL put a
+            // personal handle in front of every user, and the app is published
+            // by Azenha AI. The practice, and an address that reaches it, is
+            // what belongs in a menu.
+            // The practice that publishes the app, and it has its own page.
             ListTile(
-              leading: Icon(Icons.code, color: kTextDim, size: 22),
-              title: Text('GitHub — app source',
+              leading: Icon(Icons.auto_awesome_outlined,
+                  color: kTextDim, size: 22),
+              title: Text('azenha.ai',
                   style: TextStyle(fontSize: 15, color: kText)),
+              subtitle: Text('Where data finds its form',
+                  style: TextStyle(fontSize: 12, color: kTextDim)),
               trailing: Icon(Icons.north_east, color: kTextDim, size: 15),
               onTap: () {
                 Navigator.pop(context);
-                launchUrl(Uri.parse('https://github.com/kirshp/bulldozer-app'),
+                launchUrl(Uri.parse('https://shpara.com/azenha.ai/'),
                     mode: LaunchMode.externalApplication);
               },
             ),
