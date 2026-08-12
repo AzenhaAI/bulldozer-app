@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api.dart';
+import 'ask_review.dart';
 import 'brands_page.dart';
 import 'bubble_page.dart';
 import 'catalog_store.dart';
@@ -273,6 +274,17 @@ class _HomeShellState extends State<HomeShell> {
                 Navigator.pop(context);
                 launchUrl(Uri.parse('https://shpara.com/azenha.ai/'),
                     mode: LaunchMode.externalApplication);
+              },
+            ),
+            // No quota on this row: a person pressed it. The system prompt
+            // (ask_review.dart) is the scarce one.
+            ListTile(
+              leading: Icon(Icons.star_outline, color: kTextDim, size: 22),
+              title: Text('Rate the app',
+                  style: TextStyle(fontSize: 15, color: kText)),
+              onTap: () {
+                Navigator.pop(context);
+                AskReview.openStoreListing();
               },
             ),
             ListTile(

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
+import 'ask_review.dart';
 import 'theme.dart';
 
 const _rounds = 10;
@@ -96,6 +97,10 @@ class _QuizPageState extends State<QuizPage> {
     if (_round + 1 >= _roundsThisGame) {
       if (_score > _best) _best = _score;
       setState(() => _round = _roundsThisGame); // finished screen
+      // A finished round is someone who stayed. Fire-and-forget: AskReview
+      // decides whether this is the third one, iOS decides whether to draw
+      // anything, and nothing here waits on either.
+      AskReview.maybeAskForReview();
     } else {
       setState(() {
         _round++;
