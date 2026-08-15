@@ -748,7 +748,13 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 8),
             _StatBox(value: '$topics', label: 'topics'),
             const SizedBox(width: 8),
-            const _StatBox(value: '190+', label: 'countries'),
+            // Not a literal. Home said "190+" while the Geo tab printed
+            // "Search 232 countries…" from the same feed on the same build —
+            // two different numbers for the same thing, one tab apart. The
+            // fallback only shows before the country index has loaded.
+            _StatBox(
+                value: _countries.isEmpty ? '190+' : '${_countries.length}',
+                label: 'countries'),
           ],
         )),
         ),

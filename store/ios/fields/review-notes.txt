@@ -1,13 +1,22 @@
-BullDozer: World in Numbers is a fully native Flutter app — there is no webview anywhere in the binary. Every chart, the flat world choropleth and the spinning globe, the values scatter, the animated bubble player, country profiles, data stories and the quiz are rendered natively. There is no account, no login, no in-app purchase, no advertising and no user-generated content; no demo credentials are needed — every screen is reachable from a cold launch.
+BullDozer: World in Numbers is a native Flutter app. Every chart, the flat world
+choropleth and the spinning globe, the values scatter, the bubble player, country
+profiles, data stories and the quiz are drawn natively — none of them is a web
+page. External links (a dataset's source, an article, the Edu reads) open in an
+in-app Safari view rather than leaving the app; that is the only browser surface
+and it always shows a page from a public site, never app content.
 
-DATA AND LICENSING
-Figures come from public statistical datasets (WHO, World Bank, Eurostat, international surveys), served through our own open feed at shpara.com/bulldozer and credited on the screens where they appear. Country summaries are fetched from the Wikipedia REST API and labelled "Wikipedia · CC BY-SA" with a link to the article. Brand values on the business screens are credited to Kantar BrandZ / Forbes; brand logos come from Wikimedia Commons and are used for identification only. Coat-of-arms images likewise come from Wikimedia Commons.
+There is no account, no login, no in-app purchase, no advertising and no
+user-generated content. No demo credentials are needed: every screen is reachable
+from a cold launch.
 
-AGE RATING
-The catalog includes WHO public-health statistics such as alcohol consumption, tobacco use and suicide rates — numerical, educational data with no depiction or promotion; the questionnaire is answered accordingly.
+Data comes from a public JSON feed at shpara.com/bulldozer, built from open
+sources — IMF, World Bank, Gapminder, WVS, V-Dem and others. Each dataset is
+credited on screen with its licence and unit. Country summaries and images come
+from Wikipedia under CC BY-SA and are attributed in place.
 
-PRIVACY
-The app collects no data. All requests are anonymous GETs for public JSON/CSV; favourites, quiz progress and the theme choice are stored on the device only. Privacy policy: https://shpara.com/bulldozer/privacy/ — also linked from the app's side menu.
+The app collects nothing. There is no analytics or crash SDK, no advertising
+identifier and no login. Release reminders are local notifications scheduled on
+the device; the only network traffic is anonymous HTTPS GETs for that public feed
+and for Wikipedia summaries and images.
 
-TESTING NOTE
-First launch needs a connection to load the catalog; data is then cached for offline use. Notifications are only requested when the user taps the bell on a data release, never at launch.
+Published by Azenha AI — azenha.agent@gmail.com
