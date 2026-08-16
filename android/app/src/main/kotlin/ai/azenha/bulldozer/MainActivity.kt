@@ -1,4 +1,4 @@
-package com.shpara.bulldozer_app
+package ai.azenha.bulldozer
 
 import io.flutter.embedding.android.FlutterActivity
 
