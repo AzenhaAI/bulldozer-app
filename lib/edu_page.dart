@@ -11,7 +11,7 @@ class EduPage extends StatelessWidget {
   const EduPage({super.key});
 
   void _open(String path) {
-    launchUrl(Uri.parse('$kBaseUrl$path'), mode: LaunchMode.inAppBrowserView);
+    launchUrl(Uri.parse('$kSiteUrl$path'), mode: LaunchMode.inAppBrowserView);
   }
 
   @override

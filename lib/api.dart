@@ -6,8 +6,13 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
 /// The Flutter app is a thin client over the BullDozer site's JSON endpoints,
-/// same pattern as the Ativa app over shpara.com/madeira/events.json.
-const kBaseUrl = 'https://shpara.com/bulldozer';
+/// same pattern as the Ativa app over its own static JSON.
+const kBaseUrl = 'https://azenha.ai/bulldozer';
+
+/// Where a *person* is sent. Deliberately not kBaseUrl: the data still lives on
+/// the old host because the parser feeds only that one, but no tap out of the
+/// app may land there. Links move now, fetches move when the pipeline does.
+const kSiteUrl = 'https://azenha.ai/bulldozer';
 
 Directory? _cacheDir;
 
@@ -204,7 +209,7 @@ class Story {
         title = j['title'] ?? '',
         dek = j['dek'] ?? '';
 
-  String get url => '$kBaseUrl/stories/$slug';
+  String get url => '$kSiteUrl/stories/$slug';
 }
 
 Future<List<Story>> fetchStories() async => [

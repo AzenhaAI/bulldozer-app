@@ -334,7 +334,7 @@ class _HomeShellState extends State<HomeShell> {
       trailing: Icon(Icons.north_east, color: kTextDim, size: 15),
       onTap: () {
         Navigator.pop(context);
-        launchUrl(Uri.parse('$kBaseUrl$path'),
+        launchUrl(Uri.parse('$kSiteUrl$path'),
             mode: LaunchMode.externalApplication);
       },
     );
@@ -530,7 +530,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => StoryPage(spec: spec)));
       return;
     }
-    launchUrl(Uri.parse('$kBaseUrl/stories/$slug'),
+    launchUrl(Uri.parse('$kSiteUrl/stories/$slug'),
         mode: LaunchMode.inAppBrowserView);
   }
 

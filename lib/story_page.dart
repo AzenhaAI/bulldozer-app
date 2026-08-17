@@ -254,7 +254,7 @@ class _StoryPageState extends State<StoryPage> {
         Center(
           child: TextButton.icon(
             onPressed: () => launchUrl(
-                Uri.parse('$kBaseUrl/stories/${s.slug}'),
+                Uri.parse('$kSiteUrl/stories/${s.slug}'),
                 mode: LaunchMode.inAppBrowserView),
             icon: Icon(Icons.article_outlined, size: 18, color: kAmber),
             label: Text('Read the full story on the web',

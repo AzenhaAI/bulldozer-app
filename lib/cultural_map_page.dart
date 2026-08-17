@@ -205,7 +205,7 @@ class _CulturalMapPageState extends State<CulturalMapPage> {
         Center(
           child: TextButton.icon(
             onPressed: () => launchUrl(
-                Uri.parse('$kBaseUrl/stories/cultural-map'),
+                Uri.parse('$kSiteUrl/stories/cultural-map'),
                 mode: LaunchMode.inAppBrowserView),
             icon: Icon(Icons.article_outlined, size: 18, color: kAmber),
             label: Text('Full story on the web',
