@@ -22,7 +22,7 @@ class CsvExport {
       if (res.statusCode != 200) throw 'HTTP ${res.statusCode}';
       if (!context.mounted) return;
       await _shareBytes(context, res.bodyBytes, '$slug.csv',
-          '$title — BullDozer · shpara.com/bulldozer');
+          '$title — BullDozer · azenha.ai/bulldozer');
     } catch (e) {
       if (context.mounted) _toast(context, 'Couldn\'t export: $e');
     }
@@ -55,7 +55,7 @@ class CsvExport {
           context,
           utf8.encode(rows.join('\n')),
           name,
-          '${c.name} — ${c.items.length} indicators · shpara.com/bulldozer');
+          '${c.name} — ${c.items.length} indicators · azenha.ai/bulldozer');
     } catch (e) {
       if (context.mounted) _toast(context, 'Couldn\'t export: $e');
     }

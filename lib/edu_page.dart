@@ -105,7 +105,7 @@ class EduPage extends StatelessWidget {
           ),
         const SizedBox(height: 16),
         Center(
-          child: Text('Reads on the site · shpara.com/bulldozer/edu',
+          child: Text('Reads on the site · azenha.ai/bulldozer/edu',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ),
       ],

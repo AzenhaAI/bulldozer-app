@@ -139,7 +139,7 @@ class ShareCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(footer,
               style: const TextStyle(fontSize: 11, color: dim)),
-          const Text('shpara.com/bulldozer · open data',
+          const Text('azenha.ai/bulldozer · open data',
               style: TextStyle(
                   fontSize: 11, fontWeight: FontWeight.w600, color: amber)),
         ],
@@ -184,7 +184,7 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
       final file = await _writeTemp(dir.path, bytes);
       await SharePlus.instance.share(ShareParams(
         files: [XFile(file)],
-        text: '${widget.title} — via BullDozer · shpara.com/bulldozer',
+        text: '${widget.title} — via BullDozer · azenha.ai/bulldozer',
       ));
     } catch (_) {
       if (mounted) {

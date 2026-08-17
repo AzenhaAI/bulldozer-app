@@ -272,7 +272,7 @@ class _HomeShellState extends State<HomeShell> {
               trailing: Icon(Icons.north_east, color: kTextDim, size: 15),
               onTap: () {
                 Navigator.pop(context);
-                launchUrl(Uri.parse('https://shpara.com/azenha.ai/'),
+                launchUrl(Uri.parse('https://azenha.ai/'),
                     mode: LaunchMode.externalApplication);
               },
             ),
@@ -295,7 +295,7 @@ class _HomeShellState extends State<HomeShell> {
                 Navigator.pop(context);
                 launchUrl(
                     Uri.parse(
-                        'mailto:azenha.agent@gmail.com?subject=BullDozer'),
+                        'mailto:agent@azenha.ai?subject=BullDozer'),
                     mode: LaunchMode.externalApplication);
               },
             ),
@@ -314,7 +314,7 @@ class _HomeShellState extends State<HomeShell> {
                     Text(
                         'The world in numbers — public, parsed datasets on economy, '
                         'markets, governance, wellbeing and more. '
-                        'Data from shpara.com/bulldozer.'),
+                        'Data from azenha.ai/bulldozer.'),
                   ],
                 );
               },
@@ -914,8 +914,8 @@ class _HomePageState extends State<HomePage> {
             return Center(
               child: Text(
                 fresh.isEmpty
-                    ? 'Open data · full site at shpara.com/bulldozer'
-                    : 'Data updated $fresh · open data · shpara.com/bulldozer',
+                    ? 'Open data · full site at azenha.ai/bulldozer'
+                    : 'Data updated $fresh · open data · azenha.ai/bulldozer',
                 style: TextStyle(fontSize: 11, color: kTextDim),
                 textAlign: TextAlign.center,
               ),

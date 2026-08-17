@@ -144,7 +144,7 @@ Widget get brandTagline => Text.rich(
 /// screenshot carries the source without covering any data.
 Widget get chartWatermark => Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 2),
-      child: Text('shpara.com/bulldozer',
+      child: Text('azenha.ai/bulldozer',
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 11,
