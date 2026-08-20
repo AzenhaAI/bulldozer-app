@@ -1,0 +1,20 @@
+Hello,
+
+Thank you for the review. A screen recording captured on a physical iPhone is
+attached. It begins on the Home screen, launches BullDozer, and walks through
+all six tabs — Home, Stats, Biz, Polls, Geo and Edu — showing the charts,
+country profiles, comparisons and survey data in normal use.
+
+In short: BullDozer presents public country-level statistics — World Bank, IMF,
+BIS, Eurobarometer, World Values Survey and others — as charts, country
+profiles and side-by-side comparisons, for analysts and researchers. There is
+no account, no login and no configuration of any kind: all content is available
+immediately on launch. Tested on iPhone 13 Pro Max (iOS 26.6) and iPad Pro
+13-inch M4 (iPadOS 26.6); the minimum supported version is iOS 15.0. Behaviour
+is identical in every territory.
+
+Full detail on each of your questions is in the App Review Notes for this
+version. Happy to provide anything else that would help.
+
+Best regards,
+Azenha AI

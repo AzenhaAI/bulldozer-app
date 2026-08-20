@@ -30,4 +30,4 @@ PRIVACY FIRST
 No account, no sign-up, no ads, no tracking. The app simply shows you the data.
 
 ABOUT THE DATA
-Figures come from public datasets and international surveys, credited on screen, with country summaries from Wikipedia (CC BY-SA), served through the open BullDozer feed at shpara.com/bulldozer.
+Figures come from public datasets and international surveys, credited on screen, with country summaries from Wikipedia (CC BY-SA), served through the open BullDozer feed at azenha.ai/bulldozer.

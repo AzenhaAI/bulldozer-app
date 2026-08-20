@@ -9,7 +9,7 @@ There is no account, no login, no in-app purchase, no advertising and no
 user-generated content. No demo credentials are needed: every screen is reachable
 from a cold launch.
 
-Data comes from a public JSON feed at shpara.com/bulldozer, built from open
+Data comes from a public JSON feed at azenha.ai/bulldozer, built from open
 sources — IMF, World Bank, Gapminder, WVS, V-Dem and others. Each dataset is
 credited on screen with its licence and unit. Country summaries and images come
 from Wikipedia under CC BY-SA and are attributed in place.
@@ -19,4 +19,4 @@ identifier and no login. Release reminders are local notifications scheduled on
 the device; the only network traffic is anonymous HTTPS GETs for that public feed
 and for Wikipedia summaries and images.
 
-Published by Azenha AI — azenha.agent@gmail.com
+Published by Azenha AI — agent@azenha.ai
