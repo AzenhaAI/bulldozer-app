@@ -1,11 +1,3 @@
-Welcome to BullDozer — our first release on the App Store!
-
-• 150+ indicators with rankings, trends and a period switcher
-• Country profiles with maps, key figures and summaries
-• Side-by-side comparison of up to 5 countries
-• A world choropleth map for every dataset
-• A scatter view to explore how indicators relate
-• Data stories with live mini charts
-• The "Guess the Country" quiz
-
-Free, no account, no ads, no tracking.
+The app icon now carries the stat wordmark, matching the app's new name,
+BullDozer Stats. Internal housekeeping in the build itself; no changes to
+features or data.
