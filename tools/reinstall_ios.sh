@@ -1,5 +1,5 @@
 #!/bin/bash
-# Keeps BullDozer alive on Kirill's iPhone. The free signing profile lasts
+# Keeps BullDozer alive on the test iPhone. The free signing profile lasts
 # 7 days, so the app vanishes without periodic reinstall.
 #
 # Runs DAILY (launchd: com.shpara.bulldozer.reinstall). Daily rather than
@@ -11,7 +11,7 @@
 # Once the paid Apple Developer Program is active, none of this is needed.
 set -o pipefail
 export PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-DEVICE="00008110-0004050C3633801E"          # Kirill's iPhone
+DEVICE="00008110-0004050C3633801E"          # test iPhone
 APP=~/Projects/bulldozer_app
 LOG=~/Library/Logs/bulldozer/reinstall_ios.log
 STAMP=~/Library/Logs/bulldozer/last_success.txt

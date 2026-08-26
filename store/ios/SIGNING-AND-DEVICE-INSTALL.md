@@ -62,6 +62,6 @@ printed by `devicectl list devices` is not required.
   (both gitignored — never commit them), backed up outside iCloud in
   `~/Documents/BullDozer_signing_keys/`
 - Store listing copy, icon, feature graphic, screenshots: `store/`
-- Releases with APK assets: github.com/kirshp/bulldozer-app/releases
+- Releases with APK assets: github.com/Azenhaai/bulldozer-app/releases
 
 _Updated: 31 Jul 2026._

@@ -103,7 +103,7 @@ Free, no account, no ads, no tracking.
   statistics datasets). If the questionnaire asks about self-harm themes, answer
   the mildest reference tier honestly (WHO suicide-rate statistics, purely
   numerical). Expected result: **13+**.
-- **Copyright**: `2026 Kirill Shpara`
+- **Copyright**: `2026 Azenha AI`
 - **Price**: Free · **Release**: Automatically release this version
 
 # App Privacy

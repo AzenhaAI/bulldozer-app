@@ -247,12 +247,12 @@ Keep: all categories None/No, except Alcohol, Tobacco, or Drug Use or References
 
 ### Copyright
 
-**Now:** 2026 Kirill Shpara
+**Now:** 2026 Azenha AI
 
 **Paste:**
 
 ```
-2026 Kirill Shpara
+2026 Azenha AI
 ```
 
 *Why.* Matches the Individual, non-trader account. No change.

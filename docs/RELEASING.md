@@ -19,7 +19,7 @@
 4. `git tag vX.Y.Z && gh release create` with the APK attached.
 
 Live link: **https://shpara.com/bulldozer/downloads/bulldozer-stats.apk**
-GitHub releases: **https://github.com/kirshp/bulldozer-app/releases**
+GitHub releases: **https://github.com/Azenhaai/bulldozer-app/releases**
 
 > Cloudflare Pages has a 25 MiB per-file limit — that is why we ship the
 > arm64 **split** APK (~18 MB), never the fat `app-release.apk` (~47 MB).
