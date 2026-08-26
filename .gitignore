@@ -53,3 +53,7 @@ key.properties
 
 # Play artifacts — big binaries live in iCloud + GitHub Releases, not git
 store/android/*.aab
+
+# Internal store notes (working language) — kept on disk, out of the repo
+store/**/README.txt
+store/PLAY-listing-paste.md
