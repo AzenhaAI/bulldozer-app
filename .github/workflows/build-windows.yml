@@ -1,0 +1,65 @@
+name: Build Windows app
+
+# An .exe cannot be produced on macOS, so this is the only way the Windows
+# wrapper gets built. Manual: it ships a download, and downloads should be
+# published on purpose rather than on every commit.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Rust comes preinstalled on windows-latest; cache the build so a rerun
+      # takes a minute rather than ten.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: windows-tauri/src-tauri
+
+      - name: Install the Tauri CLI
+        working-directory: windows-tauri
+        run: npm install
+
+      - name: Build the installer
+        working-directory: windows-tauri
+        run: npx tauri build --bundles nsis
+
+      - name: Collect it
+        shell: bash
+        run: |
+          exe=$(ls windows-tauri/src-tauri/target/release/bundle/nsis/*-setup.exe | head -1)
+          echo "Built: $exe ($(du -h "$exe" | cut -f1))"
+          mkdir -p store/windows
+          cp "$exe" "store/windows/BullDozer-setup.exe"
+
+      # Attached to the run as well as committed: the artifact is what you grab
+      # when you only want to try it, without pulling the repo.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BullDozer-setup
+          path: store/windows/BullDozer-setup.exe
+
+      - name: Commit it
+        shell: bash
+        run: |
+          git config user.name "bulldozer-bot"
+          git config user.email "agent@azenha.ai"
+          git add store/windows/BullDozer-setup.exe
+          if git diff --cached --quiet; then echo "Unchanged."; exit 0; fi
+          git commit -m "Rebuild the Windows wrapper via CI"
+          for attempt in 1 2 3; do
+            git fetch origin ${{ github.ref_name }}
+            git rebase --autostash origin/${{ github.ref_name }} || { git rebase --abort; sleep 3; continue; }
+            if git push origin HEAD:${{ github.ref_name }}; then echo "Pushed."; exit 0; fi
+            sleep $((attempt * 4))
+          done
+          exit 1
