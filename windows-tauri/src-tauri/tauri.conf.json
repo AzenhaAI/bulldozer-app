@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicedoc/tauri/v2/packages/tauri-utils/schema.json",
+  "productName": "BullDozer",
+  "version": "1.0.0",
+  "identifier": "ai.azenha.bulldozer.win",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "BullDozer",
+        "width": 1180,
+        "height": 820,
+        "resizable": true,
+        "url": "https://azenha.ai/bulldozer/"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "windows": {
+      "nsis": { "installMode": "currentUser" }
+    }
+  }
+}
