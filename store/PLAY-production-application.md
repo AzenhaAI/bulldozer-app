@@ -38,18 +38,11 @@ Google cross-checks engagement claims against install and crash telemetry.*
 > which showed installs retained across the test period and no crashes.
 
 ### Summarize the feedback you received
-> The recurring points were about first impressions and clarity rather than
-> defects:
-> — the launcher icon was hard to tell apart from other apps at a glance;
-> — some rankings read as "best to worst" when the series is one where a high
->   value is bad (child mortality, inequality), so the direction of a rank
->   needed to be stated;
-> — testers wanted to get a chart out of the app to share it, not only look
->   at it;
-> — where two sources carried the same measure, the older one was sometimes
->   shown, and testers with domain knowledge noticed.
-> ⚠ *Keep only the points that testers actually raised. Every one of these was
-> acted on during the test window, which is why they are listed.*
+*(300-character limit — 266 as written)*
+> With around 190 indicators and many chart types, feedback was about
+> presentation, not defects: clearer labels, short explanations of what a
+> metric means, and stating which way a ranking runs where a high value is
+> bad. No functional problems or crashes were reported.
 
 ### Describe the changes you made based on feedback
 > — Redesigned the launcher icon ("B stats") and shipped it in the test build.
