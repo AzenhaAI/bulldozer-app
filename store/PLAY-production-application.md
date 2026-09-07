@@ -61,15 +61,17 @@ Google cross-checks engagement claims against install and crash telemetry.*
 
 ## Section 2 — About your app
 
-### Describe your app and who it is for
-> BullDozer Stats puts public country statistics in one place: about 190
-> indicators for 232 countries, drawn from the IMF, the World Bank, Gapminder,
-> V-Dem, the World Happiness Report and other open sources, each figure shown
-> with its source and its year. It is for students, analysts, journalists and
-> anyone who needs to check a number about a country and see where it stands
-> in the world. Users open a country profile, rank countries on an indicator,
-> or compare several countries on one chart. Everything is free, with no
-> account, no ads and no sign-up.
+*The form has two 300-character fields here, not one description.*
+
+### Who is the intended audience of your app?
+*(297 characters)*
+> Students, analysts, journalists and anyone who needs to check a figure about a country and see where it stands in the world: GDP, life expectancy, democracy scores, happiness and about 190 other indicators for 232 countries. Free, no account, no ads, so it suits casual and professional use alike.
+
+### Describe how your app provides value to users
+*(292 characters)*
+> One place for public country statistics otherwise spread across the IMF, World Bank, Gapminder, V-Dem and others. Every figure shows its source and year. Users open a country profile, rank countries on any indicator, or compare several on one chart, and what was loaded keeps working offline.
+
+## Section 3 — Your production readiness
 
 ### What makes your app ready for production?
 > — The same app is already published on the Apple App Store and passed its
