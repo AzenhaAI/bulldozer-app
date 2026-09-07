@@ -73,28 +73,15 @@ Google cross-checks engagement claims against install and crash telemetry.*
 
 ## Section 3 — Your production readiness
 
-### What makes your app ready for production?
-> — The same app is already published on the Apple App Store and passed its
->   review; the Android build shares the code and the data.
-> — It collects no data: no analytics or advertising SDK, no login, and the
->   only permissions are INTERNET, POST_NOTIFICATIONS and RECEIVE_BOOT_COMPLETED.
->   The Data safety form says "no data collected", and that is accurate.
-> — The closed test ran the required 14 days with 12+ testers and produced no
->   crashes in Play Console.
-> — The listing, icon, feature graphic, screenshots and privacy policy
->   (https://azenha.ai/bulldozer/privacy) are complete and live.
-> — A published website, a Telegram bot and desktop builds already serve the
->   same data, so the Android app joins a product that is in use, not a first
->   release.
+*Two 300-character fields.*
 
-### How many installs do you expect in the first year?
-**Fewer than 1,000** — *honest for a niche reference tool with no paid
-acquisition; overstating this brings extra scrutiny and no benefit.*
+### What changes did you make to your app based on what you learned during your closed test?
+*(293 characters)*
+> Presentation, as the feedback asked: rankings now say highest and lowest rather than implying best and worst, with a note where a high value is bad; labels and short explanations were added to metrics; where two sources cover one measure the newer year is shown; the launcher icon was redrawn.
 
-### App category
-**Education** (as set in the listing).
-
----
+### How did you decide that your app is ready for production?
+*(296 characters)*
+> The closed test ran the full period with 12+ testers and no crashes in Play Console, and every point raised was resolved. The same app is already published on the App Store after review. It collects no data, needs no account, and the listing, screenshots and privacy policy are complete and live.
 
 ## After approval
 
