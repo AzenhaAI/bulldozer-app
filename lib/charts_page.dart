@@ -434,6 +434,57 @@ class _ChartsPageState extends State<ChartsPage> {
             ],
           ),
         ),
+        // Datasets added since this person last opened the app. Tap a chip to
+        // open it; the strip disappears on the next launch, which is what
+        // "since your last visit" means.
+        ValueListenableBuilder<Set<String>>(
+          valueListenable: newSlugsNotifier,
+          builder: (context, fresh, _) {
+            final items = [
+              for (final e in catalog)
+                if (fresh.contains(e.slug)) e
+            ];
+            if (items.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'NEW SINCE YOUR LAST VISIT · ${items.length}',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: kAmber),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 34,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final e in items)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: ActionChip(
+                              label: Text(e.title,
+                                  style: const TextStyle(fontSize: 12)),
+                              backgroundColor: kBgCard,
+                              side: BorderSide(color: kAmber, width: 0.8),
+                              onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (_) => DatasetPage(entry: e))),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         Expanded(
           child: Builder(builder: (context) {
             final featEntry = widget.featuredSlug != null
@@ -507,6 +558,20 @@ class _ChartsPageState extends State<ChartsPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (newSlugsNotifier.value.contains(e.slug))
+                        Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                              color: kAmber,
+                              borderRadius: BorderRadius.circular(4)),
+                          child: Text('NEW',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: kBg)),
+                        ),
                       FreshnessBadge(
                           parsedAt: e.parsedAt, latest: e.latest, compact: true),
                       const SizedBox(width: 8),

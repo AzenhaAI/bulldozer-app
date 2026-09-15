@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
 import 'catalog.dart';
@@ -42,6 +43,31 @@ Future<void> loadManifest() async {
   }
 }
 
+/// Datasets that were not in the catalogue the last time this app ran.
+///
+/// "New" is measured against what this person has already seen, not against a
+/// date: `parsedAt` is when a series was last refreshed, and a re-parsed GDP
+/// is not news. Empty on the very first run — everything is new then, which
+/// is the same as nothing being new. A tester asked where the fresh data had
+/// gone; it was in five places, and nothing said so.
+final newSlugsNotifier = ValueNotifier<Set<String>>({});
+
+const _seenKey = 'catalog.seen_slugs';
+
+Future<void> _markNew(List<CatalogEntry> fresh) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = (prefs.getStringList(_seenKey) ?? const []).toSet();
+    final now = {for (final e in fresh) e.slug};
+    if (seen.isNotEmpty) newSlugsNotifier.value = now.difference(seen);
+    // Written at once, so the strip shows for this session and not the next:
+    // "since your last visit" has to mean that.
+    await prefs.setStringList(_seenKey, now.toList());
+  } catch (_) {
+    // preferences unavailable — the catalogue still works, just without the strip
+  }
+}
+
 /// Loads the live catalog (cached by [fetchJson]); keeps the baked/cached list
 /// on any failure.
 Future<void> loadCatalog() async {
@@ -61,6 +87,7 @@ Future<void> loadCatalog() async {
             e['latest'] ?? '',
           ),
       ];
+      await _markNew(catalogNotifier.value);
     }
   } catch (_) {
     // offline or endpoint missing — keep the baked/cached catalog

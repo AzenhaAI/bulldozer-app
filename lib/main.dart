@@ -276,6 +276,22 @@ class _HomeShellState extends State<HomeShell> {
                     mode: LaunchMode.externalApplication);
               },
             ),
+            // The same figures, answered in a chat: a country code gets its
+            // card, an indicator gets the world ranking. Goes out to Telegram
+            // rather than a web view so the person lands in their own app.
+            ListTile(
+              leading: Icon(Icons.send_outlined, color: kTextDim, size: 22),
+              title: Text('Telegram bot',
+                  style: TextStyle(fontSize: 15, color: kText)),
+              subtitle: Text('Send a country code, get its numbers',
+                  style: TextStyle(fontSize: 12, color: kTextDim)),
+              trailing: Icon(Icons.north_east, color: kTextDim, size: 15),
+              onTap: () {
+                Navigator.pop(context);
+                launchUrl(Uri.parse('https://t.me/bulldozer_ebot'),
+                    mode: LaunchMode.externalApplication);
+              },
+            ),
             // No quota on this row: a person pressed it. The system prompt
             // (ask_review.dart) is the scarce one.
             ListTile(
