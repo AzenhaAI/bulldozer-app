@@ -434,9 +434,8 @@ class _ChartsPageState extends State<ChartsPage> {
             ],
           ),
         ),
-        // Datasets added since this person last opened the app. Tap a chip to
-        // open it; the strip disappears on the next launch, which is what
-        // "since your last visit" means.
+        // Datasets added to the site in the last 30 days — the same list as the
+        // site's "added this month" section. Tap a chip to open it.
         ValueListenableBuilder<Set<String>>(
           valueListenable: newSlugsNotifier,
           builder: (context, fresh, _) {
@@ -451,7 +450,7 @@ class _ChartsPageState extends State<ChartsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'NEW SINCE YOUR LAST VISIT · ${items.length}',
+                    'ADDED THIS MONTH · ${items.length}',
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
