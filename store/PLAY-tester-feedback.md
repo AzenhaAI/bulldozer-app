@@ -20,8 +20,13 @@ has no way to notice it grew.
 Polls, driven by `parsedAt` on each dataset — no editorial work, it falls out of
 the data. Possibly a `NEW` marker on the dataset card for 30 days.
 
-**Status:** open. Answer given to the tester; the discoverability fix is
-backlog.
+**Status:** fixed, on both surfaces.
+- App 1.31.0+55 (closed track): a "NEW SINCE YOUR LAST VISIT" strip and NEW
+  badges, measured against what the device last saw.
+- Site, 2026-09-25: a "datasets added this month" section on the home page and
+  New badges in Macro and Polls. Arrival dates come from git history, not from
+  parsedAt — parsedAt is the last re-parse, and it would have flagged 51
+  datasets as new where 14 were.
 
 **For the form:** this is presentation feedback, not a defect — consistent
 with the summary already written ("clearer labels … not defects").
