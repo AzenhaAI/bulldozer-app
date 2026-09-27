@@ -1,5 +1,8 @@
 import 'widgets/shell_actions.dart';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import 'api.dart';
 import 'catalog_store.dart';
@@ -9,10 +12,14 @@ import 'flags.dart';
 import 'theme.dart';
 
 /// "Ask AI" — type a country, get what the catalogue holds on it and where it
-/// stands out in the world.
+/// stands out in the world, plus an answer in words from bot.azenha.ai/ask.
 ///
-/// A tester asked for it. It is labelled as in development because no model
-/// writes the answer yet: every line is a published value with its year, rank
+/// A tester asked for it. The written answer comes from a model (Claude, with
+/// Workers AI as fallback) that is handed only this country's published
+/// figures, and the server drops any answer containing a number those figures
+/// do not hold. If there is no answer — offline, rate-limited, nothing that
+/// passed the check — the brief below stands on its own, as it did before.
+/// Every line of the brief is a published value with its year, rank
 /// and source, selected by the site (`/data/brief/<iso>.json`, see
 /// countryBrief.ts in the site repo). Nothing is generated, so nothing can be
 /// invented — the rule the whole product runs on.
@@ -51,6 +58,39 @@ class _AskPageState extends State<AskPage> {
   _Brief? _brief;
   bool _loading = false;
   String? _error;
+  final _qCtl = TextEditingController();
+  String? _answer;
+  bool _asking = false;
+
+  static const _askUrl = 'https://bot.azenha.ai/ask';
+  static const _suggestions = [
+    'Summarise what stands out, in two sentences.',
+    'How is the economy doing?',
+    'How healthy is the population?',
+  ];
+
+  /// Asks the server; any failure leaves the brief to speak for itself.
+  Future<void> _askAi(String iso, String q) async {
+    setState(() {
+      _asking = true;
+      _answer = null;
+    });
+    try {
+      final res = await http
+          .post(Uri.parse(_askUrl),
+              headers: {'content-type': 'application/json'},
+              body: jsonEncode({'country': iso, 'q': q}))
+          .timeout(const Duration(seconds: 45));
+      if (res.statusCode == 200) {
+        final j = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+        if (mounted && _brief?.iso == iso) setState(() => _answer = '${j['answer'] ?? ''}'.trim());
+      }
+    } catch (_) {
+      // offline, timeout, 429, no verified answer: the brief is the answer
+    } finally {
+      if (mounted) setState(() => _asking = false);
+    }
+  }
 
   @override
   void initState() {
@@ -64,6 +104,7 @@ class _AskPageState extends State<AskPage> {
 
   @override
   void dispose() {
+    _qCtl.dispose();
     _ctl.dispose();
     super.dispose();
   }
@@ -71,13 +112,13 @@ class _AskPageState extends State<AskPage> {
   List<Country> get _matches {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty || _countries == null) return const [];
-    return _countries!
-        .where((c) =>
-            c.name.toLowerCase().contains(q) ||
-            c.official.toLowerCase().contains(q) ||
-            c.iso.toLowerCase() == q)
-        .take(8)
-        .toList();
+    // "kz" and "kaz" work as well as "Kazakhstan"; an exact code comes first,
+    // so "de" is Germany rather than every name containing "de".
+    bool code(Country c) => c.iso.toLowerCase() == q || iso2FromIso3(c.iso).toLowerCase() == q;
+    final exact = _countries!.where(code).toList();
+    final byName = _countries!.where((c) =>
+        !code(c) && (c.name.toLowerCase().contains(q) || c.official.toLowerCase().contains(q)));
+    return [...exact, ...byName].take(8).toList();
   }
 
   Future<void> _ask(Country c) async {
@@ -86,12 +127,16 @@ class _AskPageState extends State<AskPage> {
       _loading = true;
       _error = null;
       _brief = null;
+      _answer = null;
+      _qCtl.clear();
       _query = '';
       _ctl.text = c.name;
     });
     try {
       final j = await fetchJson('/data/brief/${c.iso.toLowerCase()}.json');
       if (mounted) setState(() => _brief = _Brief.fromJson(j as Map<String, dynamic>));
+      // The summary the tester asked for, without having to ask for it.
+      if (mounted) _askAi(c.iso, _suggestions.first);
     } catch (_) {
       if (mounted) setState(() => _error = 'No answer for ${c.name} right now. Check the connection.');
     } finally {
@@ -129,9 +174,9 @@ class _AskPageState extends State<AskPage> {
         ]),
         const SizedBox(height: 6),
         Text(
-            'Type a country to see what we hold on it and where it stands out. '
-            'For now every answer is built only from our published data — each line '
-            'with its year, world rank and source — so nothing is made up.',
+            'Type a country or its code (kz, kaz) to see what we hold on it and '
+            'ask about it. Answers use only our published figures, and any number '
+            'not found in them is held back.',
             style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
         const SizedBox(height: 14),
         TextField(
@@ -143,7 +188,7 @@ class _AskPageState extends State<AskPage> {
             if (m.isNotEmpty) _ask(m.first);
           },
           decoration: InputDecoration(
-            hintText: 'A country — e.g. Kazakhstan, Brazil, JPN',
+            hintText: 'A country or code — Kazakhstan, kz, BRA',
             prefixIcon: const Icon(Icons.auto_awesome_outlined),
             isDense: true,
             filled: true,
@@ -170,18 +215,70 @@ class _AskPageState extends State<AskPage> {
           Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(_error!, style: TextStyle(color: kTextDim))),
-        if (_brief != null) ..._answer(_brief!),
+        if (_brief != null) ..._answerBlock(_brief!),
       ],
     );
   }
 
-  List<Widget> _answer(_Brief b) {
+  List<Widget> _answerBlock(_Brief b) {
     final country = _countries?.where((c) => c.iso == b.iso).firstOrNull;
     return [
       const SizedBox(height: 18),
       Text('${flagFromIso(b.iso)}  ${b.name}',
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 4),
+      if (_asking)
+        const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: LinearProgressIndicator(minHeight: 2)),
+      if (_answer != null && _answer!.isNotEmpty)
+        Container(
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+              color: kBgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kAmber.withValues(alpha: 0.5))),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('AI ANSWER · FIGURES CHECKED AGAINST OUR DATA',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),
+            const SizedBox(height: 8),
+            SelectableText(_answer!, style: const TextStyle(fontSize: 15, height: 1.45)),
+          ]),
+        ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _qCtl,
+        maxLength: 300,
+        textInputAction: TextInputAction.send,
+        onChanged: (_) => setState(() {}), // wakes the send button
+        onSubmitted: (v) {
+          if (v.trim().isNotEmpty && !_asking) _askAi(b.iso, v.trim());
+        },
+        decoration: InputDecoration(
+          hintText: 'Ask about ${b.name}…',
+          counterText: '',
+          isDense: true,
+          filled: true,
+          fillColor: kBgCard,
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.send_outlined),
+            onPressed: _asking || _qCtl.text.trim().isEmpty ? null : () => _askAi(b.iso, _qCtl.text.trim()),
+          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder, width: 0.5)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: kBorder, width: 0.5)),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Wrap(spacing: 6, runSpacing: 6, children: [
+        for (final s in _suggestions.skip(1))
+          ActionChip(
+            label: Text(s, style: const TextStyle(fontSize: 12)),
+            onPressed: _asking ? null : () { _qCtl.text = s; _askAi(b.iso, s); },
+          ),
+      ]),
+      ..._facts(b, country),
+    ];
+  }
+
+  List<Widget> _facts(_Brief b, Country? country) {
+    return [
+      const SizedBox(height: 18),
       Text(
           'We hold ${b.indicators} indicators on ${b.name}, in ${b.topics.length} topics, '
           'with figures from ${b.since} to ${b.latest}.',
