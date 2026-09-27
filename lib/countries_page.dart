@@ -113,7 +113,7 @@ class _CountriesPageState extends State<CountriesPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(children: [
             Expanded(child: Text('Geo', style: pageTitleStyle)),
             const ShellActions(),

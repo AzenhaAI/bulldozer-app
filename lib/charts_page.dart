@@ -386,7 +386,7 @@ class _ChartsPageState extends State<ChartsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(children: [
             Expanded(child: Text(widget.title, style: pageTitleStyle)),
             const ShellActions(),

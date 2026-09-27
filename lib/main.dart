@@ -96,6 +96,23 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
+/// The tabs, in order — read by both the bottom bar and the menu.
+///
+/// The menu used to address tabs by hard-coded index. When Ask AI went in as
+/// the second tab every later index moved by one and the menu did not: in
+/// 1.33.0 "Statistics" opened Ask AI, "Edu" opened Geo, and Edu could not be
+/// reached from the menu at all. One list means inserting a tab moves both.
+const _tabs = <(IconData, String, String)>[
+  // icon, bottom-bar label, menu label
+  (Icons.home_outlined, 'Home', 'Home'),
+  (Icons.auto_awesome_outlined, 'Ask AI', 'Ask AI'),
+  (Icons.bar_chart_outlined, 'Stats', 'Statistics'),
+  (Icons.business_center_outlined, 'Biz', 'Business & markets'),
+  (Icons.how_to_vote_outlined, 'Polls', 'Polls'),
+  (Icons.public_outlined, 'Geo', 'Countries'),
+  (Icons.school_outlined, 'Edu', 'Edu'),
+];
+
 class _HomeShellState extends State<HomeShell> {
   int _tab = 0;
 
@@ -160,20 +177,9 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(
-              icon: Icon(Icons.auto_awesome_outlined), label: 'Ask AI'),
-          NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined), label: 'Stats'),
-          NavigationDestination(
-              icon: Icon(Icons.business_center_outlined), label: 'Biz'),
-          NavigationDestination(
-              icon: Icon(Icons.how_to_vote_outlined), label: 'Polls'),
-          NavigationDestination(
-              icon: Icon(Icons.public_outlined), label: 'Geo'),
-          NavigationDestination(
-              icon: Icon(Icons.school_outlined), label: 'Edu'),
+        destinations: [
+          for (final (icon, label, _) in _tabs)
+            NavigationDestination(icon: Icon(icon), label: label),
         ],
       ),
     );
@@ -201,13 +207,8 @@ class _HomeShellState extends State<HomeShell> {
               child: brandTagline,
             ),
             Divider(color: kBorder, height: 1),
-            _menuItem(context, Icons.home_outlined, 'Home', 0),
-            _menuItem(context, Icons.bar_chart_outlined, 'Statistics', 1),
-            _menuItem(
-                context, Icons.business_center_outlined, 'Business & markets', 2),
-            _menuItem(context, Icons.how_to_vote_outlined, 'Polls', 3),
-            _menuItem(context, Icons.public_outlined, 'Countries', 4),
-            _menuItem(context, Icons.school_outlined, 'Edu', 5),
+            for (final (n, (icon, _, menuLabel)) in _tabs.indexed)
+              _menuItem(context, icon, menuLabel, n),
             Divider(color: kBorder, height: 1),
             ListTile(
               leading: Text(isLight ? '🌙' : '☀️',
