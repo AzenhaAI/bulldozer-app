@@ -30,3 +30,16 @@ the data. Possibly a `NEW` marker on the dataset card for 30 days.
 
 **For the form:** this is presentation feedback, not a defect — consistent
 with the summary already written ("clearer labels … not defects").
+
+## 2026-09-27 — "Why is there no Ask AI? Type a country, see what you have on it and a short summary"
+
+A tester asked for a way to type a country's name and get back what the app
+holds on it, with a short summary.
+
+**What it points at:** the app can answer "what is Kazakhstan's GDP" but not
+"what is there to know about Kazakhstan". A country profile lists 150+ rows
+with no way in for someone who does not already know what to look for.
+
+**Status:** open — design in progress. The constraint that shapes it: every
+figure must be real, so any summary is built from the country's own data and
+checked against it, never written from a model's memory.
