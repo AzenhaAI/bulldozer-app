@@ -1,3 +1,4 @@
+import 'widgets/shell_actions.dart';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
@@ -385,8 +386,11 @@ class _ChartsPageState extends State<ChartsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(widget.title, style: pageTitleStyle),
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+          child: Row(children: [
+            Expanded(child: Text(widget.title, style: pageTitleStyle)),
+            const ShellActions(),
+          ]),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),

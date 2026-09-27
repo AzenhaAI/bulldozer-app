@@ -1,3 +1,4 @@
+import 'widgets/shell_actions.dart';
 import 'ask_page.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -23,7 +24,6 @@ import 'widgets/hero_extras.dart';
 import 'countries_page.dart';
 import 'quiz_page.dart';
 import 'responsive.dart';
-import 'search_page.dart';
 import 'story_page.dart';
 import 'theme.dart';
 
@@ -592,32 +592,7 @@ class _HomePageState extends State<HomePage> {
             // No 'beta' badge: App Review Guideline 2.2 treats an app that
             // labels itself beta as unfinished — a rejection on sight, and the
             // badge sat in the header of every store screenshot.
-            // Light/dark toggle — same sun as the site header.
-            IconButton(
-              onPressed: toggleTheme,
-              icon: Text(isLight ? '🌙' : '☀️',
-                  style: const TextStyle(fontSize: 18)),
-              tooltip: 'Toggle light/dark theme',
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-            ),
-            // Global search — countries and indicators from one field.
-            IconButton(
-              onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SearchPage())),
-              icon: Icon(Icons.search, color: kText),
-              tooltip: 'Search',
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-            ),
-            // Hamburger — opens the menu drawer from the right.
-            IconButton(
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-              icon: Icon(Icons.menu, color: kText),
-              tooltip: 'Menu',
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-            ),
+            const ShellActions(),
           ],
         ),
         const SizedBox(height: 10),

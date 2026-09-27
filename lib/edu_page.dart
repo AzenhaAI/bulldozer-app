@@ -1,3 +1,4 @@
+import 'widgets/shell_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -60,7 +61,10 @@ class EduPage extends StatelessWidget {
         child: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Edu', style: pageTitleStyle),
+        Row(children: [
+          Expanded(child: Text('Edu', style: pageTitleStyle)),
+          const ShellActions(),
+        ]),
         const SizedBox(height: 4),
         Text('Learn to read — and build — data like this.',
             style: TextStyle(fontSize: 12, color: kTextDim)),

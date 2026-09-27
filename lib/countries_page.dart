@@ -1,3 +1,4 @@
+import 'widgets/shell_actions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 
@@ -112,8 +113,11 @@ class _CountriesPageState extends State<CountriesPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text('Geo', style: pageTitleStyle),
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+          child: Row(children: [
+            Expanded(child: Text('Geo', style: pageTitleStyle)),
+            const ShellActions(),
+          ]),
         ),
         _viewSwitch(),
         const SizedBox(height: 8),

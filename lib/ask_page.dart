@@ -1,3 +1,4 @@
+import 'widgets/shell_actions.dart';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
@@ -123,6 +124,8 @@ class _AskPageState extends State<AskPage> {
             child: Text('IN DEVELOPMENT',
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),
           ),
+          const Spacer(),
+          const ShellActions(),
         ]),
         const SizedBox(height: 6),
         Text(
