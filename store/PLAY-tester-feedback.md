@@ -48,3 +48,22 @@ from its own data. No model writes it yet, so nothing on the screen can be
 invented. Building it also caught a labelling error visible on every page:
 child mortality was shown "per 1,000" while the values are percentages —
 Nigeria's 11.6% read as 11.6 per 1,000, ten times too low. Fixed.
+
+---
+
+## All tester requests, 11–27 September
+
+Testers wrote to Kirill and he relayed each message as a task; they are
+listed here in the order they arrived, with what shipped. Every one was about
+content or presentation — none reported a fault.
+
+| # | Date | Request, in substance | What shipped |
+|---|------|------------------------|--------------|
+| 1 | 11 Sep | Pointed at deathboard.com, a site of causes of death by country: can we have this? | 14 WHO mortality series — 3 from the GHO, 11 causes of death from Global Health Estimates 2021, 185 countries — and the story "What the world dies of" (25 Sep). Built from WHO's own files, not the other site. |
+| 2 | 15 Sep | Alexey: where did the new data appear, which section? | "Added this month" section and NEW badges on the site (23 Sep); a "new" strip in the app (builds 55–56). |
+| 3 | 15 Sep | Which open survey databases are we still missing? | CSES (4 series, then Module 6 to 2024), Afrobarometer 3 → 18 series, IEA TIMSS / PIRLS / ICCS / ICILS (8 series) — 25 Sep. LAPOP licence accepted, data being processed. |
+| 4 | 27 Sep | Why is there no Ask AI — type a country, get what you have and a summary? | Ask AI tab, builds 57–58. |
+| 5 | 27 Sep | The menu and the buttons at top right exist only on Home. | On every tab, build 58. |
+
+Five requests, five answered; one of them (#3) is partly in progress —
+LAPOP's AmericasBarometer is downloaded under its licence and being processed.
