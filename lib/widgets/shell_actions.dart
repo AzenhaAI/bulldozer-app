@@ -7,7 +7,7 @@ import '../theme.dart';
 ///
 /// They used to live only in the Home header, so on every other tab there was
 /// no way to open the menu, switch the theme or search without going back
-/// first; a tester noticed. One widget now, used by every tab's title row and
+/// first — noticed during testing. One widget now, used by every tab's title row and
 /// by Home, so the set cannot drift between screens. The menu button appears
 /// only where there is a menu to open: on a page pushed over the tabs the
 /// nearest Scaffold has no drawer.
