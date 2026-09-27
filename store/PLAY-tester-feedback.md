@@ -40,6 +40,11 @@ holds on it, with a short summary.
 "what is there to know about Kazakhstan". A country profile lists 150+ rows
 with no way in for someone who does not already know what to look for.
 
-**Status:** open — design in progress. The constraint that shapes it: every
-figure must be real, so any summary is built from the country's own data and
-checked against it, never written from a model's memory.
+**Status:** shipped in 1.33.0 (57), 27 September — an "Ask AI" tab after
+Home, marked "in development". Type a country: what we hold on it (indicators
+by topic, years covered) and up to six lines on where it stands out in the
+world, each a published value with year, rank and source, selected by the site
+from its own data. No model writes it yet, so nothing on the screen can be
+invented. Building it also caught a labelling error visible on every page:
+child mortality was shown "per 1,000" while the values are percentages —
+Nigeria's 11.6% read as 11.6 per 1,000, ten times too low. Fixed.
