@@ -1,3 +1,4 @@
+import 'ask_page.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -113,6 +114,8 @@ class _HomeShellState extends State<HomeShell> {
             index: _tab,
             children: [
               HomePage(onGoToTab: (i) => setState(() => _tab = i)),
+              // A tester asked for it; see ask_page.dart.
+              const AskPage(),
               ChartsPage(
                   key: ValueKey('stats${catalog.length}'),
                   title: 'Statistics',
@@ -159,6 +162,8 @@ class _HomeShellState extends State<HomeShell> {
         onDestinationSelected: (i) => setState(() => _tab = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.auto_awesome_outlined), label: 'Ask AI'),
           NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined), label: 'Stats'),
           NavigationDestination(
