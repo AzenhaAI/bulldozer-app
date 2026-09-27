@@ -98,12 +98,15 @@ class _AskPageState extends State<AskPage> {
     }
   }
 
+  // Trailing zeros dropped (85, not 85.0); a percent sign sits on the number.
   String _num(num v) {
     final a = v.abs();
-    if (a >= 1000) return v.toStringAsFixed(0);
-    if (a >= 100) return v.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-    return v.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '').replaceAll(RegExp(r'\.$'), '');
+    var t = a >= 1000 ? v.toStringAsFixed(0) : v.toStringAsFixed(a >= 100 ? 1 : 2);
+    if (t.contains('.')) t = t.replaceAll(RegExp(r'\.?0+$'), '');
+    return t;
   }
+
+  String _withUnit(num v, String unit) => unit == '%' ? '${_num(v)}%' : '${_num(v)} $unit';
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +209,7 @@ class _AskPageState extends State<AskPage> {
           child: ListTile(
             title: Text('${s['title']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             subtitle: Text(
-                '${_num(s['value'] as num)} ${s['unit']} (${s['period']}) · '
+                '${_withUnit(s['value'] as num, '${s['unit']}')} (${s['period']}) · '
                 '#${s['rank']} of ${s['total']} — among the ${s['side'] == 'high' ? 'highest' : 'lowest'} in the world\n'
                 'Source: ${s['source']}',
                 style: TextStyle(fontSize: 12, color: kTextDim, height: 1.35)),
