@@ -61,6 +61,7 @@ class _AskPageState extends State<AskPage> {
   final _qCtl = TextEditingController();
   String? _answer;
   bool _asking = false;
+  String? _askNote; // said aloud when no answer comes, instead of nothing
 
   static const _askUrl = 'https://bot.azenha.ai/ask';
   static const _suggestions = [
@@ -74,6 +75,7 @@ class _AskPageState extends State<AskPage> {
     setState(() {
       _asking = true;
       _answer = null;
+      _askNote = null;
     });
     try {
       final res = await http
@@ -84,9 +86,14 @@ class _AskPageState extends State<AskPage> {
       if (res.statusCode == 200) {
         final j = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
         if (mounted && _brief?.iso == iso) setState(() => _answer = '${j['answer'] ?? ''}'.trim());
+      } else if (mounted) {
+        // Silence read as "nothing happened". Say which of the two it was.
+        setState(() => _askNote = res.statusCode == 429
+            ? 'Too many questions in a minute — try again shortly. The figures below still stand.'
+            : 'No answer passed the check against our figures this time. The figures below are the answer.');
       }
     } catch (_) {
-      // offline, timeout, 429, no verified answer: the brief is the answer
+      if (mounted) setState(() => _askNote = 'Could not reach the answer service. The figures below are from our data.');
     } finally {
       if (mounted) setState(() => _asking = false);
     }
@@ -109,6 +116,31 @@ class _AskPageState extends State<AskPage> {
     super.dispose();
   }
 
+  /// "kz уровень жизни", "Kazakhstan standard of living", "south africa gdp":
+  /// a country at the start, a question after it. People type it in one go —
+  /// the bot already takes "KZ gdp" — and a field that only understood a bare
+  /// country simply did nothing.
+  (Country, String)? get _countryAndQuestion {
+    final raw = _query.trim();
+    if (_countries == null || !raw.contains(' ')) return null;
+    final words = raw.split(RegExp(r'\s+'));
+    // Longest run of leading words that names a country wins, so "south
+    // africa" beats "south".
+    for (var n = words.length - 1; n >= 1; n--) {
+      final head = words.take(n).join(' ').toLowerCase();
+      final rest = words.skip(n).join(' ').trim();
+      if (rest.isEmpty) continue;
+      for (final c in _countries!) {
+        if (c.iso.toLowerCase() == head ||
+            iso2FromIso3(c.iso).toLowerCase() == head ||
+            c.name.toLowerCase() == head) {
+          return (c, rest);
+        }
+      }
+    }
+    return null;
+  }
+
   List<Country> get _matches {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty || _countries == null) return const [];
@@ -121,7 +153,7 @@ class _AskPageState extends State<AskPage> {
     return [...exact, ...byName].take(8).toList();
   }
 
-  Future<void> _ask(Country c) async {
+  Future<void> _ask(Country c, [String? question]) async {
     FocusScope.of(context).unfocus();
     setState(() {
       _loading = true;
@@ -135,8 +167,12 @@ class _AskPageState extends State<AskPage> {
     try {
       final j = await fetchJson('/data/brief/${c.iso.toLowerCase()}.json');
       if (mounted) setState(() => _brief = _Brief.fromJson(j as Map<String, dynamic>));
-      // The summary the tester asked for, without having to ask for it.
-      if (mounted) _askAi(c.iso, _suggestions.first);
+      // The summary the tester asked for, without having to ask for it — or
+      // the question typed after the country, if there was one.
+      if (mounted) {
+        if (question != null) _qCtl.text = question;
+        _askAi(c.iso, question ?? _suggestions.first);
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'No answer for ${c.name} right now. Check the connection.');
     } finally {
@@ -174,8 +210,8 @@ class _AskPageState extends State<AskPage> {
         ]),
         const SizedBox(height: 6),
         Text(
-            'Type a country or its code (kz, kaz) to see what we hold on it and '
-            'ask about it. Answers use only our published figures, and any number '
+            'Type a country or its code (kz, kaz) — or a country and a question, '
+            'like "kz standard of living". Answers use only our published figures, and any number '
             'not found in them is held back.',
             style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
         const SizedBox(height: 14),
@@ -184,6 +220,11 @@ class _AskPageState extends State<AskPage> {
           textInputAction: TextInputAction.search,
           onChanged: (v) => setState(() => _query = v),
           onSubmitted: (_) {
+            final cq = _countryAndQuestion;
+            if (cq != null) {
+              _ask(cq.$1, cq.$2);
+              return;
+            }
             final m = _matches;
             if (m.isNotEmpty) _ask(m.first);
           },
@@ -201,6 +242,15 @@ class _AskPageState extends State<AskPage> {
                 borderSide: BorderSide(color: kBorder, width: 0.5)),
           ),
         ),
+        if (_countryAndQuestion case (final c, final q))
+          ListTile(
+            dense: true,
+            leading: Text(flagFromIso(c.iso), style: const TextStyle(fontSize: 20)),
+            title: Text('Ask about ${c.name}'),
+            subtitle: Text('“$q”', style: TextStyle(color: kTextDim, fontSize: 12)),
+            trailing: Icon(Icons.send_outlined, color: kAmber, size: 20),
+            onTap: () => _ask(c, q),
+          ),
         for (final c in _matches)
           ListTile(
             dense: true,
@@ -240,6 +290,11 @@ class _AskPageState extends State<AskPage> {
             const SizedBox(height: 8),
             SelectableText(_answer!, style: const TextStyle(fontSize: 15, height: 1.45)),
           ]),
+        ),
+      if (_askNote != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(_askNote!, style: TextStyle(fontSize: 13, color: kTextDim, fontStyle: FontStyle.italic)),
         ),
       const SizedBox(height: 12),
       TextField(
