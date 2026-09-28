@@ -61,6 +61,7 @@ class _AskPageState extends State<AskPage> {
   final _qCtl = TextEditingController();
   String? _answer;
   bool _asking = false;
+  String? _disclaimer; // "AI answers can be wrong", in the answer's language
   String? _askNote; // said aloud when no answer comes, instead of nothing
 
   static const _askUrl = 'https://bot.azenha.ai/ask';
@@ -75,6 +76,7 @@ class _AskPageState extends State<AskPage> {
     setState(() {
       _asking = true;
       _answer = null;
+      _disclaimer = null;
       _askNote = null;
     });
     try {
@@ -85,7 +87,12 @@ class _AskPageState extends State<AskPage> {
           .timeout(const Duration(seconds: 45));
       if (res.statusCode == 200) {
         final j = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
-        if (mounted && _brief?.iso == iso) setState(() => _answer = '${j['answer'] ?? ''}'.trim());
+        if (mounted && _brief?.iso == iso) {
+          setState(() {
+            _answer = '${j['answer'] ?? ''}'.trim();
+            _disclaimer = '${j['disclaimer'] ?? ''}'.trim();
+          });
+        }
       } else if (mounted) {
         // Silence read as "nothing happened". Say which of the two it was.
         setState(() => _askNote = res.statusCode == 429
@@ -202,7 +209,7 @@ class _AskPageState extends State<AskPage> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
                 border: Border.all(color: kAmber), borderRadius: BorderRadius.circular(6)),
-            child: Text('IN DEVELOPMENT',
+            child: Text('BETA',
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),
           ),
           const Spacer(),
@@ -212,7 +219,8 @@ class _AskPageState extends State<AskPage> {
         Text(
             'Type a country or its code (kz, kaz) — or a country and a question, '
             'like "kz standard of living". Answers use only our published figures, and any number '
-            'not found in them is held back.',
+            'not found in them is held back. Your question and the country code go to our server '
+            'and to Anthropic to phrase the answer. AI answers can be wrong — the figures are the source.',
             style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
         const SizedBox(height: 14),
         TextField(
@@ -289,6 +297,12 @@ class _AskPageState extends State<AskPage> {
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),
             const SizedBox(height: 8),
             SelectableText(_answer!, style: const TextStyle(fontSize: 15, height: 1.45)),
+            const SizedBox(height: 8),
+            Text(
+                (_disclaimer?.isNotEmpty ?? false)
+                    ? _disclaimer!
+                    : 'AI answers can be wrong — the figures below are the source.',
+                style: TextStyle(fontSize: 12, color: kTextDim, fontStyle: FontStyle.italic)),
           ]),
         ),
       if (_askNote != null)
