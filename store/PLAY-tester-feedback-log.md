@@ -38,7 +38,7 @@ confirm it was theirs.
 | R2 | 15 Sep | Which open survey databases are still missing? | **Fixed, 25–28 Sep.** CSES (4 series), Afrobarometer 3 → 18 series, IEA TIMSS / PIRLS / ICCS / ICILS (8 series); LAPOP AmericasBarometer 2004–2026 (11 series, 28 countries) on 28 Sep. Remaining ones need an account or a written application and are logged in the sources backlog. No app update is needed for new data: the app reads the live catalogue. |
 | R3 | 27 Sep | "Why is there no Ask AI? Type a country, see what you have on it and a short summary." | **Fixed, in three steps.** 1.33.0 (57): an Ask AI tab after Home — what the app holds on a country and where it stands out, every line a published figure with year, rank and source. 1.34.0 (59): an answer in words, written by a model from those figures only; every number in it is checked against our data before it is shown, and an answer with a number we do not hold is dropped. 1.34.2 (61): labelled Beta, and every answer says AI can be wrong and the figures below are the source. |
 | R4 | 27 Sep | The menu and the buttons at top right exist only on Home. | **Fixed, 1.33.1 (58).** Theme, search and menu on every tab. Doing it found a real defect: the menu addressed tabs by position, so after Ask AI was inserted "Statistics" opened Ask AI and Edu could not be reached at all. One list now drives both the bar and the menu. |
-| R5 | 27 Sep | Ask AI should accept a country code like "kz", as the country search does. | **Fixed, 1.34.0 (59).** Two- and three-letter codes in Ask AI; 1.34.1 (60) also takes a country and a question on one line ("kz standard of living"). |
+| R5 | 27 Sep | Ask AI should accept a country code like "kz", as the country search does. _Source to confirm: a tester, or noticed by the developer — drop the row if the latter._ | **Fixed, 1.34.0 (59).** Two- and three-letter codes in Ask AI; 1.34.1 (60) also takes a country and a question on one line ("kz standard of living"). |
 
 ## Found while acting on these reports
 
@@ -65,7 +65,7 @@ Same kind of defect each time: the product saying something its data does not.
 | | Count |
 |---|---|
 | Testers who wrote, named in this log | 1 (more to be confirmed) |
-| Requests and reports received, 11–27 Sep | 6 |
+| Requests and reports received, 11–27 Sep | 6 (5 confirmed from testers, R5 to confirm) |
 | Fixed and shipped | 6 |
 | Pending / deferred | 0 |
 | Defects found while acting on them | 4, all fixed |
