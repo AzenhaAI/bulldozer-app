@@ -217,8 +217,12 @@ class FeaturedCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF3A2A00), Color(0xFF1C1F23)],
+          // Follows the theme like FeaturedCard: a fixed dark gradient left
+          // dark text on a dark card in the light theme.
+          gradient: LinearGradient(
+            colors: isLight
+                ? [const Color(0xFFF3E3C0), const Color(0xFFFFFFFF)]
+                : [const Color(0xFF3A2A00), const Color(0xFF1C1F23)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
