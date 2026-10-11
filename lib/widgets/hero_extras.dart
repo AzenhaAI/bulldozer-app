@@ -245,11 +245,22 @@ class RecordsHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(f.value,
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: kAmber)),
+                  // The year sits under the value, where a narrow phone does
+                  // not cut it off: "2026 est." is what separates a forecast
+                  // from a record.
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(f.value,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: kAmber)),
+                      if (f.when.isNotEmpty)
+                        Text(f.when,
+                            style: TextStyle(fontSize: 10, color: kTextDim)),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -264,8 +275,10 @@ class RecordsHero extends StatelessWidget {
 
 class RecordFact {
   final String emoji, country, iso, caption, value, slug;
+  final String when; // period, with "est." for a forecast
   const RecordFact(
-      {required this.emoji,
+      {this.when = '',
+      required this.emoji,
       required this.country,
       required this.iso,
       required this.caption,

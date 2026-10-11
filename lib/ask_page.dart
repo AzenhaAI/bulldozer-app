@@ -267,6 +267,19 @@ class _AskPageState extends State<AskPage> {
             subtitle: Text(c.region, style: TextStyle(color: kTextDim, fontSize: 12)),
             onTap: () => _ask(c),
           ),
+        // Nothing matched: say so. A typo ("z is it safe") used to leave an
+        // empty screen, which reads as the feature not working.
+        if (_countries != null &&
+            _query.trim().length >= 2 &&
+            _countryAndQuestion == null &&
+            _matches.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: Text(
+                'No country matches “${_query.trim()}”. Start with a country or its code, '
+                'then the question — for example “kz is it safe?”',
+                style: TextStyle(color: kTextDim, fontSize: 13, height: 1.4)),
+          ),
         if (_loading)
           const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
         if (_error != null)

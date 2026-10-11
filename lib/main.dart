@@ -89,6 +89,9 @@ class BulldozerApp extends StatelessWidget {
   }
 }
 
+/// The open tab, surviving the shell's rebuild on a theme switch.
+int _shellTab = 0;
+
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -114,7 +117,11 @@ const _tabs = <(IconData, String, String)>[
 ];
 
 class _HomeShellState extends State<HomeShell> {
-  int _tab = 0;
+  // Kept outside the state: switching theme rebuilds the shell under a new
+  // key, and a plain field sent the reader back to Home from whatever tab
+  // they had the theme switch on.
+  int get _tab => _shellTab;
+  set _tab(int v) => _shellTab = v;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +144,7 @@ class _HomeShellState extends State<HomeShell> {
                   key: ValueKey('stats${catalog.length}'),
                   title: 'Statistics',
                   kind: 'macro',
-                  featuredSlug: 'gapminder-life-expectancy',
+                  featuredSlug: 'wb-life-expectancy',
                   featuredStyle: 'records'),
               ChartsPage(
                   key: ValueKey('biz${catalog.length}'),

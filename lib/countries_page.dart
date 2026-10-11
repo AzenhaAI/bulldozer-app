@@ -259,7 +259,7 @@ const _headline = <(String, List<String>)>[
   ('GDP growth', ['imf-gdp-growth', 'gapminder-gdp-growth']),
   ('Inflation', ['imf-inflation']),
   ('Unemployment', ['imf-unemployment']),
-  ('Life expectancy', ['gapminder-life-expectancy']),
+  ('Life expectancy', ['wb-life-expectancy', 'gapminder-life-expectancy']),
   ('Population', ['imf-population', 'gapminder-population']),
   ('Happiness', ['whr-happiness']),
 ];
@@ -299,7 +299,7 @@ const _priority = <String, List<List<String>>>{
     ['owid-electricity'],
   ],
   'health': [
-    ['gapminder-life-expectancy'],
+    ['wb-life-expectancy', 'gapminder-life-expectancy'],
     ['owid-child-mortality', 'qog-wdi-mortinf'],
     ['qog-wdi-chexppgdp'],
     ['who-obesity'],
@@ -402,7 +402,7 @@ class _CountryPageState extends State<CountryPage> {
                     fontWeight: FontWeight.w800,
                     color: kAmber,
                     height: 1.1)),
-            Text('#${it.rank} of ${it.total}',
+            Text('#${it.rank} of ${it.total}${_isEstimate(it) ? ' · est.' : ''}',
                 style: TextStyle(
                     fontSize: 10, color: kTextDim, height: 1.2)),
           ],
@@ -636,7 +636,7 @@ class _CountryPageState extends State<CountryPage> {
                     highlightPeriod: series.last.period,
                   ),
                 const SizedBox(height: 12),
-                Text('#${item.rank} of ${item.total} · latest ${item.period}',
+                Text('#${item.rank} of ${item.total} · latest ${_when(item)}',
                     style: TextStyle(fontSize: 12, color: kTextDim)),
                 const SizedBox(height: 8),
               ],
@@ -721,15 +721,21 @@ class _CountryPageState extends State<CountryPage> {
           _header(country),
           if (headline.isNotEmpty) ...[
             const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1.85, // compact: label + value + rank, no air
-              children: [for (final h in headline) _kpiBadge(h.$1, h.$2)],
-            ),
+            // Tiles take their height from their text. A fixed aspect ratio
+            // cut the value in half on a 320-point phone with larger text,
+            // and three across cut "GDP per capita" to "GDP per c…".
+            LayoutBuilder(builder: (context, box) {
+              final cols = box.maxWidth < 380 ? 2 : 3;
+              final w = (box.maxWidth - 8 * (cols - 1)) / cols;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final h in headline)
+                    SizedBox(width: w, child: _kpiBadge(h.$1, h.$2)),
+                ],
+              );
+            }),
           ],
           if (_wiki != null) ...[
             const SizedBox(height: 12),
@@ -911,7 +917,7 @@ class _IndicatorRow extends StatelessWidget {
                   Text(item.title,
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text('${item.period} · ${item.unit}',
+                  Text('${_when(item)} · ${item.unit}',
                       style: TextStyle(fontSize: 11, color: kTextDim)),
                 ],
               ),
@@ -944,3 +950,13 @@ class _IndicatorRow extends StatelessWidget {
     );
   }
 }
+
+/// IMF series run past the last closed year into the IMF's own projections;
+/// shown with a bare year a forecast reads as a result. Same rule as the site
+/// and Ask AI: the current and the previous year are estimates.
+bool _isEstimate(CountryItem it) {
+  final y = int.tryParse(RegExp(r'\d{4}').stringMatch(it.period) ?? '') ?? 0;
+  return it.slug.startsWith('imf-') && y >= DateTime.now().year - 1;
+}
+
+String _when(CountryItem it) => _isEstimate(it) ? '${it.period} est.' : it.period;

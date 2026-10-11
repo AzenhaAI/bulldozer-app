@@ -45,6 +45,7 @@ class _ComparePageState extends State<ComparePage> {
     // headline economic measure is the neutral thing to compare first.
     const preferred = [
       'imf-gdp-per-capita-ppp',
+      'wb-life-expectancy',
       'gapminder-life-expectancy',
       'gapminder-income',
     ];

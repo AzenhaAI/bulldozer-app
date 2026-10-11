@@ -38,7 +38,7 @@ class _ExplorePageState extends State<ExplorePage> {
     _x = _prefer(
         ['gapminder-income', 'imf-gdp-per-capita', 'maddison-gdp-per-capita'],
         0);
-    _y = _prefer(['gapminder-life-expectancy', 'whr-happiness'], 1);
+    _y = _prefer(['wb-life-expectancy', 'gapminder-life-expectancy', 'whr-happiness'], 1);
     _load();
   }
 

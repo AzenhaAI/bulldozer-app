@@ -100,7 +100,7 @@ class _ChartsPageState extends State<ChartsPage> {
 
   // Rotating pool for the records hero: emoji, caption, slug, best=max|min.
   static const _recordPool = <(String, String, String, bool)>[
-    ('👴', 'longest life expectancy', 'gapminder-life-expectancy', true),
+    ('👴', 'longest life expectancy', 'wb-life-expectancy', true),
     ('👥', 'most people', 'gapminder-population', true),
     ('📈', 'fastest GDP growth', 'imf-gdp-growth', true),
     ('💰', 'richest per capita (PPP)', 'imf-gdp-per-capita-ppp', true),
@@ -127,11 +127,20 @@ class _ChartsPageState extends State<ChartsPage> {
               p.$4 ? b.value.compareTo(a.value) : a.value.compareTo(b.value));
         if (rows.isEmpty) continue;
         final o = rows.first;
+        // A record needs its year: IMF series end in the IMF's own projection
+        // for the current year, so "highest inflation" was a 2026 forecast
+        // presented as a fact. And a tie is not a record: three countries
+        // stand at 100% internet use, and one of them was named the leader.
+        final ties = rows.where((r) => r.value == o.value).length;
+        final y = int.tryParse(RegExp(r'\d{4}').stringMatch(last) ?? '') ?? 0;
+        final est = p.$3.startsWith('imf-') && y >= DateTime.now().year - 1;
+        final when = est ? '$last est.' : last;
         out.add(RecordFact(
             emoji: p.$1,
-            country: o.entity,
+            country: ties > 1 ? '${o.entity} +${ties - 1}' : o.entity,
             iso: o.iso,
-            caption: p.$2,
+            caption: ties > 1 ? '${p.$2} · tied by $ties' : p.$2,
+            when: when,
             value: formatValue(o.value),
             slug: p.$3));
       } catch (_) {}
@@ -471,7 +480,7 @@ class _ChartsPageState extends State<ChartsPage> {
                           Padding(
                             padding: const EdgeInsets.only(right: 6),
                             child: ActionChip(
-                              label: Text(e.title,
+                              label: Text(_listTitle(e),
                                   style: const TextStyle(fontSize: 12)),
                               backgroundColor: kBgCard,
                               side: BorderSide(color: kAmber, width: 0.8),
@@ -549,11 +558,11 @@ class _ChartsPageState extends State<ChartsPage> {
                 margin: const EdgeInsets.symmetric(vertical: 3),
                 child: ListTile(
                   dense: true,
-                  title: Text(e.title,
+                  title: Text(_listTitle(e),
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600)),
                   subtitle: Text(
-                    '${topicLabels[e.topic] ?? e.topic} · ${e.source}',
+                    '${e.source} · ${topicLabels[e.topic] ?? e.topic}',
                     style: TextStyle(fontSize: 12, color: kTextDim),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1043,4 +1052,17 @@ class _TrendSummary extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A list row's title without the survey name in brackets when the subtitle
+/// already names that source: "Broadband Internet at Home (AmericasBarometer)"
+/// broke mid-word on a small phone ("(AmericasBaromet / er)"). The source moves
+/// to the front of the subtitle, so same-named series stay apart.
+String _listTitle(CatalogEntry e) {
+  final m = RegExp(r'^(.*\S)\s+\(([^()]+)\)$').firstMatch(e.title);
+  if (m == null) return e.title;
+  final inBrackets = m.group(2)!.toLowerCase();
+  final src = e.source.toLowerCase();
+  final key = inBrackets.split(RegExp(r'[\s,]+')).first;
+  return key.length >= 3 && src.contains(key) ? m.group(1)! : e.title;
 }
