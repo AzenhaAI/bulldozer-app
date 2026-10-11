@@ -65,7 +65,7 @@ class _GlobeState extends State<Globe> with SingleTickerProviderStateMixin {
       ..addListener(() {
         // gentle auto-spin, paused for a few seconds after a drag
         if (DateTime.now().difference(_lastDrag).inSeconds >= 3) {
-          setState(() => _lon += 0.0012);
+          setState(() => _lon -= 0.0012); // west to east, as the Earth turns
         }
       })
       ..repeat();
@@ -104,7 +104,10 @@ class _GlobeState extends State<Globe> with SingleTickerProviderStateMixin {
                 onPanUpdate: (d) {
                   _lastDrag = DateTime.now();
                   setState(() {
-                    _lon += d.delta.dx / 120;
+                    // The surface follows the finger. It used to move against
+                    // it sideways while following it vertically — a tester
+                    // likened it to an aircraft yoke reversed left-right.
+                    _lon -= d.delta.dx / 120;
                     _lat = (_lat + d.delta.dy / 160).clamp(-1.2, 1.2);
                   });
                 },
@@ -141,22 +144,56 @@ class _Proj {
     return Offset(c.dx + r * x, c.dy - r * y);
   }
 
-  /// Path of a ring's visible part (null if fully hidden).
-  Path? ringPath(List<Offset> ring) {
-    Path? path;
-    var open = false;
-    for (final ll in ring) {
-      final p = point(ll);
-      if (p == null) {
-        open = false;
-        continue;
+  /// Screen point; a point on the far hemisphere is pinned to the rim in its
+  /// own direction, so a country cut by the horizon ends along the edge of
+  /// the disk instead of in a chord across it.
+  Offset rimPoint(Offset lonLat) {
+    final lam = lonLat.dx - lon0, phi = lonLat.dy;
+    final sinPhi = sin(phi), cosPhi = cos(phi), cosLam = cos(lam);
+    final cosC = sinLat0 * sinPhi + cosLat0 * cosPhi * cosLam;
+    var x = cosPhi * sin(lam);
+    var y = cosLat0 * sinPhi - sinLat0 * cosPhi * cosLam;
+    if (cosC < 0) {
+      final len = sqrt(x * x + y * y);
+      if (len > 1e-9) {
+        x /= len;
+        y /= len;
       }
-      if (!open) {
-        path ??= Path();
+    }
+    return Offset(c.dx + r * x, c.dy - r * y);
+  }
+
+  bool _front(Offset lonLat) {
+    final lam = lonLat.dx - lon0, phi = lonLat.dy;
+    return sinLat0 * sin(phi) + cosLat0 * cos(phi) * cos(lam) >= 0;
+  }
+
+  /// Path of a ring (null if wholly on the far side). Long edges are split
+  /// into steps of about a degree before projecting: drawn as single straight
+  /// lines they turned coastlines near the rim into facets, and pieces cut by
+  /// the horizon into slivers — the artefacts a tester circled on Indonesia.
+  Path? ringPath(List<Offset> ring) {
+    if (ring.length < 3 || !ring.any(_front)) return null;
+    const step = 0.018; // radians, ~1°
+    final path = Path();
+    var first = true;
+    void add(Offset ll) {
+      final p = rimPoint(ll);
+      if (first) {
         path.moveTo(p.dx, p.dy);
-        open = true;
+        first = false;
       } else {
-        path!.lineTo(p.dx, p.dy);
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+    for (var i = 0; i < ring.length; i++) {
+      final a = ring[i], b = ring[(i + 1) % ring.length];
+      add(a);
+      final dLon = b.dx - a.dx, dLat = b.dy - a.dy;
+      if (dLon.abs() > pi) continue; // crosses the antimeridian: no infill
+      final n = (max(dLon.abs(), dLat.abs()) / step).floor();
+      for (var k = 1; k < n; k++) {
+        add(Offset(a.dx + dLon * k / n, a.dy + dLat * k / n));
       }
     }
     return path;
