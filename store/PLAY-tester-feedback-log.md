@@ -26,6 +26,21 @@ from `PLAY-tester-feedback.md` (11–27 September), which keeps the full notes.
 |---|------|--------------|--------|
 | A1 | 15 Sep | "Where did the new data appear? Which sections do I look in?" — asked after fourteen mortality series went live. | **Fixed, on both surfaces.** The data was reachable from day one (Macro › Health, every country profile, Explore, search, the bot), but nothing announced an addition. App 1.31.0 (55): a "new since your last visit" strip and NEW badges. Site, 23–25 Sep: "datasets added this month" on the home page, NEW badges in Macro and Polls. Arrival dates come from git history, not the last re-parse — the re-parse date would have flagged 51 datasets as new where 14 were. |
 
+## Tester 2 — Alexander
+
+**Who:** _to confirm — device._ Writes in Russian, sends screenshots with the
+problem circled in red, numbers his points. Opened with "Bulldozer. I'll be
+pouring out thoughts bit by bit."
+**Period:** 2 October 2026, on an app build without the Ask AI tab (1.32 or
+earlier — _to confirm_).
+**Volume:** 2 observations so far, both on the home screen globe, both with
+screenshots.
+
+| # | Date | What he reported (translated) | Status |
+|---|------|-------------------------------|--------|
+| X1 | 2 Oct | "Not a bug as such, but the globe works like an aircraft yoke reversed left-right — it may put people off. It is not intuitive, given that up-down works without the reverse." | **Fixed, 1.34.3 (62), and he was exactly right.** Dragging right moved the view centre east, so the surface slid left — against the finger — while the vertical drag followed it. One sign. The idle spin was turned to run west to east, as the Earth does. |
+| X2 | 2 Oct | "Also not a bug, but maybe look at how the map is laid onto the 3D sphere. You can see artefacts of the spherical model on the continents. Maybe increase the sphere's faceting to smooth it." (Indonesia and Australia circled, at the edge of the globe) | **Fixed, 1.34.3 (62).** His diagnosis was close: coastlines were drawn as straight lines between sparse points, and points on the far side of the globe were dropped, so a country cut by the horizon was closed with a chord across the disk — the slivers he circled. Edges are now split into ~1° steps and far-side points are pinned to the rim, so a country ends along the globe's edge. Verified on an Android emulator with Indonesia and Australia at the rim. |
+
 ## Requests from testers not yet named in this log
 
 Relayed by the developer between 11 and 27 September; who sent each is not
@@ -64,9 +79,9 @@ Same kind of defect each time: the product saying something its data does not.
 
 | | Count |
 |---|---|
-| Testers who wrote, named in this log | 1 (more to be confirmed) |
-| Requests and reports received, 11–27 Sep | 6 (5 confirmed from testers, R5 to confirm) |
-| Fixed and shipped | 6 |
+| Testers who wrote, named in this log | 2 (more to be confirmed) |
+| Requests and reports received, 11 Sep – 2 Oct | 8 (7 confirmed from testers, R5 to confirm) |
+| Fixed and shipped | 8 (X1–X2 in 1.34.3, uploaded 11 Oct) |
 | Pending / deferred | 0 |
 | Defects found while acting on them | 4, all fixed |
 | Builds shipped to the closed track in response | _to confirm against Play Console — see note_ |
