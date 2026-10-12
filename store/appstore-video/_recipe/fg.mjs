@@ -1,0 +1,11 @@
+import sharp from '/Users/kirillshpara/Projects/alfacat/node_modules/sharp/lib/index.js';
+import { readFileSync } from 'node:fs';
+const V = process.argv[2];
+const j = JSON.parse(readFileSync(`${V}/fg.json`));
+const R = Math.round(j.PW * 0.13);
+const shot = await sharp('/Users/kirillshpara/Projects/bulldozer_app/store/screenshots/ios-6.9-66/2-ask-ai.png').resize(j.PW, j.PH, { fit: 'fill' }).png().toBuffer();
+const mask = Buffer.from(`<svg width="${j.PW}" height="${j.PH}"><rect width="${j.PW}" height="${j.PH}" rx="${R}" fill="#fff"/></svg>`);
+const scr = await sharp(shot).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
+const full = await sharp(`${V}/fg-bg.png`).composite([{ input: scr, left: j.px, top: j.py }]).png().toBuffer();
+await sharp(full).resize(1024, 500, { kernel: 'lanczos3' }).flatten({ background: '#0b0d0f' }).removeAlpha().png().toFile(`${V}/feature-graphic-1024x500.png`);
+console.log('ok');
