@@ -43,6 +43,12 @@ class EduPage extends StatelessWidget {
         '/edu/#learn',
       ),
       (
+        '🗂️',
+        'Sources — the world\'s surveys and data',
+        '81 research programmes, from the World Values Survey to PISA and Gallup — what each covers, how to get it, and which ones this app uses.',
+        '/edu/sources/',
+      ),
+      (
         '📖',
         'Glossary — metric reference',
         'What GDP PPP, Gini, HDI, polyarchy and every other metric in the app actually mean.',
@@ -50,7 +56,7 @@ class EduPage extends StatelessWidget {
       ),
     ];
 
-    // Five links and nothing else — this is the one tab a wide layout cannot
+    // Six links and nothing else — this is the one tab a wide layout cannot
     // help. Stretched to the full 1280 the cards became long thin strips over a
     // field of empty black; held to a reading column they read as a deliberate
     // index, which is what they are. The rest of the app fills the width; this
