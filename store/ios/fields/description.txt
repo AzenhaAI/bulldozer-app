@@ -1,7 +1,10 @@
-BullDozer turns the world into numbers you can actually explore. Compare countries across 150+ indicators covering the economy, society, business and the environment — with fast charts, world maps, country profiles and a data quiz. Free, with no account, no ads and no tracking.
+BullDozer turns the world into numbers you can actually explore. Compare countries across 270+ indicators covering the economy, society, business and the environment — with fast charts, world maps, country profiles, a data quiz and Ask AI. Free, with no account, no ads and no tracking.
+
+ASK AI (BETA)
+Pick a country and ask in your own words — "How healthy are people?", "Is the economy growing?". The answer is written from BullDozer's published figures with the source and year of each, and any number not found in our data is held back. AI answers can be wrong, so the figures are always shown alongside. The app asks once before your first question is sent.
 
 CHARTS & RANKINGS
-Browse 150+ indicators, search them, filter by topic and rank every country on any of them. Switch periods to see how the ranking changes, and tap any country bar to open its trend over time.
+Browse 270+ indicators, search them, filter by topic and rank every country on any of them. Switch periods to see how the ranking changes, and tap any country bar to open its trend over time.
 
 COUNTRY PROFILES
 Pick a country from a searchable list with flags and get the full picture: a map zoomed to the country, headline macro figures, a short encyclopedic summary, and every available indicator grouped into Statistics and Surveys.
@@ -27,7 +30,7 @@ MADE FOR EXPLORING
 • Clear, readable charts on every screen
 
 PRIVACY FIRST
-No account, no sign-up, no ads, no tracking. The app simply shows you the data.
+No account, no sign-up, no ads, no tracking. An Ask AI question is sent only after you allow it, carries nothing that identifies you and is not stored.
 
 ABOUT THE DATA
 Figures come from public datasets and international surveys, credited on screen, with country summaries from Wikipedia (CC BY-SA), served through the open BullDozer feed at azenha.ai/bulldozer.

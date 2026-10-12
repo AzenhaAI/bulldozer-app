@@ -14,9 +14,23 @@ sources — IMF, World Bank, Gapminder, WVS, V-Dem and others. Each dataset is
 credited on screen with its licence and unit. Country summaries and images come
 from Wikipedia under CC BY-SA and are attributed in place.
 
-The app collects nothing. There is no analytics or crash SDK, no advertising
-identifier and no login. Release reminders are local notifications scheduled on
-the device; the only network traffic is anonymous HTTPS GETs for that public feed
-and for Wikipedia summaries and images.
+ASK AI (BETA)
+The Ask AI tab writes a short answer about a country from our published
+figures. To see it: open the Ask AI tab, type "Brazil" and pick it. Before the
+first question leaves the device, a dialog explains that the question and the
+chosen country are sent to our server (bot.azenha.ai) and on to Claude by
+Anthropic, with a Cloudflare Workers AI model as the fallback. "Not now" sends
+nothing and the figures stay on screen; "Allow" continues and is remembered.
+Any number in an answer that is not in our data is rejected on the server, and
+every answer carries a note that AI can be wrong.
+
+PRIVACY
+There is no analytics or crash SDK, no advertising identifier and no login.
+Release reminders are local notifications scheduled on the device. Network
+traffic is anonymous HTTPS GETs for the public feed and Wikipedia summaries,
+plus the Ask AI question after the user allows it. That question is not linked
+to the user, carries no identifier, is not stored by us and is not used for
+tracking; the App Privacy label declares it as Other User Content, used for App
+Functionality.
 
 Published by Azenha AI — agent@azenha.ai

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api.dart';
@@ -74,6 +75,11 @@ class _AskPageState extends State<AskPage> {
 
   /// Asks the server; any failure leaves the brief to speak for itself.
   Future<void> _askAi(String iso, String q) async {
+    if (!await _aiConsent()) {
+      if (mounted) setState(() => _askNote = 'Nothing was sent. The figures below are from our data.');
+      return;
+    }
+    if (!mounted) return;
     setState(() {
       _asking = true;
       _answer = null;
@@ -105,6 +111,40 @@ class _AskPageState extends State<AskPage> {
     } finally {
       if (mounted) setState(() => _asking = false);
     }
+  }
+
+  static const _kAiConsent = 'ask.ai.consent';
+
+  /// Asked once, before the first question leaves the phone (App Store
+  /// guideline 5.1.2(i)): what goes where, in plain words, with a real way to
+  /// say no. Declining keeps the figures and sends nothing.
+  Future<bool> _aiConsent() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_kAiConsent) ?? false) return true;
+    if (!mounted) return false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kBgElev,
+        title: Text('Send this question to an AI?', style: TextStyle(color: kText, fontSize: 18)),
+        content: Text(
+          'To write the answer in words, your question and the country you picked are sent '
+          'to our server and on to Claude, an AI model by Anthropic (or, if it is unavailable, '
+          'a model on Cloudflare). Nothing that identifies you is sent, and we keep no record '
+          'of it. The figures on this screen do not need this.',
+          style: TextStyle(color: kTextDim, height: 1.45),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Not now')),
+          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Allow')),
+        ],
+      ),
+    );
+    // The closing dialog hands focus back to the country field once its exit
+    // transition ends, which would bring the keyboard back. Drop it after that.
+    Future.delayed(const Duration(milliseconds: 400), () => FocusManager.instance.primaryFocus?.unfocus());
+    if (ok == true) await prefs.setBool(_kAiConsent, true);
+    return ok == true;
   }
 
   @override
