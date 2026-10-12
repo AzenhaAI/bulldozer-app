@@ -12,7 +12,9 @@ class EduPage extends StatelessWidget {
   const EduPage({super.key});
 
   void _open(String path) {
-    launchUrl(Uri.parse('$kSiteUrl$path'), mode: LaunchMode.inAppBrowserView);
+    // Absolute links (Model Lab lives outside the BullDozer section) go as is.
+    final url = path.startsWith('http') ? path : '$kSiteUrl$path';
+    launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);
   }
 
   @override
@@ -49,6 +51,12 @@ class EduPage extends StatelessWidget {
         '/edu/sources/',
       ),
       (
+        '💻',
+        'AI on a student laptop',
+        '22 open language models on one ordinary 16 GB MacBook, the same 24 questions in seven languages, compared with the cloud.',
+        'https://azenha.ai/modellab/',
+      ),
+      (
         '📖',
         'Glossary — metric reference',
         'What GDP PPP, Gini, HDI, polyarchy and every other metric in the app actually mean.',
@@ -56,7 +64,7 @@ class EduPage extends StatelessWidget {
       ),
     ];
 
-    // Six links and nothing else — this is the one tab a wide layout cannot
+    // Seven links and nothing else — this is the one tab a wide layout cannot
     // help. Stretched to the full 1280 the cards became long thin strips over a
     // field of empty black; held to a reading column they read as a deliberate
     // index, which is what they are. The rest of the app fills the width; this

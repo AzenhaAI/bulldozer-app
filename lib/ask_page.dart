@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 import 'api.dart';
 import 'catalog_store.dart';
@@ -287,6 +288,8 @@ class _AskPageState extends State<AskPage> {
               padding: const EdgeInsets.only(top: 16),
               child: Text(_error!, style: TextStyle(color: kTextDim))),
         if (_brief != null) ..._answerBlock(_brief!),
+        const SizedBox(height: 28),
+        const ModelLabBanner(),
       ],
     );
   }
@@ -420,5 +423,41 @@ class _AskPageState extends State<AskPage> {
         ),
       ],
     ];
+  }
+}
+
+/// Model Lab on azenha.ai: 22 open models tested on an ordinary 16 GB
+/// laptop against the cloud — the next step for anyone who wants to run AI
+/// themselves on a modest computer. Shown at the foot of Ask AI.
+class ModelLabBanner extends StatelessWidget {
+  const ModelLabBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => launchUrl(Uri.parse('https://azenha.ai/modellab/'), mode: LaunchMode.inAppBrowserView),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: kBgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder, width: 0.5)),
+        child: Row(children: [
+          const Text('💻', style: TextStyle(fontSize: 26)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Run AI on your own laptop', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 3),
+              Text(
+                  'We tested 22 open models on an ordinary 16 GB MacBook against the cloud — '
+                  'which ones fit and answer well. A guide for students on a modest computer.',
+                  style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.arrow_forward, color: kAmber, size: 20),
+        ]),
+      ),
+    );
   }
 }
