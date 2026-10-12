@@ -6,13 +6,19 @@ tester did not say. Evidence: `PLAY-tester-feedback-log.md` (per tester, dated,
 their words, the build that answered each item).
 
 ## Before you paste — four checks
-1. **Upload AAB 66 (1.34.7) to the closed track first.** The answers say every
+1. **Upload AAB 67 (1.34.8) to the closed track first.** The answers say every
    item is answered "in the build now in the track". File:
-   `store/android/bulldozer-v1.34.7+66.aab` (signature checked against Play).
+   `store/android/bulldozer-v1.34.8+67.aab` (signature checked against Play).
+   67 = 66 plus a one-time "Send this question to an AI?" consent before the
+   first Ask AI question leaves the phone.
 2. **Data safety form.** Ask AI sends the question and a country code to our
-   server and to Anthropic. The form must say so (Other user-generated content
-   → collected, not shared for advertising, processed for app functionality,
-   not linked to identity) before "as stated in the Data safety form" is true.
+   server and to Anthropic. The form must say so before "as stated in the Data
+   safety form" is true: App activity → **Other user-generated content** →
+   Collected: yes · Shared: no (Anthropic and Cloudflare process it for us as
+   service providers) · Processed ephemerally: yes · Required or optional:
+   **optional** (the user can decline in the consent dialog) · Purpose: **App
+   functionality**. Encrypted in transit: yes. Deletion request: not needed,
+   nothing is stored.
 3. **Testers installed.** The answers say 13 — read today's number in Play
    Console (Testing → Closed testing → Testers) and change it if different.
 4. **Wait for day 14** of this round (Wednesday) before submitting.
