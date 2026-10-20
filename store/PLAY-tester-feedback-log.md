@@ -56,8 +56,8 @@ confirm it was theirs.
 | R5 | 27 Sep | Ask AI should accept a country code like "kz", as the country search does. _Source to confirm: a tester, or noticed by the developer — drop the row if the latter._ | **Fixed, 1.34.0 (59).** Two- and three-letter codes in Ask AI; 1.34.1 (60) also takes a country and a question on one line ("kz standard of living"). |
 | R6 | 20 Oct | "The AI part of the app needs work" — relayed in substance; which tester, and their exact words, _to confirm_. | **Open.** Taken as direction for the fourth test round. Candidate answers written up 21 Oct: figures the answer rests on shown as chips under it, comparison of two countries, trend questions, streaming. Which ship first is decided with the testers. |
 | R7 | 21 Oct | A place to try language models inside the app, "like Ollama / OpenCode / OpenRouter": choose from the models available, try them free, add your own. Today that means Telegram, Python or similar, which is inconvenient. Several testers; names _to confirm_. | **Open, planned.** Fourth round: a model picker in Ask AI — Claude, open models on Workers AI, a user's own Ollama by local address, a user's own provider key — on the same checked country questions, so every number is still verified. Free-form chat with arbitrary models is a different product (content rating, reporting duty) and is kept out of BullDozer. |
-| R8 | 20 Oct | On a weak 5G signal the app showed "190+ countries" on Home, a spinner under Data stories that never ended, and on a dataset page a raw error ("ClientException with SocketException: Failed host lookup: 'azenha.ai' … errno = 8"). Screenshots, 21:05–21:06. Tester _to confirm_. | **Open, planned for 1.34.9 (68).** The cause was the phone's DNS, not the service (no Cloudflare incident at that hour; the request never reached us). The app's fault is how it showed it: a plain "No connection" state with a Retry button instead of the spinner and the exception text, and the country count from the cached catalogue instead of "190+". |
-| R9 | 21 Oct | "Can I download the data and work with it offline, as an archive?" Tester _to confirm_. | **Open, planned.** Today every page opened once stays available offline (read-through cache); nothing is downloadable in advance. Plan: a "Download all data" row in the menu that fetches the whole catalogue (273 datasets, 232 country briefs and profiles) into that cache, shows the date of the copy and refreshes on request. Size measured before building; shipped in 68 or 69. |
+| R8 | 20 Oct | On a weak 5G signal the app showed "190+ countries" on Home, a spinner under Data stories that never ended, and on a dataset page a raw error ("ClientException with SocketException: Failed host lookup: 'azenha.ai' … errno = 8"). Screenshots, 21:05–21:06. Tester _to confirm_. | **Fixed, 1.34.9 (68), 21 Oct.** The cause was the phone's DNS, not the service (no Cloudflare incident at that hour; the request never reached us). The app's fault was how it showed it. Now: every page says "No connection. Check the internet and try again." with a Retry button — datasets, stories, countries, brands, cities, the quiz and the Home feed; the country count comes from the cached manifest, never a literal. Verified on a simulator pointed at a dead host. |
+| R9 | 21 Oct | "Can I download the data and work with it offline, as an archive?" Tester _to confirm_. | **Fixed, 1.34.9 (68), 21 Oct.** Menu → "Download all data": fetches the whole catalogue — 273 indicators, 232 country briefs, 9 index files, 514 files, about 25 MB — into the cache every page already reads when offline; progress bar, Cancel keeps what was fetched, the menu row then shows the date of the copy. Wikipedia summaries and images stay online-only. |
 
 ## Found while acting on these reports
 
@@ -85,11 +85,11 @@ Same kind of defect each time: the product saying something its data does not.
 |---|---|
 | Testers who wrote, named in this log | 2 (more to be confirmed) |
 | Requests and reports received, 11 Sep – 21 Oct | 12 (11 from testers, R5 to confirm) |
-| Fixed and shipped | 8 (X1–X2 in 1.34.3, uploaded 11 Oct) |
-| Open, for the fourth round | 4 (R6, R7 — AI block; R8 — offline state; R9 — offline archive) |
+| Fixed and shipped | 10 (X1–X2 in 1.34.3, 11 Oct; R8–R9 in 1.34.9, 21 Oct) |
+| Open, for the fourth round | 2 (R6, R7 — AI block) |
 | Defects found while acting on them | 4, all fixed |
 | Builds shipped to the closed track in response | _to confirm against Play Console — see note_ |
 
-**Note on builds.** The code is at 1.34.8 (67); 67 is in the closed track since 12 Oct. Which builds actually reached
+**Note on builds.** The code is at 1.34.9 (68); 67 is in the closed track since 12 Oct, 68 built 21 Oct. Which builds actually reached
 the closed track has to be read from Play Console, not from this repo; the
 answers in the production form must name only builds testers could install.
