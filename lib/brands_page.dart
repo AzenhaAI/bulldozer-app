@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'widgets/load_error.dart';
 
 /// Most-valuable global brands with their logos — the Biz section's flagship
 /// content (mirrors the site's /logos). Logos are Wikimedia Commons renders.
@@ -20,6 +21,11 @@ class _BrandsPageState extends State<BrandsPage> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  void _load() {
+    if (_error != null) setState(() => _error = null);
     fetchBrands().then((b) {
       b.sort((x, y) => x.rank.compareTo(y.rank));
       if (mounted) setState(() => _brands = b);
@@ -36,12 +42,7 @@ class _BrandsPageState extends State<BrandsPage> {
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
       ),
       body: _error != null
-          ? Center(
-              child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text('Couldn\'t load brands.\n$_error',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: kTextDim))))
+          ? LoadError(error: _error!, what: 'the brands', onRetry: _load)
           : _brands == null
               ? Center(child: CircularProgressIndicator(color: kAmber))
               : _list(_brands!),

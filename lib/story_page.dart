@@ -8,6 +8,7 @@ import 'api.dart';
 import 'flags.dart';
 import 'palette.dart';
 import 'theme.dart';
+import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/region_legend.dart';
 
@@ -123,12 +124,7 @@ class _StoryPageState extends State<StoryPage> {
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
       ),
       body: _error != null
-          ? Center(
-              child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text('Couldn\'t load the story.\n$_error',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: kTextDim))))
+          ? LoadError(error: _error!, what: 'the story', onRetry: () { setState(() => _error = null); _load(); })
           : _main == null
               ? Center(child: CircularProgressIndicator(color: kAmber))
               : _body(),

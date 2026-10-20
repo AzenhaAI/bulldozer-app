@@ -7,7 +7,9 @@ import 'package:path_provider/path_provider.dart';
 
 /// The Flutter app is a thin client over the BullDozer site's JSON endpoints,
 /// same pattern as the Ativa app over its own static JSON.
-const kBaseUrl = 'https://azenha.ai/bulldozer';
+// Overridable at build time (--dart-define=BD_BASE=…) so a dead host can
+// stand in for "no connection" when testing the offline states.
+const kBaseUrl = String.fromEnvironment('BD_BASE', defaultValue: 'https://azenha.ai/bulldozer');
 
 /// Where a *person* is sent. Deliberately not kBaseUrl: the data still lives on
 /// the old host because the parser feeds only that one, but no tap out of the

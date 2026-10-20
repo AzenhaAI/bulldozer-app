@@ -16,6 +16,8 @@ import 'explore_page.dart';
 import 'favorites_store.dart';
 import 'flags.dart';
 import 'notify.dart';
+import 'offline_store.dart';
+import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/featured_card.dart';
 import 'widgets/entrance.dart';
@@ -31,6 +33,7 @@ void main() {
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
   loadManifest(); // freshness + resource counts from the site's discovery doc
+  OfflineStore.load(); // date of the last "Download all data", for the menu row
   loadFavorites(); // starred countries/indicators from disk
   initNotify(); // local release reminders (Ativa-style, no push server)
   loadTheme(); // light/dark preference from disk
@@ -305,6 +308,26 @@ class _HomeShellState extends State<HomeShell> {
                     mode: LaunchMode.externalApplication);
               },
             ),
+            // Fills the offline cache in advance — a tester asked for "an
+            // archive to work offline". Every page opened once was already
+            // kept; this keeps all of them.
+            ValueListenableBuilder<String?>(
+              valueListenable: OfflineStore.dateNotifier,
+              builder: (_, date, _) => ListTile(
+                leading: Icon(Icons.download_for_offline_outlined, color: kTextDim, size: 22),
+                title: Text('Download all data',
+                    style: TextStyle(fontSize: 15, color: kText)),
+                subtitle: Text(
+                    date == null
+                        ? 'Keep every indicator and country for offline use'
+                        : 'Offline copy from $date · ${OfflineStore.filesNotifier.value} files',
+                    style: TextStyle(fontSize: 12, color: kTextDim)),
+                onTap: () {
+                  Navigator.pop(context);
+                  showDialog(context: context, builder: (_) => const _DownloadAllDialog());
+                },
+              ),
+            ),
             // No quota on this row: a person pressed it. The system prompt
             // (ask_review.dart) is the scarce one.
             ListTile(
@@ -413,6 +436,7 @@ class _HomePageState extends State<HomePage> {
   List<Observation> _happyTop = [];
   Map<String, double> _happyValues = {}; // full map for the choropleth hero
   List<Story> _stories = [];
+  Object? _storiesError; // set when the feed could not be loaded, cleared on retry
   bool _globeHero = true; // 🌍 globe vs 🗺️ flat map on the Home hero
   List<Release> _releases = [];
   List<Country> _countries = []; // resolves starred ISOs to country objects
@@ -538,11 +562,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadStories() async {
+    if (_storiesError != null && mounted) setState(() => _storiesError = null);
     try {
       final s = await fetchStories();
       if (mounted) setState(() => _stories = s);
-    } catch (_) {
-      // stories feed is best-effort
+    } catch (e) {
+      // best-effort feed, but a spinner that never ends reads as "broken":
+      // a tester on a weak signal watched one for a minute (21:05, 20 Oct).
+      if (mounted) setState(() => _storiesError = e);
     }
   }
 
@@ -754,10 +781,13 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 8),
             // Not a literal. Home said "190+" while the Geo tab printed
             // "Search 232 countries…" from the same feed on the same build —
-            // two different numbers for the same thing, one tab apart. The
-            // fallback only shows before the country index has loaded.
+            // two different numbers for the same thing, one tab apart. Before
+            // the index arrives the manifest's count stands in (it is cached
+            // too); "190+" showed on a tester's phone with no connection.
             _StatBox(
-                value: _countries.isEmpty ? '190+' : '${_countries.length}',
+                value: _countries.isNotEmpty
+                    ? '${_countries.length}'
+                    : '${manifestNotifier.value?.counts['countries'] ?? kCountriesBaked}',
                 label: 'countries'),
           ],
         )),
@@ -895,7 +925,9 @@ class _HomePageState extends State<HomePage> {
         Text('Visual stories built on public data.',
             style: TextStyle(fontSize: 12, color: kTextDim)),
         const SizedBox(height: 10),
-        if (_stories.isEmpty)
+        if (_stories.isEmpty && _storiesError != null)
+          LoadError(error: _storiesError!, what: 'the stories', onRetry: _loadStories)
+        else if (_stories.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
@@ -1055,6 +1087,85 @@ class _BizEntryCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Progress of "Download all data": a count, a bar, Cancel while it runs and
+/// a plain result at the end. Cancelling keeps what was fetched.
+class _DownloadAllDialog extends StatefulWidget {
+  const _DownloadAllDialog();
+
+  @override
+  State<_DownloadAllDialog> createState() => _DownloadAllDialogState();
+}
+
+class _DownloadAllDialogState extends State<_DownloadAllDialog> {
+  int _done = 0, _total = 0;
+  bool _running = true, _cancelled = false;
+  String? _result;
+
+  @override
+  void initState() {
+    super.initState();
+    _run();
+  }
+
+  Future<void> _run() async {
+    try {
+      final failed = await OfflineStore.downloadAll(
+        onProgress: (d, t) {
+          if (mounted) setState(() { _done = d; _total = t; });
+        },
+        cancelled: () => _cancelled,
+      );
+      if (!mounted) return;
+      setState(() {
+        _running = false;
+        _result = _cancelled
+            ? 'Stopped. What was fetched stays available offline.'
+            : failed == 0
+                ? 'Done. Every indicator and country now opens without a connection.'
+                : 'Done, except $failed files that could not be fetched. Run it again on a better connection.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _running = false; _result = friendlyError(e); });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: kBgElev,
+      title: Text('Download all data', style: TextStyle(color: kText, fontSize: 18)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_result != null)
+            Text(_result!, style: TextStyle(color: kTextDim, height: 1.45))
+          else ...[
+            Text(_total == 0 ? 'Reading the catalogue…' : '$_done of $_total files',
+                style: TextStyle(color: kTextDim)),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+                value: _total == 0 ? null : _done / _total,
+                color: kAmber, backgroundColor: kBgCard, minHeight: 6),
+            const SizedBox(height: 10),
+            Text('About 25 MB. Wikipedia summaries and images stay online-only.',
+                style: TextStyle(color: kTextDim, fontSize: 12, height: 1.4)),
+          ],
+        ],
+      ),
+      actions: [
+        if (_running)
+          TextButton(
+              onPressed: () => setState(() => _cancelled = true),
+              child: const Text('Cancel'))
+        else
+          FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+      ],
     );
   }
 }

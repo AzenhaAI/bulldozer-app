@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'widgets/load_error.dart';
 
 /// City-livability rankings (mirrors the site's /cities). One metric at a
 /// time, switchable via chips; ranked bar list of cities.
@@ -20,6 +21,11 @@ class _CitiesPageState extends State<CitiesPage> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  void _load() {
+    if (_error != null) setState(() => _error = null);
     fetchCities().then((d) {
       if (mounted) setState(() => _data = d);
     }).catchError((e) {
@@ -35,12 +41,7 @@ class _CitiesPageState extends State<CitiesPage> {
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
       ),
       body: _error != null
-          ? Center(
-              child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text('Couldn\'t load cities.\n$_error',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: kTextDim))))
+          ? LoadError(error: _error!, what: 'the cities', onRetry: _load)
           : _data == null
               ? Center(child: CircularProgressIndicator(color: kAmber))
               : _body(_data!),

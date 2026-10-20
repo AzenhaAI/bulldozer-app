@@ -11,6 +11,7 @@ import 'favorites_store.dart';
 import 'flags.dart';
 import 'responsive.dart';
 import 'theme.dart';
+import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
@@ -77,6 +78,7 @@ class _CountriesPageState extends State<CountriesPage> {
   }
 
   Future<void> _load() async {
+    if (_error != null) setState(() => _error = null);
     try {
       final list = await fetchCountryIndex();
       list.sort((a, b) => a.name.compareTo(b.name));
@@ -90,13 +92,7 @@ class _CountriesPageState extends State<CountriesPage> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return Center(
-          child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text('Couldn\'t load countries.\n$_error',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: kTextDim)),
-      ));
+      return LoadError(error: _error!, what: 'the countries', onRetry: _load);
     }
     if (_countries == null) {
       return const SkeletonList(count: 10);

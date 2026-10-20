@@ -12,6 +12,10 @@ final catalogNotifier = ValueNotifier<List<CatalogEntry>>(bakedCatalog);
 
 List<CatalogEntry> get catalog => catalogNotifier.value;
 
+/// Countries in the index at the time of the build — shown on Home only
+/// until the index (or the cached manifest) is in hand.
+const kCountriesBaked = 232;
+
 Map<String, CatalogEntry> get catalogBySlug =>
     {for (final e in catalog) e.slug: e};
 

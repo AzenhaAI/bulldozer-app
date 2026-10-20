@@ -8,6 +8,7 @@ import 'responsive.dart';
 import 'share_card.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/entrance.dart';
 import 'widgets/featured_card.dart';
@@ -628,7 +629,7 @@ class DatasetPage extends StatefulWidget {
 
 class _DatasetPageState extends State<DatasetPage> {
   Dataset? _ds;
-  String? _error;
+  Object? _error;
   String? _period;
   bool _mapView = false;
   bool _showAll = false;
@@ -641,6 +642,7 @@ class _DatasetPageState extends State<DatasetPage> {
   }
 
   Future<void> _load() async {
+    if (_error != null) setState(() => _error = null);
     try {
       final ds = await fetchDataset(widget.entry.slug);
       setState(() {
@@ -648,7 +650,7 @@ class _DatasetPageState extends State<DatasetPage> {
         _period = ds.periods.isEmpty ? null : ds.periods.last;
       });
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e);
     }
   }
 
@@ -688,13 +690,7 @@ class _DatasetPageState extends State<DatasetPage> {
         ],
       ),
       body: _error != null
-          ? Center(
-              child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text('Couldn\'t load data.\n$_error',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: kTextDim)),
-            ))
+          ? LoadError(error: _error!, what: 'this indicator', onRetry: _load)
           : _ds == null
               ? _buildSkeleton()
               : _buildBody(),

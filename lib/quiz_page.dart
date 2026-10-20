@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'ask_review.dart';
 import 'theme.dart';
+import 'widgets/load_error.dart';
 
 const _rounds = 10;
 int _roundsThisGame = _rounds;
@@ -123,13 +124,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return _centered(Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Couldn\'t load the quiz.\n$_error',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: kTextDim)),
-        const SizedBox(height: 12),
-        FilledButton(onPressed: _start, child: const Text('Retry')),
-      ]));
+      return LoadError(error: _error!, what: 'the quiz', onRetry: _start);
     }
     if (_loading) {
       return Center(child: CircularProgressIndicator(color: kAmber));
