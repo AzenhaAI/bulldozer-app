@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import 'offline_bundle.dart';
+
 /// The Flutter app is a thin client over the BullDozer site's JSON endpoints,
 /// same pattern as the Ativa app over its own static JSON.
 // Overridable at build time (--dart-define=BD_BASE=…) so a dead host can
@@ -22,8 +24,7 @@ Future<File?> _cacheFile(String path) async {
   if (kIsWeb) return null; // no filesystem cache on web
   try {
     _cacheDir ??= await getApplicationCacheDirectory();
-    final safe = path.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    return File('${_cacheDir!.path}/bd_$safe');
+    return File('${_cacheDir!.path}/${cacheNameFor(path)}');
   } catch (_) {
     return null;
   }
@@ -56,6 +57,11 @@ Future<dynamic> fetchJson(String path) async {
       } on FormatException {
         file.delete().ignore(); // poisoned by an older, less careful version
       }
+    }
+    // Nothing cached for this page: unpack the copy baked into the app once,
+    // then read it from the cache like any other offline page.
+    if (file != null && _cacheDir != null && await OfflineBundle.seed(_cacheDir!) && await file.exists()) {
+      return jsonDecode(await file.readAsString());
     }
     rethrow;
   }
