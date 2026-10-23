@@ -586,7 +586,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => StoryPage(spec: spec)));
       return;
     }
-    launchUrl(Uri.parse('$kSiteUrl/stories/$slug'),
+    launchUrl(Uri.parse(inAppSite('$kSiteUrl/stories/$slug')),
         mode: LaunchMode.inAppBrowserView);
   }
 

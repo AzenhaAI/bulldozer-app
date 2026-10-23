@@ -18,6 +18,18 @@ const kBaseUrl = String.fromEnvironment('BD_BASE', defaultValue: 'https://azenha
 /// app may land there. Links move now, fetches move when the pipeline does.
 const kSiteUrl = 'https://azenha.ai/bulldozer';
 
+/// A site page opened inside the app's own browser view, marked so the site
+/// knows: it then hides its App Store prompt ("Get the app" — seen inside the
+/// app, 23 Oct 2026) and its phone tab bar, and remembers that for the rest of
+/// the visit. Pages outside BullDozer (Model Lab) pass through unchanged.
+String inAppSite(String url) {
+  if (!url.startsWith(kSiteUrl)) return url;
+  final i = url.indexOf('#');
+  final base = i < 0 ? url : url.substring(0, i);
+  final frag = i < 0 ? '' : url.substring(i);
+  return '$base${base.contains('?') ? '&' : '?'}app=1$frag';
+}
+
 Directory? _cacheDir;
 
 Future<File?> _cacheFile(String path) async {
