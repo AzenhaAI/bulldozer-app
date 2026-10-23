@@ -58,6 +58,7 @@ confirm it was theirs.
 | R7 | 21 Oct | A place to try language models inside the app, "like Ollama / OpenCode / OpenRouter": choose from the models available, try them free, add your own. Today that means Telegram, Python or similar, which is inconvenient. Several testers; names _to confirm_. | **Open, planned.** Fourth round: a model picker in Ask AI — Claude, open models on Workers AI, a user's own Ollama by local address, a user's own provider key — on the same checked country questions, so every number is still verified. Free-form chat with arbitrary models is a different product (content rating, reporting duty) and is kept out of BullDozer. |
 | R8 | 20 Oct | On a weak 5G signal the app showed "190+ countries" on Home, a spinner under Data stories that never ended, and on a dataset page a raw error ("ClientException with SocketException: Failed host lookup: 'azenha.ai' … errno = 8"). Screenshots, 21:05–21:06. Tester _to confirm_. | **Fixed, 1.34.9 (68), 21 Oct.** The cause was the phone's DNS, not the service (no Cloudflare incident at that hour; the request never reached us). The app's fault was how it showed it. Now: every page says "No connection. Check the internet and try again." with a Retry button — datasets, stories, countries, brands, cities, the quiz and the Home feed; the country count comes from the cached manifest, never a literal. Verified on a simulator pointed at a dead host. |
 | R9 | 21 Oct | "Can I download the data and work with it offline, as an archive?" Tester _to confirm_. | **Fixed, 1.34.9 (68), 21 Oct.** Menu → "Download all data": fetches the whole catalogue — 273 indicators, 232 country briefs, 9 index files, 514 files, about 25 MB — into the cache every page already reads when offline; progress bar, Cancel keeps what was fetched, the menu row then shows the date of the copy. Wikipedia summaries and images stay online-only. **Extended, 1.35.0 (69), 22 Oct:** a tester's iPhone with mobile data off for the app still showed "No connection" on Home — so the whole catalogue now ships inside the app (2 MB compressed, data as of 11 Oct) and is unpacked on the first failed fetch; with no connection and an empty cache every indicator and country opens. Verified on a simulator with the cache wiped and the network unreachable: 514 files unpacked, Home and the Brazil profile complete. |
+| R10 | 23 Oct | Showed an "Amazing Maps" picture ("Will you receive food as a guest at someone's house?", Europe in four colour classes) and asked why BullDozer has no maps like that, and whether Edu could have a generator that makes such maps on request — including from users' own data. Testers, names _to confirm_. | **Open, planned.** A "Map maker" in Edu: pick one of our indicators or paste your own table (country, value), choose a region (World, Europe, Africa…) and 3–5 named classes, write the title, export a square image. Every map built from our data carries its source and year; the example map has no source, so we do not reproduce it. |
 
 ## Found while acting on these reports
 
@@ -84,9 +85,9 @@ Same kind of defect each time: the product saying something its data does not.
 | | Count |
 |---|---|
 | Testers who wrote, named in this log | 2 (more to be confirmed) |
-| Requests and reports received, 11 Sep – 21 Oct | 12 (11 from testers, R5 to confirm) |
+| Requests and reports received, 11 Sep – 23 Oct | 13 (12 from testers, R5 to confirm) |
 | Fixed and shipped | 10 (X1–X2 in 1.34.3, 11 Oct; R8–R9 in 1.34.9, 21 Oct) |
-| Open, for the fourth round | 2 (R6, R7 — AI block) |
+| Open, for the fourth round | 3 (R6, R7 — AI block; R10 — map maker) |
 | Defects found while acting on them | 4, all fixed |
 | Builds shipped to the closed track in response | _to confirm against Play Console — see note_ |
 
