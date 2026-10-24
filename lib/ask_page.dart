@@ -12,6 +12,7 @@ import 'charts_page.dart';
 import 'countries_page.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'widgets/ai_reading.dart';
 
 /// "Ask AI" — type a country, get what the catalogue holds on it and where it
 /// stands out in the world, plus an answer in words from bot.azenha.ai/ask.
@@ -330,6 +331,7 @@ class _AskPageState extends State<AskPage> {
         if (_brief != null) ..._answerBlock(_brief!),
         const SizedBox(height: 28),
         const ModelLabBanner(),
+        const AiReading(),
       ],
     );
   }
