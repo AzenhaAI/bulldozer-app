@@ -46,6 +46,7 @@ class _AiReadingState extends State<AiReading> {
   static DateTime? _cachedAt;
   List<_Section>? _sections = _cache;
   int _tab = 0;
+  bool _failed = false; // shown with Retry: a block that silently vanished hid a network fault (28 Oct)
   bool _all = false;
 
   @override
@@ -56,19 +57,21 @@ class _AiReadingState extends State<AiReading> {
   }
 
   Future<void> _load() async {
+    if (_failed && mounted) setState(() => _failed = false);
     try {
       final r = await http.get(Uri.parse('https://bot.azenha.ai/ai-news')).timeout(const Duration(seconds: 20));
-      if (r.statusCode != 200) return;
+      if (r.statusCode != 200) throw Exception('HTTP ${r.statusCode}');
       final j = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
       final s = [
         for (final x in (j['sections'] as List? ?? [])) _Section(x as Map<String, dynamic>)
       ].where((x) => x.items.isNotEmpty).toList();
-      if (s.isEmpty) return;
+      if (s.isEmpty) throw Exception('empty list');
       _cache = s;
       _cachedAt = DateTime.now();
       if (mounted) setState(() => _sections = s);
     } catch (_) {
-      // offline or the list is down — Ask AI works without it
+      // Ask AI works without it; say so instead of leaving a gap.
+      if (mounted && _sections == null) setState(() => _failed = true);
     }
   }
 
@@ -87,7 +90,20 @@ class _AiReadingState extends State<AiReading> {
   @override
   Widget build(BuildContext context) {
     final sections = _sections;
-    if (sections == null || sections.isEmpty) return const SizedBox.shrink();
+    if (sections == null || sections.isEmpty) {
+      if (!_failed) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Row(children: [
+          Icon(Icons.cloud_off_outlined, size: 18, color: kTextDim),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text("Couldn't load the AI reading list. Check the connection.",
+                  style: TextStyle(fontSize: 13, color: kTextDim))),
+          TextButton(onPressed: _load, child: const Text('Retry')),
+        ]),
+      );
+    }
     final s = sections[_tab.clamp(0, sections.length - 1)];
     final shown = _all ? s.items : s.items.take(5).toList();
     return Column(
