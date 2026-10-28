@@ -62,7 +62,7 @@ const bizSlugs = [
   'wb-stocks-traded',
   'wb-listed-companies',
   'wb-account-ownership',
-  'wb-digital-payments',
+  'findex-digital-payments', // WB's own series ends in 2017; Findex runs to 2024
   'wb-mobile-money',
   'wb-debit-card',
   'wb-bank-branches',
@@ -102,7 +102,7 @@ class _ChartsPageState extends State<ChartsPage> {
   // Rotating pool for the records hero: emoji, caption, slug, best=max|min.
   static const _recordPool = <(String, String, String, bool)>[
     ('👴', 'longest life expectancy', 'wb-life-expectancy', true),
-    ('👥', 'most people', 'gapminder-population', true),
+    ('👥', 'most people', 'imf-population', true), // Gapminder's ends in 2013
     ('📈', 'fastest GDP growth', 'imf-gdp-growth', true),
     ('💰', 'richest per capita (PPP)', 'imf-gdp-per-capita-ppp', true),
     ('🌐', 'most internet users', 'gapminder-internet', true),

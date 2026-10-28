@@ -281,7 +281,7 @@ const _priority = <String, List<List<String>>>{
     ['owid-extreme-poverty'],
   ],
   'demographics': [
-    ['gapminder-population', 'imf-population'],
+    ['imf-population', 'gapminder-population'], // freshest first: IMF 2026, Gapminder ends 2013
     ['gapminder-median-age'],
     ['wb-sp-dyn-tfrt-in'],
     ['gapminder-urban'],
