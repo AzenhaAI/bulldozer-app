@@ -44,6 +44,7 @@ dependencies:
   fl_chart: ^0.69.2
   in_app_review: ^2.0.12
   shared_preferences: ^2.5.5
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'widgets/shell_actions.dart';
 import 'ask_page.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api.dart';
@@ -355,12 +356,17 @@ class _HomeShellState extends State<HomeShell> {
               leading: Icon(Icons.info_outline, color: kTextDim, size: 22),
               title: Text('About',
                   style: TextStyle(fontSize: 15, color: kText)),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
+                // From the installed app, not a literal: About said "1.28.0"
+                // in every build until 1.37, so nobody could tell which
+                // TestFlight build was on the phone.
+                final info = await PackageInfo.fromPlatform();
+                if (!context.mounted) return;
                 showAboutDialog(
                   context: context,
                   applicationName: 'BullDozer',
-                  applicationVersion: '1.28.0',
+                  applicationVersion: '${info.version} (${info.buildNumber})',
                   applicationIcon: brandMark(40),
                   children: const [
                     Text(
