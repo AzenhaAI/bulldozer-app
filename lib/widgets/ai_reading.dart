@@ -40,7 +40,10 @@ class _Section {
 }
 
 class _AiReadingState extends State<AiReading> {
-  static List<_Section>? _cache; // one fetch per app run is plenty
+  // Kept between visits, but not for the whole run: an app left open for a day
+  // never saw the Images & video tab added on the server (28 Oct 2026).
+  static List<_Section>? _cache;
+  static DateTime? _cachedAt;
   List<_Section>? _sections = _cache;
   int _tab = 0;
   bool _all = false;
@@ -48,7 +51,8 @@ class _AiReadingState extends State<AiReading> {
   @override
   void initState() {
     super.initState();
-    if (_sections == null) _load();
+    final stale = _cachedAt == null || DateTime.now().difference(_cachedAt!) > const Duration(minutes: 30);
+    if (_sections == null || stale) _load();
   }
 
   Future<void> _load() async {
@@ -61,6 +65,7 @@ class _AiReadingState extends State<AiReading> {
       ].where((x) => x.items.isNotEmpty).toList();
       if (s.isEmpty) return;
       _cache = s;
+      _cachedAt = DateTime.now();
       if (mounted) setState(() => _sections = s);
     } catch (_) {
       // offline or the list is down — Ask AI works without it
