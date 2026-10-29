@@ -267,9 +267,9 @@ class _HomeShellState extends State<HomeShell> {
               },
             ),
             _linkItem(context, Icons.dashboard_outlined,
-                'Detailed dashboards', '/dashboards'),
+                'Detailed dashboards', '/dashboards/'),
             _linkItem(context, Icons.menu_book_outlined,
-                'Glossary — metric reference', '/glossary'),
+                'Glossary — metric reference', '/glossary/'),
             _linkItem(
                 context, Icons.open_in_new, 'Open full website', '/'),
             _linkItem(context, Icons.privacy_tip_outlined,
@@ -592,7 +592,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (_) => StoryPage(spec: spec)));
       return;
     }
-    launchUrl(Uri.parse(inAppSite('$kSiteUrl/stories/$slug')),
+    launchUrl(Uri.parse(inAppSite('$kSiteUrl/stories/$slug/')),
         mode: LaunchMode.inAppBrowserView);
   }
 

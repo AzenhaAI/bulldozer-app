@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'api.dart';
 import 'map_maker_page.dart';
+import 'people_chart_page.dart';
 import 'theme.dart';
 
 /// Edu tab — mirrors the site's /edu section: a field guide to dashboards,
@@ -52,6 +53,13 @@ class EduPage extends StatelessWidget {
         '/edu/sources/',
       ),
       (
+        '🎬',
+        'Images and video with AI',
+        'A student\'s map: cloud generators and open models you can run yourself, what is free, '
+            'whose licence lets you publish, and the EU\'s labelling rules — every fact sourced.',
+        '/edu/ai-media/',
+      ),
+      (
         '💻',
         'AI on a student laptop',
         '22 open language models on one ordinary 16 GB MacBook, the same 24 questions in seven languages, compared with the cloud.',
@@ -61,11 +69,11 @@ class EduPage extends StatelessWidget {
         '📖',
         'Glossary — metric reference',
         'What GDP PPP, Gini, HDI, polyarchy and every other metric in the app actually mean.',
-        '/glossary',
+        '/glossary/',
       ),
     ];
 
-    // Seven links and nothing else — this is the one tab a wide layout cannot
+    // Eight links and nothing else — this is the one tab a wide layout cannot
     // help. Stretched to the full 1280 the cards became long thin strips over a
     // field of empty black; held to a reading column they read as a deliberate
     // index, which is what they are. The rest of the app fills the width; this
@@ -85,46 +93,58 @@ class EduPage extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: kTextDim)),
         const SizedBox(height: 14),
         // Tools that run in the app, ahead of the reading list. Testers asked
-        // for poster maps (R10); more makers join this block as they ship.
+        // for poster maps (R10) and people charts (R14); more makers join as they ship.
         Text('MAKE YOUR OWN',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),
         const SizedBox(height: 6),
-        Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: InkWell(
-            onTap: () => Navigator.of(context)
-                .push(MaterialPageRoute(builder: (_) => const MapMakerPage())),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('🗺️', style: TextStyle(fontSize: 24)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Map maker',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1.2)),
-                        const SizedBox(height: 4),
-                        Text(
-                            'Turn any of our indicators into a poster map: pick a region, '
-                            'name the colour classes, share the image — with its source on it.',
-                            style: TextStyle(fontSize: 12, color: kTextDim, height: 1.35)),
-                      ],
+        for (final m in <(String, String, String, Widget Function())>[
+          (
+            '🗺️',
+            'Map maker',
+            'Turn any of our indicators into a poster map: pick a region, '
+                'name the colour classes, share the image — with its source on it.',
+            () => const MapMakerPage(),
+          ),
+          (
+            '🧍',
+            'People chart',
+            'Columns of 100 figures: compare countries on one question or on '
+                'what people die of, or draw your own table.',
+            () => const PeopleChartPage(),
+          ),
+        ])
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            child: InkWell(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => m.$4())),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(m.$1, style: const TextStyle(fontSize: 24)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(m.$2,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1.2)),
+                          const SizedBox(height: 4),
+                          Text(m.$3, style: TextStyle(fontSize: 12, color: kTextDim, height: 1.35)),
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6, top: 2),
-                    child: Icon(Icons.chevron_right, color: kTextDim, size: 20),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6, top: 2),
+                      child: Icon(Icons.chevron_right, color: kTextDim, size: 20),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
         const SizedBox(height: 16),
         Text('READ',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),

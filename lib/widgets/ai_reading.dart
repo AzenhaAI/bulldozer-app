@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../api.dart';
 import '../theme.dart';
 
 /// AI news, long reads on AI and the week's papers, under Ask AI.
@@ -151,6 +152,15 @@ class _AiReadingState extends State<AiReading> {
           TextButton(
             onPressed: () => setState(() => _all = !_all),
             child: Text(_all ? 'Show fewer' : 'Show all ${s.items.length}'),
+          ),
+        if (s.id == 'media')
+          // Testers asked for image and video AI as more than headlines (R13).
+          TextButton.icon(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: kAmber),
+            onPressed: () => launchUrl(Uri.parse(inAppSite('$kSiteUrl/edu/ai-media/')),
+                mode: LaunchMode.inAppBrowserView),
+            icon: const Icon(Icons.school_outlined, size: 18),
+            label: const Text('New to this? Our guide: tools, free options, licences, labelling rules'),
           ),
         Text('Headlines and links from the publishers’ own feeds; tap to read at the source.',
             style: TextStyle(fontSize: 11, color: kTextDim, height: 1.4)),

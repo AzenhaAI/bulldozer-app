@@ -229,7 +229,7 @@ class Story {
         title = j['title'] ?? '',
         dek = j['dek'] ?? '';
 
-  String get url => '$kSiteUrl/stories/$slug';
+  String get url => '$kSiteUrl/stories/$slug/';
 }
 
 Future<List<Story>> fetchStories() async => [

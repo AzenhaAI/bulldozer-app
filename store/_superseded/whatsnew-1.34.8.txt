@@ -1,0 +1,3 @@
+New: Ask AI (Beta). Pick a country and ask in your own words — the answer is written from BullDozer's published figures, and any number not found in them is held back. It asks once before your first question is sent.
+
+Also new: a Sources guide to 81 survey and data programmes in Edu, fresher life-expectancy data, a globe that follows your finger, clearer records with tied countries and estimate years, and fixes for small screens and large text — many of them from our testers.

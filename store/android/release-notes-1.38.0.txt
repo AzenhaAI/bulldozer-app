@@ -1,0 +1,1 @@
+From our testers' requests: People chart and Map maker in Edu (share as images with the source on them); Read about AI under Ask AI (news, long reads, images & video, papers, Karpathy) and a guide to AI images and video; full offline mode with the catalogue built in; freshest figure first where sources overlap; exact version in About.
