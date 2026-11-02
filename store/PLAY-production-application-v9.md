@@ -1,19 +1,19 @@
-# Production access — fourth application, v9 (build 75)
+# Production access — fourth application, v9 (build 76)
 
 BullDozer Stats · `ai.azenha.bulldozer`. v6 was rejected (~16 Oct); this round
-ran with builds 67–75. v7 (build 72) and v8 (build 73) are kept as they were;
-v9 adds build 75 and R15–R17 (2 Nov). Every number below is traced in the feedback log
-(`PLAY-tester-feedback-log.md`): 19 tester items, A1, X1–X2, R1–R4, R6–R17
-(R5 left out — its source is not on record). 17 fixed, 2 planned (R6 partly
+ran with builds 67–76. v7 (build 72) and v8 (build 73) are kept as they were;
+v9 adds build 76 and R15–R18 (2 Nov). Every number below is traced in the feedback log
+(`PLAY-tester-feedback-log.md`): 20 tester items, A1, X1–X2, R1–R4, R6–R18
+(R5 left out — its source is not on record). 18 fixed, 2 planned (R6 partly
 answered by R11/R13, R7 model choice).
 
 ## Before you paste — four checks
-1. **Build 75 (1.38.1) in the closed track and reviewed** —
-   `store/android/bulldozer-v1.38.1+75.aab`, signature 49:E8:57:CC… Answers 4
-   and 7 say "build 75, now in the track". Build 74 went to TestFlight only.
+1. **Build 76 (1.38.1) in the closed track and reviewed** —
+   `store/android/bulldozer-v1.38.1+76.aab`, signature 49:E8:57:CC… Answers 4
+   and 7 say "build 76, now in the track". Builds 74 and 75 never went to Play.
 2. **Which builds reached the track this round.** Answers 2 and 8 say testers
-   received builds 67 to 75. Read Test and release → Latest releases and bundles:
-   if some (68–73) were never uploaded, change "eight builds, 67 to 75" to the
+   received builds 67 to 76. Read Test and release → Latest releases and bundles:
+   if some (68–73) were never uploaded, change "eight builds, 67 to 76" to the
    real list and "builds testers received" stays true only for those.
 3. **Testers.** Dashboard → the closed-test card: opted-in count and day count.
    The answers say 13; change it in answers 1 and 7 if different.
@@ -28,7 +28,7 @@ The same circle that tests our other apps: friends and acquaintances, asked one 
 
 ## 2. Describe the engagement you received from testers  *(262)*
 ```
-Testers used the app and wrote back, often with screenshots: 19 requests and reports from 11 Sep to 2 Nov, logged with date and their words. 17 are fixed in builds testers received, most within days; the other two are planned. Each build's notes say what to try.
+Testers used the app and wrote back, often with screenshots: 20 requests and reports from 11 Sep to 2 Nov, logged with date and their words. 18 are fixed in builds testers received, most within days; the other two are planned. Each build's notes say what to try.
 ```
 
 ## 3. Summary of the feedback, and how you collected it  *(282)*
@@ -38,7 +38,7 @@ Logged per tester, dated, in their words. Asked for: Ask AI, AI news and reads, 
 
 ## 4. What changes did you make to your app based on what you learned during your closed test?  *(237)*
 ```
-Ask AI with checked figures and consent; AI lists and an image/video guide; Map and People chart makers; source, year and method under each figure; trends marked; offline data; clear No connection states; freshest figure first. Build 75.
+Ask AI with checked figures and consent; AI lists and an image/video guide; Map and People chart makers; source, year and method under each figure; trends marked; offline data; clear No connection states; freshest figure first. Build 76.
 ```
 
 ## 5. Who is the intended audience?  *(259)*
@@ -55,23 +55,23 @@ One place for public country statistics otherwise spread across the IMF, World B
 
 ## 7. Production readiness  *(253)*
 ```
-Ready. The same app has been on the App Store since August; 1.34.8 is live there. 13 testers installed; 17 of the 19 items they raised are fixed in build 75, now in the track. No account, no ads; an Ask AI question is sent only after the user allows it.
+Ready. The same app has been on the App Store since August; 1.34.8 is live there. 13 testers installed; 18 of the 20 items they raised are fixed in build 76, now in the track. No account, no ads; an Ask AI question is sent only after the user allows it.
 ```
 
 ## 8. What did you do differently this time?  *(257)*
 ```
-This round we answered testers in days, not weeks: eight builds, 67 to 75, each fixing what they had just reported, and every item logged with date and their words. We also found why figures went stale: the weekly refresh was not being published. Now it is.
+This round we answered testers in days, not weeks: eight builds, 67 to 76, each fixing what they had just reported, and every item logged with date and their words. We also found why figures went stale: the weekly refresh was not being published. Now it is.
 ```
 
 ---
 
 ## Where the numbers come from
-- **19 items, 17 fixed:** feedback log rows A1, X1, X2, R1–R4, R6–R17. Open:
+- **20 items, 18 fixed:** feedback log rows A1, X1, X2, R1–R4, R6–R18. Open:
   R6 (AI block — partly answered by the lists in R11/R13), R7 (model choice).
 - **App Store since August:** 1.28.0 created 3 Aug, Ready for Sale; 1.34.8
   Ready for Sale since 12 Oct (App Store Connect API, checked 2 Nov).
-- **Builds 67–75:** iOS builds up to 75 uploaded 12 Oct – 2 Nov (App Store
-  Connect); Android 74 was never built — the Play track gets 75; Android AABs in
+- **Builds 67–75:** iOS builds up to 76 uploaded 12 Oct – 2 Nov (App Store
+  Connect); Android 74 was never built and 75 never uploaded — the Play track gets 76; Android AABs in
   `store/android` and `_superseded/`. Play track contents — check 2 above.
 - **Weekly refresh:** GitHub Actions "Update data", every Monday, all runs
   green; publication to azenha.ai was manual and lagged until 28 Oct.
