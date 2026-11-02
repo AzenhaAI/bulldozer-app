@@ -188,6 +188,29 @@ class EduPage extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 16),
+        // The images and video guide as a thin strip at the very end, where a
+        // reader who scrolled the whole tab lands — so it is not lost in the
+        // list above (2 Nov 2026).
+        Material(
+          color: kAmber.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => _open('/edu/ai-media/'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(children: [
+                const Text('🎬', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 10),
+                const Expanded(
+                    child: Text('Make images and video with AI — free tools, licences, labelling',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                Icon(Icons.arrow_forward, color: kAmber, size: 18),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         Center(
           child: Text('Reads on the site · azenha.ai/bulldozer/edu',
               style: TextStyle(fontSize: 11, color: kTextDim)),
