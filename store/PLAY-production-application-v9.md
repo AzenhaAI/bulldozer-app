@@ -31,9 +31,9 @@ The same circle that tests our other apps: friends and acquaintances, asked one 
 Testers used the app and wrote back, often with screenshots: 19 requests and reports from 11 Sep to 2 Nov, logged with date and their words. 17 are fixed in builds testers received, most within days; the other two are planned. Each build's notes say what to try.
 ```
 
-## 3. Summary of the feedback, and how you collected it  *(285)*
+## 3. Summary of the feedback, and how you collected it  *(282)*
 ```
-Logged per tester with date and their words. Asked for: Ask AI, AI news and reads, image and video AI, poster maps, people charts, source and method under each figure. Reported: globe turned the wrong way, raw errors on a weak signal, stale figures, keyboard over the menu. No crashes.
+Logged per tester, dated, in their words. Asked for: Ask AI, AI news and reads, image and video AI, poster maps, people charts, source and method under each figure. Reported: globe turned the wrong way, raw errors on a weak signal, stale figures, keyboard over the menu. No crashes.
 ```
 
 ## 4. What changes did you make to your app based on what you learned during your closed test?  *(237)*
