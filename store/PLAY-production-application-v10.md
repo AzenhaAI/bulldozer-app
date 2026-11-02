@@ -23,9 +23,9 @@ Volunteers only: no paid testers and no testing service. We wrote to people we k
 In closed testing since September, three rounds. Testers sent 20 requests and bug reports, mostly with screenshots; 13 came this round, and 11 of those were fixed the same or the next day. Each is logged with its date and the tester's own wording; every build lists what to try.
 ```
 
-## 3. Summary of the feedback, and how you collected it  *(276)*
+## 3. Summary of the feedback, and how you collected it  *(274)*
 ```
-Examples, in their words: "can I download the data and work offline?", "why no caption: how it is calculated, source, year?", "#5 of 120, good or bad?", poster maps, NYT-style people charts, AI news and AI video. Bugs: raw error text on weak 5G, two populations for Argentina.
+Examples, translated: "can I download the data and work offline?", "why no caption: how it is calculated, source, year?", "#5 of 120, good or bad?", poster maps, NYT-style people charts, AI news and AI video. Bugs: raw error text on weak 5G, two populations for Argentina.
 ```
 
 ## 4. What changes did you make to your app based on what you learned during your closed test?  *(276)*
