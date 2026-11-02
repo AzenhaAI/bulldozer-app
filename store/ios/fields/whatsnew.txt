@@ -2,6 +2,7 @@ Built from our testers' requests:
 
 • Every figure has a caption: what it measures, how it is calculated, the source, the year and the licence, with a link to the full method.
 • See a trend before you tap: rows read "2018 → 2025" when there is a series behind them and "2024 only" when there is a single reading.
+• "#5 of 120 — good or bad?" Ranks are green or red only where one direction is plainly better, and tapping a figure says it in words.
 • Tap anywhere outside a search box to put the keyboard away.
 • People chart (Edu): columns of 100 figures — compare countries on one question, see what people die of, or draw your own table. Share it as an image with the source printed on it.
 • Map maker (Edu): turn any indicator into a poster map with named colour classes.
