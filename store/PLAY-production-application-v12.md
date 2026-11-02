@@ -60,9 +60,9 @@ Our testers are unpaid volunteers, so instead of asking them to reinstall weekly
 
 ## Final free-text field (limit 300)
 
-**Variant A — firm, the developer's points as facts** *(299)*
+**Variant A — firm, the developer's points as facts** *(298)*
 ```
-Fourth application. Closed testing on Play since 21 Aug, unpaid volunteers; public on Apple's App Store since 3 Aug, three releases. This round: 13 tester reports, 11 fixed within a day, all in build 77. If the answer is no again, please name the one thing that fell short; we will fix it that week.
+Fourth application. 13 unpaid volunteers, above the 12 required, have tested since 21 Aug; such a circle cannot be held for months, and it did its job: 18 of their 20 requests are closed and checked by them. Public on Apple's App Store since 3 Aug. If no again, please name exactly what fell short.
 ```
 
 **Variant B — conciliatory (the reviewer's recommendation)** *(287)*
@@ -74,6 +74,7 @@ Fourth application. Since the last one: 13 new tester reports, 11 fixed within a
 
 ## Where the numbers come from
 - **20 items, 18 fixed; 13 since 20 Oct, 11 fixed in code the same or next day:** feedback log A1, X1, X2, R1–R4, R6–R18 (R6–R18 this round; R8 20→21 Oct and R14 28→29 Oct next day, the rest same day). Open: R6, R7 — "planned with them" = decided with the testers, per the log.
+- **13 above the 12 required:** Google's closed-testing rule is 12 opted-in testers for 14 days; the card shows the live count.
 - **Seven with screenshots or example images:** X1, X2, R8, R10, R14, R15, R17.
 - **Play track this round:** Submission activity — #4 12 Oct (build 67, 1.34.8), #5 2 Nov (build 77, 1.38.1). Earlier: #1–2 21 Aug, #3 27 Sep.
 - **Builds 68–76:** iOS/TestFlight (App Store Connect); Android AABs built but not uploaded (68, 69, 70, 72, 73, 75) or uploaded and discarded unsent (76).
