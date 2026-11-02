@@ -1,4 +1,6 @@
-# Production access — fourth application, v12 (build 77), after the independent review
+# Production access — fourth application, v12 (build 77) — SUBMITTED 2 Nov 2026, ~16:10 UTC
+
+Submitted by the developer while release 77 (submission #5) was still "In review" in the closed track.
 
 BullDozer Stats · `ai.azenha.bulldozer`. v12 replaces v10/v11 after two findings on 2 Nov:
 (1) Play Console's Submission activity shows the closed track received only builds 67 (12 Oct)
