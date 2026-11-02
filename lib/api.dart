@@ -158,6 +158,9 @@ class CountryItem {
   /// with no trend, 0 is unknown (data published before 2 Nov 2026).
   final String first;
   final int years;
+  /// 'high' or 'low' where one direction is plainly better, '' where the rank
+  /// is no judgement (opinions, spending, population) — testers, 2 Nov 2026.
+  final String better;
 
   CountryItem.fromJson(Map<String, dynamic> j)
       : slug = j['slug'] ?? '',
@@ -169,8 +172,9 @@ class CountryItem {
         period = '${j['period'] ?? ''}',
         rank = j['rank'] ?? 0,
         total = j['total'] ?? 0,
-        first = '${j['first'] ?? ''}',
-        years = j['years'] ?? 0;
+        first = j['first'] is String ? j['first'] : '',
+        years = j['years'] is int ? j['years'] : 0,
+        better = '${j['better'] ?? ''}';
 }
 
 class Country {
