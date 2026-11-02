@@ -1,0 +1,1 @@
+From our testers' requests: every figure now says what it measures, how, its source, year and licence, with a link to the full method; rows show "2018 → 2025" for a trend or "2024 only"; tap outside a search box to hide the keyboard. Also: People chart and Map maker in Edu; Read about AI with a guide to AI images and video; full offline mode; freshest figure first.

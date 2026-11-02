@@ -118,6 +118,9 @@ class Dataset {
   final String unit;
   final String source;
   final String license;
+  /// The publisher's own page, and the one-line method note the site shows on
+  /// the dataset page (weighting, item, projection caveat) — empty when absent.
+  final String url, method, vintage;
   final List<Observation> data;
 
   Dataset.fromJson(Map<String, dynamic> j)
@@ -127,6 +130,9 @@ class Dataset {
         unit = j['unit'] ?? '',
         source = j['source'] ?? '',
         license = j['license'] ?? '',
+        url = j['url'] ?? '',
+        method = j['method'] ?? '',
+        vintage = j['vintage'] ?? '',
         data = [
           for (final o in (j['data'] as List? ?? [])) Observation.fromJson(o)
         ];
@@ -148,6 +154,10 @@ class CountryItem {
   final String period;
   final int rank;
   final int total;
+  /// This country's earliest period and how many it has: 1 is a single figure
+  /// with no trend, 0 is unknown (data published before 2 Nov 2026).
+  final String first;
+  final int years;
 
   CountryItem.fromJson(Map<String, dynamic> j)
       : slug = j['slug'] ?? '',
@@ -158,7 +168,9 @@ class CountryItem {
         value = (j['value'] as num?)?.toDouble() ?? 0,
         period = '${j['period'] ?? ''}',
         rank = j['rank'] ?? 0,
-        total = j['total'] ?? 0;
+        total = j['total'] ?? 0,
+        first = '${j['first'] ?? ''}',
+        years = j['years'] ?? 0;
 }
 
 class Country {

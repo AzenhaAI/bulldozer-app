@@ -330,7 +330,9 @@ class _AskPageState extends State<AskPage> {
               child: Text(_error!, style: TextStyle(color: kTextDim))),
         if (_brief != null) ..._answerBlock(_brief!),
         const SizedBox(height: 28),
-        const ModelLabBanner(),
+        GuideBanner.modelLab,
+        const SizedBox(height: 10),
+        GuideBanner.aiMedia,
         const AiReading(),
       ],
     );
@@ -468,32 +470,47 @@ class _AskPageState extends State<AskPage> {
   }
 }
 
-/// Model Lab on azenha.ai: 22 open models tested on an ordinary 16 GB
-/// laptop against the cloud — the next step for anyone who wants to run AI
-/// themselves on a modest computer. Shown at the foot of Ask AI.
-class ModelLabBanner extends StatelessWidget {
-  const ModelLabBanner({super.key});
+/// A guide on azenha.ai, shown as a card at the foot of Ask AI.
+///
+/// Model Lab: 22 open models tested on an ordinary 16 GB laptop against the
+/// cloud — the next step for anyone who wants to run AI themselves. The images
+/// and video guide sat only inside its tab of the reading list, and testers
+/// looking for it did not find it (2 Nov 2026), so it has a card of its own.
+class GuideBanner extends StatelessWidget {
+  final String emoji, title, text, url;
+  const GuideBanner(this.emoji, this.title, this.text, this.url, {super.key});
+
+  static const modelLab = GuideBanner(
+      '💻',
+      'Run AI on your own laptop',
+      'We tested 22 open models on an ordinary 16 GB MacBook against the cloud — '
+          'which ones fit and answer well. A guide for students on a modest computer.',
+      'https://azenha.ai/modellab/');
+
+  static const aiMedia = GuideBanner(
+      '🎬',
+      'Make images and video with AI',
+      'Which generators are free, which open models run on your own computer, '
+          'licences and the new labelling rules — a student\'s map, every fact linked.',
+      '$kSiteUrl/edu/ai-media/');
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => launchUrl(Uri.parse('https://azenha.ai/modellab/'), mode: LaunchMode.inAppBrowserView),
+      onTap: () => launchUrl(Uri.parse(inAppSite(url)), mode: LaunchMode.inAppBrowserView),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
             color: kBgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder, width: 0.5)),
         child: Row(children: [
-          const Text('💻', style: TextStyle(fontSize: 26)),
+          Text(emoji, style: const TextStyle(fontSize: 26)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Run AI on your own laptop', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               const SizedBox(height: 3),
-              Text(
-                  'We tested 22 open models on an ordinary 16 GB MacBook against the cloud — '
-                  'which ones fit and answer well. A guide for students on a modest computer.',
-                  style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
+              Text(text, style: TextStyle(fontSize: 13, color: kTextDim, height: 1.4)),
             ]),
           ),
           const SizedBox(width: 8),

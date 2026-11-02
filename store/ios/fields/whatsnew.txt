@@ -1,8 +1,11 @@
 Built from our testers' requests:
 
+• Every figure has a caption: what it measures, how it is calculated, the source, the year and the licence, with a link to the full method.
+• See a trend before you tap: rows read "2018 → 2025" when there is a series behind them and "2024 only" when there is a single reading.
+• Tap anywhere outside a search box to put the keyboard away.
 • People chart (Edu): columns of 100 figures — compare countries on one question, see what people die of, or draw your own table. Share it as an image with the source printed on it.
 • Map maker (Edu): turn any indicator into a poster map with named colour classes.
-• Read about AI (Ask AI): AI news, long reads, images & video, papers of the week and Andrej Karpathy — plus a guide to making images and video with AI.
+• Read about AI (Ask AI): AI news, long reads, images & video, papers of the week and Andrej Karpathy — and a guide to making images and video with AI, now one tap from Ask AI.
 • Works offline: the whole catalogue ships inside the app, "Download all data" keeps the latest copy, and a lost connection now says so with Retry.
 • One number per question: where two sources measure the same thing, the freshest one is shown; older series are marked historical.
 • About shows the exact version and build.

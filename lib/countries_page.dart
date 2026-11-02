@@ -128,6 +128,7 @@ class _CountriesPageState extends State<CountriesPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: TextField(
             onChanged: (v) => setState(() => _query = v),
+            textInputAction: TextInputAction.done,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search ${_countries!.length} countries…',
@@ -161,6 +162,8 @@ class _CountriesPageState extends State<CountriesPage> {
             final rows = (shown.length + cols - 1) ~/ cols;
             return ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
+            // Scrolling the list puts the keyboard away too (R17).
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             itemCount: rows + head,
             itemBuilder: (_, idx) {
@@ -632,8 +635,12 @@ class _CountryPageState extends State<CountryPage> {
                     highlightPeriod: series.last.period,
                   ),
                 const SizedBox(height: 12),
-                Text('#${item.rank} of ${item.total} · latest ${_when(item)}',
+                Text(
+                    series.length == 1
+                        ? '#${item.rank} of ${item.total} · one reading so far (${_when(item)}), no trend yet'
+                        : '#${item.rank} of ${item.total} · ${series.length} readings, ${series.first.period} → ${_when(item)}',
                     style: TextStyle(fontSize: 12, color: kTextDim)),
+                if (snap.data != null) ..._about(snap.data!, item),
                 const SizedBox(height: 8),
               ],
             ),
@@ -641,6 +648,45 @@ class _CountryPageState extends State<CountryPage> {
         },
       ),
     );
+  }
+
+  /// What the figure is, how it is made, who publishes it and when — testers
+  /// asked why a number came with no caption (2 Nov 2026). The full note is
+  /// the dataset page on the site; the source link goes to the publisher.
+  List<Widget> _about(Dataset ds, CountryItem item) {
+    final dim = TextStyle(fontSize: 13, color: kTextDim, height: 1.4);
+    return [
+      const SizedBox(height: 14),
+      Divider(color: kBorder, height: 1),
+      const SizedBox(height: 12),
+      if (ds.summary.isNotEmpty) Text(ds.summary, style: const TextStyle(fontSize: 13, height: 1.4)),
+      if (ds.method.isNotEmpty) ...[
+        const SizedBox(height: 6),
+        Text('How: ${ds.method}', style: dim),
+      ],
+      const SizedBox(height: 6),
+      Text(
+          'Source: ${ds.source}${ds.vintage.isNotEmpty ? ', ${ds.vintage}' : ''} · '
+          'this figure ${_when(item)}${ds.license.isNotEmpty ? ' · ${ds.license}' : ''}',
+          style: dim),
+      const SizedBox(height: 4),
+      Wrap(spacing: 4, children: [
+        TextButton.icon(
+          style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: kAmber),
+          icon: const Icon(Icons.menu_book_outlined, size: 17),
+          label: const Text('Method and full notes'),
+          onPressed: () => launchUrl(Uri.parse(inAppSite('$kSiteUrl/dataset/${ds.slug}/')),
+              mode: LaunchMode.inAppBrowserView),
+        ),
+        if (ds.url.startsWith('http'))
+          TextButton.icon(
+            style: TextButton.styleFrom(padding: const EdgeInsets.only(left: 8), foregroundColor: kAmber),
+            icon: const Icon(Icons.north_east, size: 16),
+            label: Text(ds.source.length > 28 ? 'Publisher' : ds.source),
+            onPressed: () => launchUrl(Uri.parse(ds.url), mode: LaunchMode.inAppBrowserView),
+          ),
+      ]),
+    ];
   }
 
   @override
@@ -913,7 +959,7 @@ class _IndicatorRow extends StatelessWidget {
                   Text(item.title,
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text('${_when(item)} · ${item.unit}',
+                  Text('${_span(item)} · ${item.unit}',
                       style: TextStyle(fontSize: 11, color: kTextDim)),
                 ],
               ),
@@ -935,9 +981,13 @@ class _IndicatorRow extends StatelessWidget {
                                 : kTextDim)),
               ],
             ),
+            // The trend icon only where there is a trend: every row used to
+            // carry it, and a single figure opened to one number (R15).
             Padding(
-              padding: EdgeInsets.only(left: 6),
-              child: Icon(Icons.show_chart, size: 16, color: kTextDim),
+              padding: const EdgeInsets.only(left: 6),
+              child: item.years == 1
+                  ? const SizedBox(width: 16)
+                  : Icon(Icons.show_chart, size: 16, color: item.years > 1 ? kAmber : kTextDim),
             ),
           ],
         ),
@@ -956,3 +1006,12 @@ bool _isEstimate(CountryItem it) {
 }
 
 String _when(CountryItem it) => _isEstimate(it) ? '${it.period} est.' : it.period;
+
+/// "2019 → 2025" for a series, "2024 only" for a single figure, so a row says
+/// before it is tapped whether there is a trend behind it (testers, 2 Nov 2026).
+String _span(CountryItem it) {
+  // A pooled wave ("2011–2024") with "only" after it reads like a gap.
+  if (it.years == 1) return it.period.contains('–') ? '${_when(it)}, one reading' : '${_when(it)} only';
+  if (it.years > 1 && it.first.isNotEmpty && it.first != it.period) return '${it.first} → ${_when(it)}';
+  return _when(it);
+}

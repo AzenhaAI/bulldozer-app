@@ -86,6 +86,14 @@ class BulldozerApp extends StatelessWidget {
         title: 'BullDozer',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
+        // A tap anywhere outside a text field puts the keyboard away. On a
+        // phone it covered the tab bar, and testers in Geo search saw no way
+        // back to the menu short of typing a country (2 Nov 2026).
+        builder: (_, child) => GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: child,
+        ),
         // new key on toggle → the whole tree rebuilds with the new palette
         home: HomeShell(key: ValueKey(isLight)),
       ),
