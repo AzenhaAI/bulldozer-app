@@ -1,0 +1,12 @@
+<en-US>
+From our testers' requests: every figure now says what it measures, how it is calculated, its source, year and licence, with a link to the full method. Rows show "2018 → 2025" when there is a trend and "2024 only" for a single reading. Green and red ranks appear only where better is clear, explained in words. Tap outside a search box to hide the keyboard. Also: People chart and Map maker in Edu, a guide to AI images and video, full offline mode.
+</en-US>
+<pt-PT>
+A pedido dos testers: cada valor indica o que mede, como é calculado, a fonte, o ano e a licença, com ligação ao método completo. As linhas mostram "2018 → 2025" quando há série e "2024 only" quando há um único valor. Verde e vermelho só onde é claro o que é melhor, explicado por palavras. Toque fora da pesquisa para fechar o teclado. Também: gráfico de pessoas e criador de mapas no Edu, guia de imagens e vídeo com IA, modo offline completo.
+</pt-PT>
+<de-DE>
+Auf Wunsch unserer Tester: Jeder Wert zeigt, was er misst, wie er berechnet wird, Quelle, Jahr und Lizenz, mit Link zur vollständigen Methode. Zeilen zeigen "2018 → 2025" bei einer Zeitreihe und "2024 only" bei einem Einzelwert. Grün und Rot nur, wo klar ist, was besser ist – in Worten erklärt. Tippen außerhalb der Suche schließt die Tastatur. Außerdem: Personendiagramm und Kartenmacher in Edu, Leitfaden zu KI-Bildern und -Videos, voller Offline-Modus.
+</de-DE>
+<ru-RU>
+По просьбам тестеров: у каждой цифры теперь видно, что она измеряет, как считается, источник, год и лицензия, со ссылкой на полную методику. В строках «2018 → 2025», если есть ряд лет, и «2024 only», если значение одно. Зелёный и красный только там, где ясно, что лучше, с пояснением словами. Нажатие вне поиска закрывает клавиатуру. Также: диаграмма из человечков и конструктор карт в Edu, гид по ИИ-картинкам и видео, полный офлайн-режим.
+</ru-RU>
