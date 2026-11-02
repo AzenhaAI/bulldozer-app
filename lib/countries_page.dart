@@ -1014,28 +1014,33 @@ bool _isEstimate(CountryItem it) {
 
 String _when(CountryItem it) => _isEstimate(it) ? '${it.period} est.' : it.period;
 
-/// 1 among the better third, -1 among the worse third, 0 in the middle or
-/// where the indicator has no better direction.
+/// 1 in the better quarter, -1 in the worse quarter, 0 in the middle half or
+/// where the indicator has no better direction. Quarters, not thirds: with
+/// thirds most of a list was coloured and the colour said little (2 Nov 2026).
 int _standing(CountryItem it) {
   if (it.total <= 0 || it.better.isEmpty) return 0;
-  final top = it.rank <= it.total / 3, bottom = it.rank > it.total * 2 / 3;
+  final top = it.rank <= it.total / 4, bottom = it.rank > it.total * 3 / 4;
   if (!top && !bottom) return 0;
   return (top == (it.better == 'high')) ? 1 : -1;
 }
 
 /// The answer to "#5 of 120 — is that good or bad?" (a tester, 2 Nov 2026).
 String _rankMeaning(CountryItem it) {
-  final n = it.rank;
+  // Past the middle, count from the bottom: "150th highest" read like a high
+  // place for what is the 30th lowest (a tester, 2 Nov 2026).
+  final low = it.rank > (it.total + 1) / 2;
+  final n = low ? it.total - it.rank + 1 : it.rank;
   final th = (n % 100 >= 11 && n % 100 <= 13) ? 'th' : const {1: 'st', 2: 'nd', 3: 'rd'}[n % 10] ?? 'th';
-  final head = '#$n of ${it.total}: ${n == 1 ? 'the highest' : '$n$th highest'} value of ${it.total} countries';
+  final pos = n == 1 ? (low ? 'the lowest' : 'the highest') : '$n$th ${low ? 'lowest' : 'highest'}';
+  final head = '#${it.rank} of ${it.total}: $pos value of ${it.total} countries';
   if (it.better.isEmpty) return '$head. Here that is where the country stands, not a judgement of good or bad.';
   final dir = it.better == 'high' ? 'Higher is better here' : 'Lower is better here';
   final g = _standing(it);
   final verdict = g == 1
-      ? 'so this is among the best third'
+      ? 'so this is in the best quarter'
       : g == -1
-          ? 'so this is among the worst third'
-          : 'so this is in the middle third';
+          ? 'so this is in the worst quarter'
+          : 'so this is in the middle half';
   return '$head. $dir, $verdict.';
 }
 
