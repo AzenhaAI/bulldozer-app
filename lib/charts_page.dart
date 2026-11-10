@@ -251,7 +251,13 @@ class _ChartsPageState extends State<ChartsPage> {
           footer: 'See the full ranking →',
           onTap: onTap,
           child: TrendChart(
-              points: avg, highlightPeriod: avg.last.$1, height: 140),
+              points: avg,
+              highlightPeriod: avg.last.$1,
+              height: 140,
+              unit: _featDs!.unit,
+              mode: _featDs!.changeMode.isEmpty ? null : _featDs!.changeMode,
+              nonNegative: _featDs!.nonNegative,
+              projectedFrom: _featDs!.projectedFrom),
         );
       }
     }
@@ -690,10 +696,14 @@ class _DatasetPageState extends State<DatasetPage> {
             TrendChart(
               points: [for (final o in series) (o.period, o.value)],
               highlightPeriod: obs.period,
+              unit: ds.unit,
+              mode: ds.changeMode.isEmpty ? null : ds.changeMode,
+              nonNegative: ds.nonNegative,
+              projectedFrom: ds.projectedFrom,
+              reference: series.length >= 2 ? ds.medianIn(series.last.period)?.value : null,
+              referenceLabel: 'Median of ${ds.medianIn(series.last.period)?.n ?? 0}',
             ),
-            const SizedBox(height: 12),
-            if (series.length >= 2)
-              _TrendSummary(first: series.first, last: series.last),
+            const SizedBox(height: 4),
             chartWatermark,
             const SizedBox(height: 8),
           ],
@@ -822,33 +832,3 @@ class _ViewToggle extends StatelessWidget {
   }
 }
 
-class _TrendSummary extends StatelessWidget {
-  final Observation first;
-  final Observation last;
-  const _TrendSummary({required this.first, required this.last});
-
-  @override
-  Widget build(BuildContext context) {
-    final change = last.value - first.value;
-    final up = change >= 0;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('${first.period} → ${last.period}',
-            style: TextStyle(fontSize: 12, color: kTextDim)),
-        Row(
-          children: [
-            Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 14, color: up ? kUp : kDown),
-            const SizedBox(width: 2),
-            Text('${up ? '+' : ''}${formatValue(change)}',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: up ? kUp : kDown)),
-          ],
-        ),
-      ],
-    );
-  }
-}

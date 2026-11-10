@@ -87,8 +87,21 @@ class Dataset {
   final String license;
   final List<Observation> data;
 
+  /// 'pp' (shares, scores) or 'pct' (levels); empty when the site does not say.
+  final String changeMode;
+
+  /// First projected year (IMF WEO), drawn dashed and left out of trends.
+  final double? projectedFrom;
+
+  /// Countries measured in different years (household surveys): compare each
+  /// country's latest reading, not one calendar year.
+  final bool latestPerCountry;
+
   Dataset.fromJson(Map<String, dynamic> j)
-      : slug = j['slug'] ?? '',
+      : changeMode = j['changeMode'] ?? '',
+        latestPerCountry = j['latestPerCountry'] == true,
+        projectedFrom = double.tryParse('${j['projectedFrom'] ?? ''}'),
+        slug = j['slug'] ?? '',
         title = j['title'] ?? '',
         summary = j['summary'] ?? '',
         unit = j['unit'] ?? '',
@@ -100,6 +113,29 @@ class Dataset {
 
   List<String> get periods =>
       {for (final o in data) o.period}.toList()..sort();
+
+  /// No country, in any year, below zero — the chart axis may not go there.
+  bool get nonNegative => data.every((o) => !(o.value < 0));
+
+  /// Median across countries in one period — the chart's reference line.
+  /// For [latestPerCountry] series, the median of each country's latest
+  /// reading (a 2020 median would be mostly the rich countries surveyed then).
+  ({double value, int n})? medianIn(String period) {
+    final List<double> v;
+    if (latestPerCountry) {
+      final latest = <String, Observation>{};
+      for (final o in data) {
+        final k = o.iso.isEmpty ? o.entity : o.iso;
+        if (!latest.containsKey(k) || o.period.compareTo(latest[k]!.period) > 0) latest[k] = o;
+      }
+      v = [for (final o in latest.values) if (o.value.isFinite) o.value]..sort();
+    } else {
+      v = [for (final o in data) if (o.period == period && o.value.isFinite) o.value]..sort();
+    }
+    if (v.isEmpty) return null;
+    final n = v.length;
+    return (value: n.isOdd ? v[n ~/ 2] : (v[n ~/ 2 - 1] + v[n ~/ 2]) / 2, n: n);
+  }
 }
 
 Future<Dataset> fetchDataset(String slug) async =>

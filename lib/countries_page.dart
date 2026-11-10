@@ -550,6 +550,12 @@ class _CountryPageState extends State<CountryPage> {
                   TrendChart(
                     points: [for (final o in series) (o.period, o.value)],
                     highlightPeriod: series.last.period,
+                    unit: item.unit,
+                    mode: (snap.data?.changeMode.isEmpty ?? true) ? null : snap.data!.changeMode,
+                    nonNegative: snap.data?.nonNegative,
+                    projectedFrom: snap.data?.projectedFrom,
+                    reference: series.length >= 2 ? snap.data?.medianIn(series.last.period)?.value : null,
+                    referenceLabel: 'Median of ${snap.data?.medianIn(series.last.period)?.n ?? 0}',
                   ),
                 const SizedBox(height: 12),
                 Text('#${item.rank} of ${item.total} · latest ${item.period}',
