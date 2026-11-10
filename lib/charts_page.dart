@@ -233,20 +233,14 @@ class _ChartsPageState extends State<ChartsPage> {
       }
     }
     if (widget.featuredStyle == 'trend' && _featDs != null) {
-      // world average per period — a line that actually moves
-      final byPeriod = <String, List<double>>{};
-      for (final o in _featDs!.data) {
-        byPeriod.putIfAbsent(o.period, () => []).add(o.value);
-      }
-      final points = byPeriod.keys.toList()..sort();
-      final avg = [
-        for (final p in points)
-          (p, byPeriod[p]!.reduce((a, b) => a + b) / byPeriod[p]!.length)
-      ];
+      // Median of the same countries in every period: an average over whoever
+      // reported each year showed who was surveyed, not change.
+      final panel = _featDs!.panelMedians();
+      final avg = panel?.points ?? const <(String, double)>[];
       if (avg.length >= 2) {
         return HeroShell(
           tag: 'Featured · ${featEntry.source}',
-          title: 'World ${featEntry.title.toLowerCase()}: '
+          title: '${featEntry.title}, median of ${panel!.n} countries: '
               '${formatValue(avg.first.$2)} → ${formatValue(avg.last.$2)}',
           footer: 'See the full ranking →',
           onTap: onTap,
@@ -256,7 +250,6 @@ class _ChartsPageState extends State<ChartsPage> {
               height: 140,
               unit: _featDs!.unit,
               mode: _featDs!.changeMode.isEmpty ? null : _featDs!.changeMode,
-              nonNegative: _featDs!.nonNegative,
               projectedFrom: _featDs!.projectedFrom),
         );
       }
@@ -698,10 +691,10 @@ class _DatasetPageState extends State<DatasetPage> {
               highlightPeriod: obs.period,
               unit: ds.unit,
               mode: ds.changeMode.isEmpty ? null : ds.changeMode,
-              nonNegative: ds.nonNegative,
+              margins: [for (final o in series) o.moe],
               projectedFrom: ds.projectedFrom,
               reference: series.length >= 2 ? ds.medianIn(series.last.period)?.value : null,
-              referenceLabel: 'Median of ${ds.medianIn(series.last.period)?.n ?? 0}',
+              referenceLabel: 'Median, ${ds.medianIn(series.last.period)?.n ?? 0} countries',
             ),
             const SizedBox(height: 4),
             chartWatermark,

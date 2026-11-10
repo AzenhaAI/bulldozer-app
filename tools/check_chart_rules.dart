@@ -25,11 +25,20 @@ void main() {
     }
   }
   void check(bool cond, String msg) { if (!cond) { bad++; print('✗ $msg'); } }
-  check(isFlat([0, 0, 0, 0]) && !isFlat([1, 1.2]) && isFlat([1.04, 0.96]), 'isFlat');
-  check(yDomain([0, 0, 0]).$1 == 0 && yDomain([0, 0, 0]).$2 > 0, 'flat zero domain never negative');
-  check(yDomain([65, 76], area: true).$1 == 0, 'area starts at 0');
-  check(yDomain([-3, 2], nonNegative: false).$1 < -3, 'negative allowed when data has negatives');
+  check(yDomain([0, 0, 0]).$1 < 0 && yDomain([0, 0, 0]).$2 > 0, 'flat series still gets a range');
+  check(yDomain([65, 76]).$1 > 64 && yDomain([65, 76]).$2 < 77, 'axis zooms to the data');
+  check(niceTicks(-10.7, 10.9, count: 5).join(',') == '-10.0,-5.0,0.0,5.0,10.0', 'round ticks with 0: ${niceTicks(-10.7, 10.9, count: 5)}');
+  check(!trendOf([for (var i = 0; i < 8; i++) (2016.0 + i, [70, 74, 77, 78, 77, 74, 70, 66][i].toDouble())])!.clear, 'no trend through a rise then fall');
+  check(trendOf([for (var i = 0; i < 8; i++) (2016.0 + i, 50 + i * 1.5)])!.clear, 'steady rise is a trend');
   check(periodYear('2021–2023') == 2022 && periodYear('2016') == 2016, 'periodYear');
-  print(bad == 0 ? '✓ all ${cases.length + 5} checks pass' : '$bad failed');
+  final lw = (jsonDecode(File('test/lowess_vectors.json').readAsStringSync())['cases'] as List).cast<Map>();
+  for (final c in lw) {
+    final sm = lowess(d(c['x']), d(c['y']), frac: 0.3);
+    final ref = d(c['smooth']);
+    var worst = 0.0;
+    for (var i = 0; i < sm.length; i++) { worst = [worst, (sm[i] - ref[i]).abs()].reduce((a, b) => a > b ? a : b); }
+    if (!(worst < 1e-8)) { bad++; print('✗ lowess ${c['name']} $worst'); }
+  }
+  print(bad == 0 ? '✓ all ${cases.length} trend cases, ${lw.length} lowess series and 6 rule checks pass' : '$bad failed');
   exit(bad == 0 ? 0 : 1);
 }

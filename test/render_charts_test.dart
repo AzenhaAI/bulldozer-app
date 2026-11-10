@@ -26,7 +26,7 @@ void main() {
   final out = Platform.environment['RENDER_OUT'] ?? 'build/render';
   testWidgets('render', (t) async {
     await t.runAsync(loadInter);
-    t.view.physicalSize = const Size(390 * 2, 330 * 2);
+    t.view.physicalSize = const Size(390 * 2, 380 * 2);
     t.view.devicePixelRatio = 2;
     final cases = (jsonDecode(File(fx!).readAsStringSync()) as List).cast<Map>();
     Directory(out).createSync(recursive: true);
@@ -51,10 +51,10 @@ void main() {
                   highlightPeriod: '${(c['points'] as List).last[0]}',
                   unit: '${c['unit']}',
                   mode: '${c['mode']}'.isEmpty ? null : '${c['mode']}',
-                  nonNegative: c['nonNegative'] as bool,
+                  margins: c['margins'] == null ? null : [for (final m in c['margins'] as List) (m as num?)?.toDouble()],
                   projectedFrom: c['projectedFrom'] == null ? null : double.parse('${c['projectedFrom']}'),
                   reference: ref,
-                  referenceLabel: c['refN'] != null ? 'Median of ${c['refN']}' : 'Median',
+                  referenceLabel: 'Median, ${c['refN'] ?? '?'} countries',
                 ),
               ]),
             ),

@@ -70,8 +70,12 @@ class Observation {
   final double value;
   final String iso;
 
+  /// 95% margin of error (survey series; the site's scripts/tools/moe.py), or null.
+  final double? moe;
+
   Observation.fromJson(Map<String, dynamic> j)
-      : entity = j['entity'] ?? '',
+      : moe = (j['moe'] as num?)?.toDouble(),
+        entity = j['entity'] ?? '',
         group = j['group'] ?? '',
         period = '${j['period'] ?? ''}',
         value = (j['value'] as num?)?.toDouble() ?? 0,
@@ -114,10 +118,28 @@ class Dataset {
   List<String> get periods =>
       {for (final o in data) o.period}.toList()..sort();
 
-  /// No country, in any year, below zero — the chart axis may not go there.
-  bool get nonNegative => data.every((o) => !(o.value < 0));
+  /// Median per period over the countries measured in every period (the same
+  /// rule as the site's regional lines): a changing set of countries would
+  /// show who was surveyed, not change. Null with fewer than 3 such countries.
+  ({List<(String, double)> points, int n})? panelMedians() {
+    final ps = periods;
+    final byEnt = <String, Map<String, double>>{};
+    for (final o in data) {
+      (byEnt[o.iso.isEmpty ? o.entity : o.iso] ??= {})[o.period] = o.value;
+    }
+    final panel = [for (final m in byEnt.values) if (ps.every(m.containsKey)) m];
+    if (panel.length < 3) return null;
+    double med(List<double> v) {
+      v.sort();
+      final n = v.length;
+      return n.isOdd ? v[n ~/ 2] : (v[n ~/ 2 - 1] + v[n ~/ 2]) / 2;
+    }
+
+    return (points: [for (final p in ps) (p, med([for (final m in panel) m[p]!]))], n: panel.length);
+  }
 
   /// Median across countries in one period — the chart's reference line.
+
   /// For [latestPerCountry] series, the median of each country's latest
   /// reading (a 2020 median would be mostly the rich countries surveyed then).
   ({double value, int n})? medianIn(String period) {
