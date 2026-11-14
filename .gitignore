@@ -57,3 +57,8 @@ store/android/*.aab
 # Internal store notes (working language) — kept on disk, out of the repo
 store/**/README.txt
 store/PLAY-listing-paste.md
+
+# Store builds stay on disk, never in git (public repo)
+store/android/**/*.aab
+store/android/**/*.apk
+*.ipa
