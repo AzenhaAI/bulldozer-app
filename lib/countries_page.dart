@@ -653,6 +653,8 @@ class _CountryPageState extends State<CountryPage> {
                         height: 1.4,
                         color: switch (_standing(item)) { 1 => kUp, -1 => kDown, _ => kTextDim })),
                 if (snap.data != null) ..._about(snap.data!, item),
+                // Name and stores under the figure, as on every chart (owner, 14 Nov).
+                chartWatermark,
                 const SizedBox(height: 8),
               ],
             ),

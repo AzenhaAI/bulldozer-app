@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'theme.dart';
+import 'widgets/brand_footer.dart';
 import 'widgets/load_error.dart';
 import 'widgets/search_sheet.dart';
 
@@ -755,7 +756,7 @@ class _Poster extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 2),
-                child: Text('azenha.ai/bulldozer', textAlign: TextAlign.right, style: TextStyle(color: dim, fontSize: 7.5)),
+                child: BrandFooter(color: dim, fontSize: 7.5, align: MainAxisAlignment.end),
               ),
             ],
           ),

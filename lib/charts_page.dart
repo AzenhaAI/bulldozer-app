@@ -844,7 +844,11 @@ class _DatasetPageState extends State<DatasetPage> {
           Text('Tap a country for its trend · $_period · ${ds.unit}',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ] else ...[
-          for (var i = 0; i < shown.length; i++)
+          if (rows.length >= 3) _SampleStats(values: [for (final o in rows) o.value], unit: ds.unit),
+          for (var i = 0; i < shown.length; i++) ...[
+            // Where the median falls in the ranking, so a row reads against it.
+            if (rows.length >= 3 && i == _medianSlot(shown, rows))
+              _MedianRule(value: _median([for (final o in rows) o.value]), unit: ds.unit),
             _BarRow(
               rank: _asc ? rows.length - i : i + 1, // rank in the full ranking
               obs: shown[i],
@@ -852,6 +856,7 @@ class _DatasetPageState extends State<DatasetPage> {
               negative: shown[i].value < 0,
               onTap: () => _showTrend(shown[i]),
             ),
+          ],
           if (!_showAll && rows.length > 20)
             TextButton(
               onPressed: () => setState(() => _showAll = true),
@@ -1042,4 +1047,66 @@ String _listTitle(CatalogEntry e) {
   final src = e.source.toLowerCase();
   final key = inBrackets.split(RegExp(r'[\s,]+')).first;
   return key.length >= 3 && src.contains(key) ? m.group(1)! : e.title;
+}
+
+double _median(List<double> v) {
+  final s = [...v]..sort();
+  final n = s.length;
+  return n.isOdd ? s[n ~/ 2] : (s[n ~/ 2 - 1] + s[n ~/ 2]) / 2;
+}
+
+/// Index in [shown] before which the median line goes: the first row past the
+/// median in the current sort order; -1 when it falls outside what is shown.
+int _medianSlot(List<Observation> shown, List<Observation> rows) {
+  final m = _median([for (final o in rows) o.value]);
+  final desc = shown.length < 2 || shown.first.value >= shown.last.value;
+  for (var i = 0; i < shown.length; i++) {
+    if (desc ? shown[i].value < m : shown[i].value > m) return i;
+  }
+  return -1;
+}
+
+/// "Median 168 · mean 182 · 185 countries": the middle of the sample next to
+/// its average, so a single bar has something to be read against (owner,
+/// 14 Nov 2026). Unweighted — every country counts once.
+class _SampleStats extends StatelessWidget {
+  final List<double> values;
+  final String unit;
+  const _SampleStats({required this.values, required this.unit});
+
+  @override
+  Widget build(BuildContext context) {
+    final mean = values.reduce((a, b) => a + b) / values.length;
+    final u = unit.contains('%') ? '%' : '';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+          'Median ${formatValue(_median(values))}$u · mean ${formatValue(mean)}$u · '
+          '${values.length} countries, each counted once',
+          style: TextStyle(fontSize: 12, color: kTextDim)),
+    );
+  }
+}
+
+class _MedianRule extends StatelessWidget {
+  final double value;
+  final String unit;
+  const _MedianRule({required this.value, required this.unit});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = kAmber.withValues(alpha: 0.7);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(children: [
+        Expanded(child: Divider(color: c, thickness: 1, height: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text('median ${formatValue(value)}${unit.contains('%') ? '%' : ''}',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
+        ),
+        Expanded(child: Divider(color: c, thickness: 1, height: 1)),
+      ]),
+    );
+  }
 }

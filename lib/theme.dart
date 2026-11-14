@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'widgets/brand_footer.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Light/dark theme, same palettes as the site (src/styles/global.css and its
@@ -144,11 +146,5 @@ Widget get brandTagline => Text.rich(
 /// screenshot carries the source without covering any data.
 Widget get chartWatermark => Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 2),
-      child: Text('azenha.ai/bulldozer',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-              color: kAmber.withValues(alpha: 0.55))),
+      child: BrandFooter(color: kAmber.withValues(alpha: 0.6)),
     );

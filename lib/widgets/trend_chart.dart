@@ -263,7 +263,7 @@ class TrendChart extends StatelessWidget {
                     getTitlesWidget: (v, meta) {
                       // Only the round ticks: fl_chart also offers the bare min and max.
                       if (!ticks.any((t) => (t - v).abs() < tickStep * 1e-6)) return const SizedBox.shrink();
-                      return Text('${formatValue(v)}${unit.contains('%') ? '%' : ''}',
+                      return Text('${_tickLabel(v, tickStep)}${unit.contains('%') ? '%' : ''}',
                           style: TextStyle(fontSize: 10, color: kTextDim));
                     },
                   ),
@@ -327,3 +327,19 @@ class TrendChart extends StatelessWidget {
     ]);
   }
 }
+
+/// A tick label with as many decimals as the step needs: formatValue rounds to
+/// two places, so a 0.0025 step on Albania's HDI read 0.81, 0.81, 0.80, 0.80.
+String _tickLabel(double v, double step) {
+  if (step >= 1 || step <= 0) return formatValue(v);
+  var dp = 0;
+  var scaled = step;
+  while (dp < 6 && (scaled - scaled.roundToDouble()).abs() > 1e-6) {
+    dp++;
+    scaled *= 10;
+  }
+  return v.toStringAsFixed(dp);
+}
+
+@visibleForTesting
+String tickLabelForTest(double v, double step) => _tickLabel(v, step);

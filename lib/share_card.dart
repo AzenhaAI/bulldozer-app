@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+
+import 'widgets/brand_footer.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -139,9 +141,8 @@ class ShareCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(footer,
               style: const TextStyle(fontSize: 11, color: dim)),
-          const Text('azenha.ai/bulldozer · open data',
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w600, color: amber)),
+          const SizedBox(height: 4),
+          const BrandFooter(color: amber, align: MainAxisAlignment.start),
         ],
       ),
     );
