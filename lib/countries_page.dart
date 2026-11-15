@@ -404,7 +404,7 @@ class _CountryPageState extends State<CountryPage> {
                     color: kAmber,
                     height: 1.1)),
             // The year next to the rank: tiles mix indicators of different years.
-            Text('#${it.rank} of ${it.total} · ${it.period}${_isEstimate(it) ? ' est.' : ''}',
+            Text('${_rankLabel(it)} · ${it.period}${_isEstimate(it) ? ' est.' : ''}',
                 style: TextStyle(
                     fontSize: 10, color: kTextDim, height: 1.2)),
           ],
@@ -1004,7 +1004,7 @@ class _IndicatorRow extends StatelessWidget {
                 Text(formatValue(item.value),
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w700)),
-                Text('#${item.rank} of ${item.total}',
+                Text(_rankLabel(item),
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -1036,7 +1036,9 @@ class _IndicatorRow extends StatelessWidget {
 /// and Ask AI: the current and the previous year are estimates.
 bool _isEstimate(CountryItem it) {
   final y = int.tryParse(RegExp(r'\d{4}').stringMatch(it.period) ?? '') ?? 0;
-  return it.slug.startsWith('imf-') && y >= DateTime.now().year - 1;
+  // Profiles rank on the last observed year (the site leaves IMF projections
+  // out), so only a year from the current one on is an estimate here.
+  return it.slug.startsWith('imf-') && y >= DateTime.now().year;
 }
 
 String _when(CountryItem it) => _isEstimate(it) ? '${it.period} est.' : it.period;
@@ -1063,6 +1065,14 @@ double _bestness(CountryItem it) {
   return (place - 1) / (it.total - 1);
 }
 
+/// "#4 of 176"; a value shared at an end reads from that end: "tied lowest of
+/// 166 (62)" instead of "#105 of 166" (QA, 15 Nov 2026), "#1= of 214" at the top.
+String _rankLabel(CountryItem it) {
+  if (it.ties > 1 && it.fromBottom == 1 && it.fromTop > 1) return 'tied lowest of ${it.total} (${it.ties})';
+  if (it.ties > 1) return '#${it.rank}= of ${it.total}';
+  return '#${it.rank} of ${it.total}';
+}
+
 /// The answer to "#5 of 120 — is that good or bad?" (a tester, 2 Nov 2026).
 String _rankMeaning(CountryItem it) {
   // Past the middle, count from the bottom: "150th highest" read like a high
@@ -1073,14 +1083,17 @@ String _rankMeaning(CountryItem it) {
   final end = low ? 'lowest' : 'highest';
   final tie = it.ties > 1 ? ', tied with ${it.ties - 1} other ${it.ties == 2 ? 'country' : 'countries'}' : '';
   final pos = n == 1 ? 'the $end value$tie' : '$n$th $end value$tie';
-  final head = '#${it.rank} of ${it.total}: $pos, of ${it.total} countries';
+  final head = '#${it.rank} of ${it.total} countries: $pos';
   if (it.better.isEmpty) return '$head. Here that is where the country stands, not a judgement of good or bad.';
   final dir = it.better == 'high' ? 'Higher is better here' : 'Lower is better here';
   final g = _standing(it);
+  // A tie at an end that covers more than a quarter of countries (121 of 214
+  // at 100% electricity) is "tied for the best value", not "the best quarter".
+  final bigTie = n == 1 && it.ties > it.total / 4;
   final verdict = g == 1
-      ? 'so this is in the best quarter'
+      ? (bigTie ? 'so this is tied for the best value' : 'so this is in the best quarter')
       : g == -1
-          ? 'so this is in the worst quarter'
+          ? (bigTie ? 'so this is tied for the worst value' : 'so this is in the worst quarter')
           : 'so this is in the middle half';
   return '$head. $dir, $verdict.';
 }

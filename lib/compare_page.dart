@@ -91,8 +91,12 @@ class _ComparePageState extends State<ComparePage> {
   }
 
   Observation? _latest(String iso) {
+    // Observed years only: "2026 est." here disagreed with the indicator page,
+    // which ranks 2025 (QA, 15 Nov 2026).
+    final pf = _ds?.projectedFrom;
     final rows = (_ds?.data ?? [])
-        .where((o) => o.iso == iso && o.value.isFinite)
+        .where((o) => o.iso == iso && o.value.isFinite &&
+            (pf == null || (double.tryParse(RegExp(r'\d{4}').stringMatch(o.period) ?? '') ?? 0) < pf))
         .toList();
     if (rows.isEmpty) return null;
     rows.sort((a, b) => a.period.compareTo(b.period));

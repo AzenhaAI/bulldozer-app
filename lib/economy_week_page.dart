@@ -76,7 +76,7 @@ class EconomyWeek {
     }
     return EconomyWeek(
       '${j['asOf'] ?? ''}',
-      j['forecastYear'] is int ? j['forecastYear'] as int : null,
+      int.tryParse('${j['forecastYear'] ?? ''}'),
       rows,
       [for (final c in (j['commodities'] as List? ?? const [])) if (c is Map) Map<String, dynamic>.from(c)],
     );
@@ -233,48 +233,64 @@ class _EconomyWeekPageState extends State<EconomyWeekPage> {
               onSelectionChanged: (s) => setState(() => _set = s.first),
             ),
             const SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columnSpacing: 14,
+            // Country names stay put while the figures scroll sideways: a
+            // scrolled row had lost its label (QA, 15 Nov 2026). Two tables
+            // with the same fixed row heights, side by side.
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              DataTable(
+                columnSpacing: 0,
                 horizontalMargin: 4,
                 headingRowHeight: 44,
-                dataRowMinHeight: 40,
-                dataRowMaxHeight: 52,
-                sortColumnIndex: cols.indexWhere((c) => c.key == _sortKey) + 1,
-                sortAscending: !_desc,
-                columns: [
-                  const DataColumn(label: Text('', style: TextStyle(fontSize: 11))),
-                  for (final c in cols)
-                    DataColumn(
-                      numeric: true,
-                      tooltip: c.hint,
-                      label: Text(c.label, textAlign: TextAlign.right, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                      onSort: (_, _) => setState(() {
-                        if (_sortKey == c.key) {
-                          _desc = !_desc;
-                        } else {
-                          _sortKey = c.key;
-                          _desc = true;
-                        }
-                      }),
-                    ),
-                ],
+                dataRowMinHeight: 48,
+                dataRowMaxHeight: 48,
+                columns: const [DataColumn(label: Text('', style: TextStyle(fontSize: 11)))],
                 rows: [
                   for (final r in rows)
                     DataRow(cells: [
                       DataCell(SizedBox(
-                        width: 112,
+                        width: 104,
                         child: Text('${r.iso.length == 3 ? '${flagFromIso(r.iso)} ' : ''}${r.name}',
-                            maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, height: 1.15)),
                       )),
-                      for (final c in cols)
-                        DataCell(_cell(r.f[c.key], c)),
                     ]),
                 ],
               ),
-            ),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columnSpacing: 14,
+                    horizontalMargin: 6,
+                    headingRowHeight: 44,
+                    dataRowMinHeight: 48,
+                    dataRowMaxHeight: 48,
+                    sortColumnIndex: cols.indexWhere((c) => c.key == _sortKey),
+                    sortAscending: !_desc,
+                    columns: [
+                      for (final c in cols)
+                        DataColumn(
+                          numeric: true,
+                          tooltip: c.hint,
+                          label: Text(c.label, textAlign: TextAlign.right, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                          onSort: (_, _) => setState(() {
+                            if (_sortKey == c.key) {
+                              _desc = !_desc;
+                            } else {
+                              _sortKey = c.key;
+                              _desc = true;
+                            }
+                          }),
+                        ),
+                    ],
+                    rows: [
+                      for (final r in rows)
+                        DataRow(cells: [for (final c in cols) DataCell(_cell(r.f[c.key], c))]),
+                    ],
+                  ),
+                ),
+              ),
+            ]),
             const SizedBox(height: 18),
             Text('COMMODITIES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmberText)),
             const SizedBox(height: 6),
@@ -290,7 +306,7 @@ class _EconomyWeekPageState extends State<EconomyWeekPage> {
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                   const SizedBox(width: 10),
                   SizedBox(
-                    width: 120,
+                    width: 150,
                     child: Text(
                         [
                           if (c['changeMonth'] is num) '${_signed((c['changeMonth'] as num).toDouble())}% m/m',

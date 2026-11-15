@@ -144,6 +144,16 @@ class Dataset {
   /// country's latest reading, not one calendar year.
   final bool latestPerCountry;
 
+  /// The newest period that is not a projection (IMF series end in the
+  /// IMF's forecast for the current year): what rankings and records use.
+  String? get lastObserved {
+    if (periods.isEmpty) return null;
+    final pf = projectedFrom;
+    if (pf == null) return periods.last;
+    final obs = periods.where((p) => (double.tryParse(RegExp(r'\d{4}').stringMatch(p) ?? '') ?? 0) < pf).toList();
+    return obs.isEmpty ? periods.last : obs.last;
+  }
+
   /// What the rows' lo/hi bounds are, e.g. "95% uncertainty interval (WHO)";
   /// empty when the source publishes none.
   final String ciLabel;
@@ -450,23 +460,55 @@ String formatWithUnit(double v, String unit) {
   final u = unit.trim();
   final l = u.toLowerCase();
   if (l == 'million') return formatValue(v * 1e6);
-  if (l == 'bn') return formatValue(v * 1e9);
-  if (l == 'usd bn' || l == 'intl\$ bn') return '\$${formatValue(v * 1e9)}';
+  // "bn" and "USD bn" are money in this catalogue (BrandZ values).
+  if (l == 'bn' || l == 'usd bn' || l == 'intl\$ bn') return '\$${formatValue(v * 1e9)}';
+  if (l.endsWith('/hr')) return '\$${formatValue(v)}/hr';
+  if (l.startsWith(r'$ per day')) return '\$${formatValue(v)} a day${l.contains('ppp') ? ' (PPP)' : ''}';
   if (l == 'usd' || l == 'intl\$' || l.startsWith('intl-\$') || l.contains('intl\$/')) {
     return '\$${formatValue(v)}';
   }
-  // Shares read to one decimal: "3.1%", not "3.10%".
-  final pct = v.abs() < 100 ? v.toStringAsFixed(1) : formatValue(v);
+  final pct = _pctNumber(v);
   if (u == '%' || l == '% yoy' || l == '% per year') return '$pct%';
   if (u.startsWith('%')) return '$pct$u';
   if (l == 'years') return '${formatValue(v)} yrs';
   if (l.startsWith('index') || l.startsWith('mean') || l.startsWith('estimate') ||
       l.contains('score') || l.contains('pts') || l.contains('…') ||
+      RegExp(r'^\d+\s*[–-]\s*\d+$').hasMatch(l) || // "0–100": the scale, not a unit
       u.isEmpty || l == 'count' || l == 'people') {
+    // Counts and categories are whole: "9", not "9.00" (QA, 15 Nov 2026).
+    if ((l == 'count' || l == 'people' || l.contains('…')) && v == v.roundToDouble() && v.abs() < 1000) {
+      return v.toStringAsFixed(0);
+    }
     return formatValue(v);
+  }
+  if ((l == 'sites' || l.startsWith('refugee')) && v == v.roundToDouble() && v.abs() < 1000) {
+    return '${v.toStringAsFixed(0)} $u';
   }
   return '${formatValue(v)} $u';
 }
+
+/// Shares to one decimal ("3.1%"), tiny ones to two significant digits
+/// ("0.0012%", not "0.0%"), huge ones grouped ("19,906%", not "19.9k%").
+String _pctNumber(double v) {
+  final a = v.abs();
+  if (a == 0) return '0';
+  if (a >= 1000) return _grouped(v.round());
+  if (a >= 100) return v.toStringAsFixed(0);
+  if (a < 0.1) return _trim(v.toStringAsPrecision(2));
+  return v.toStringAsFixed(1);
+}
+
+String _grouped(int n) {
+  final s = n.abs().toString();
+  final b = StringBuffer(n < 0 ? '-' : '');
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+    b.write(s[i]);
+  }
+  return b.toString();
+}
+
+String _trim(String s) => s.contains('.') && !s.contains('e') ? s.replaceFirst(RegExp(r'\.?0+$'), '') : s;
 
 String formatValue(double v) {
   final abs = v.abs();
@@ -476,5 +518,7 @@ String formatValue(double v) {
   if (abs >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
   if (abs >= 100) return v.toStringAsFixed(0);
   if (abs >= 10) return v.toStringAsFixed(1);
+  // Small values keep two significant digits instead of rounding to 0.00.
+  if (abs < 0.01) return _trim(v.toStringAsPrecision(2));
   return v.toStringAsFixed(2);
 }

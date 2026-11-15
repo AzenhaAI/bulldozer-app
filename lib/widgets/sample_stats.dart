@@ -36,7 +36,7 @@ class SampleStats extends StatelessWidget {
   Widget build(BuildContext context) {
     if (values.length < 3) return const SizedBox.shrink();
     final mean = values.reduce((a, b) => a + b) / values.length;
-    String f(double v) => formatWithUnit(v, unit.startsWith('%') ? unit : '');
+    String f(double v) => formatWithUnit(v, unit);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text.rich(

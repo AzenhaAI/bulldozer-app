@@ -8,6 +8,7 @@ import 'responsive.dart';
 import 'share_card.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'search_page.dart' show searchScore;
 import 'widgets/sample_stats.dart';
 import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
@@ -94,6 +95,7 @@ class ChartsPage extends StatefulWidget {
 
 class _ChartsPageState extends State<ChartsPage> {
   String _query = '';
+  final _searchCtl = TextEditingController();
   String _topic = 'all';
   List<Observation> _featTop = [];
   Dataset? _featDs; // full dataset, for the trend/dots hero styles
@@ -121,7 +123,8 @@ class _ChartsPageState extends State<ChartsPage> {
     for (final p in picks) {
       try {
         final ds = await fetchDataset(p.$3);
-        final last = ds.periods.last;
+        // A record is a fact: the last observed year, never an IMF forecast.
+        final last = ds.lastObserved ?? ds.periods.last;
         final rows = ds.data
             .where((o) => o.period == last && o.iso.isNotEmpty)
             .toList()
@@ -168,7 +171,7 @@ class _ChartsPageState extends State<ChartsPage> {
     if (slug == null) return;
     try {
       final ds = await fetchDataset(slug);
-      final last = ds.periods.last;
+      final last = ds.lastObserved ?? ds.periods.last;
       final rows = ds.data.where((o) => o.period == last).toList()
         ..sort((a, b) => b.value.compareTo(a.value));
       if (mounted) {
@@ -389,10 +392,9 @@ class _ChartsPageState extends State<ChartsPage> {
     final q = _query.toLowerCase();
     final shown = pool
         .where((e) => _topic == 'all' || e.topic == _topic)
-        .where((e) =>
-            q.isEmpty ||
-            e.title.toLowerCase().contains(q) ||
-            e.source.toLowerCase().contains(q))
+        // Word-start and one-typo matching, as in the main search: "without
+        // food" missed "Went Without Enough Food" (QA, 15 Nov 2026).
+        .where((e) => q.isEmpty || searchScore(q, '${e.title} ${e.source}') > 0)
         .toList();
     final topics = {for (final e in pool) e.topic}.toList()
       ..sort((a, b) => topicRank(a).compareTo(topicRank(b)));
@@ -410,9 +412,22 @@ class _ChartsPageState extends State<ChartsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: TextField(
+            controller: _searchCtl,
             onChanged: (v) => setState(() => _query = v),
+            autocorrect: false,
+            enableSuggestions: false,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear',
+                      icon: Icon(Icons.close, color: kTextDim, size: 18),
+                      onPressed: () => setState(() {
+                        _searchCtl.clear();
+                        _query = '';
+                      }),
+                    ),
               hintText: 'Search ${pool.length} indicators…',
               hintStyle: TextStyle(color: kTextDim, fontSize: 14),
               prefixIcon: Icon(Icons.search, color: kTextDim, size: 20),
@@ -527,6 +542,16 @@ class _ChartsPageState extends State<ChartsPage> {
               // full-width strips above the hero. Narrow: one per row, as before.
               final topRows = cols == 1 ? topN : (topN > 0 ? 1 : 0);
               final heads = topRows + (showFeatured ? 1 : 0);
+              // A search with no match said nothing at all (QA, 15 Nov 2026).
+              if (shown.isEmpty && _query.isNotEmpty) {
+                return ListView(physics: const AlwaysScrollableScrollPhysics(), children: [
+                  Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text('No indicators match "$_query" here — try the search at the top for every tab.',
+                        textAlign: TextAlign.center, style: TextStyle(color: kTextDim)),
+                  ),
+                ]);
+              }
               return ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
@@ -911,7 +936,14 @@ class _DatasetPageState extends State<DatasetPage> {
     final u = ds.unit.contains('%') ? '%' : '';
     final context0 = [
       obs.period,
-      if (peers.length >= 3) '#${higher + 1} of ${peers.length}${tied > 1 ? ' (tied with ${tied - 1})' : ''}',
+      if (peers.length >= 3)
+        // The same range the list shows, where readings carry intervals.
+        (() {
+          final rr = _rankRanges([for (final o in ds.data) if (o.period == obs.period && o.iso.isNotEmpty) o]);
+          final r = rr?.entries.where((e) => identical(e.key, obs) || (e.key.iso == obs.iso)).firstOrNull?.value;
+          final place = r != null && r.$1 != r.$2 ? '#${r.$1}–${r.$2}' : '#${higher + 1}';
+          return '$place of ${peers.length}${tied > 1 ? ' (tied with ${tied - 1} other${tied > 2 ? 's' : ''})' : ''}';
+        })(),
       if (med != null && peers.length >= 3)
         'median ${formatValue(med.value)}$u — ${obs.value > med.value ? 'above' : obs.value < med.value ? 'below' : 'at'} it'
             // With a published interval, say whether the gap is more than noise.

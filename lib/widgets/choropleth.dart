@@ -576,7 +576,9 @@ class _MapPainter extends CustomPainter {
         fill = Paint()..color = Choropleth.colorFor(v, breaks);
       }
       canvas.drawPath(path, fill);
-      if (identical(fill, _noData)) {
+      // Locator and picker maps carry no data at all: hatching every country
+      // there said "no data" about the whole world (QA, 15 Nov 2026).
+      if (identical(fill, _noData) && (values.length >= 3 || colorOverride != null)) {
         // Hatch no-data shapes so they can't be read as the lowest class.
         final r = path.getBounds().intersect(canvasRect);
         if (r.width > 0 && r.height > 0) {

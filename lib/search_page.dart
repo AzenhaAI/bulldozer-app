@@ -202,6 +202,8 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       appBar: AppBar(
         title: TextField(
+              autocorrect: false,
+              enableSuggestions: false,
           controller: _ctrl,
           autofocus: true,
           onChanged: (v) => setState(() => _q = v),
