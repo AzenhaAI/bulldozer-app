@@ -1,9 +1,8 @@
 # In-app events — rolling plan
 
 One event a month, tied to a real data release, each with a deep link to its
-screen (`bulldozerstats://open/...`, build 83+). App Store: `_stores/asc_event.py`
-with an `event-<name>.json` here, then a review submission. Google Play:
-Promotional content (Grow users), same text and 16:9 card. An event lasts at
+screen (`bulldozerstats://open/...`, build 84+). App Store only — Google Play promotional content is not available to this app (16 Nov 2026). App Store: `_stores/asc_event.py`
+with an `event-<name>.json` here, then a review submission. An event lasts at
 most 31 days and may be announced up to 14 days before it starts.
 
 Dates of releases are the publishers' usual months; check the release has

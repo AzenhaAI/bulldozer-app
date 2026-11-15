@@ -1,3 +1,5 @@
+> NOT AVAILABLE (16 Nov 2026): Play gives Promotional content to apps only past its unpublished "Premium growth tools" eligibility; the BullDozer console has no such page (the URL falls back to Home). Kept for when it opens up.
+
 # Google Play promotional content — Economy this week (with 1.39.1, build 83)
 
 Play Console → BullDozer Stats → Grow users → Promotional content → Create
