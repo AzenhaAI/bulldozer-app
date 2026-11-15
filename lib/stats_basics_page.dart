@@ -178,9 +178,10 @@ class StatsBasicsPage extends StatelessWidget {
         _Term(
           'Why a trend line is shown — or not',
           'The app draws a straight trend only when the series really moves one way: at least 6 '
-              'readings, a Mann–Kendall test with p < 0.05, and the same direction in both halves. '
+              'readings, a Mann–Kendall test with p < 0.05 (corrected because yearly figures move in runs), '
+              'the same direction in both halves, and on surveys a change bigger than the margin of error. '
               'Up-then-down series get no line, because one line would lie about them.',
-          'all three tests must pass',
+          'every test must pass',
           'A series that rises, dips for two years and rises again: "no steady trend".',
         ),
         _Term(
