@@ -854,9 +854,22 @@ class _DatasetPageState extends State<DatasetPage> {
               obs: shown[i],
               fraction: maxV == 0 ? 0 : (shown[i].value.abs() / maxV),
               negative: shown[i].value < 0,
+              // A tick at the median inside every bar track: in the top 20 the
+              // median row itself is usually out of sight (#93 of 185 on adult
+              // mortality), and the owner looked for it there (15 Nov 2026).
+              median: rows.length >= 3 && maxV > 0 && _median([for (final o in rows) o.value]) >= 0
+                  ? _median([for (final o in rows) o.value]) / maxV
+                  : null,
               onTap: () => _showTrend(shown[i]),
             ),
           ],
+          // The median falls below the rows shown: say where, so the line is
+          // not simply missing from a collapsed list.
+          if (rows.length >= 3 && shown.isNotEmpty && _medianSlot(shown, rows) == -1 && shown.length < rows.length)
+            _MedianRule(
+                value: _median([for (final o in rows) o.value]),
+                unit: ds.unit,
+                note: 'past the ${shown.length} shown, around #${(rows.length + 1) ~/ 2}'),
           if (!_showAll && rows.length > 20)
             TextButton(
               onPressed: () => setState(() => _showAll = true),
@@ -922,12 +935,14 @@ class _BarRow extends StatelessWidget {
   final Observation obs;
   final double fraction;
   final bool negative;
+  final double? median;
   final VoidCallback onTap;
   const _BarRow(
       {required this.rank,
       required this.obs,
       required this.fraction,
       required this.negative,
+      this.median,
       required this.onTap});
 
   @override
@@ -953,7 +968,7 @@ class _BarRow extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
                 child:
-                    _Bar(fraction: fraction, color: negative ? kDown : kAmber)),
+                    _Bar(fraction: fraction, color: negative ? kDown : kAmber, mark: median)),
             const SizedBox(width: 8),
             SizedBox(
                 width: 58,
@@ -971,11 +986,12 @@ class _BarRow extends StatelessWidget {
 class _Bar extends StatelessWidget {
   final double fraction;
   final Color color;
-  const _Bar({required this.fraction, required this.color});
+  final double? mark;
+  const _Bar({required this.fraction, required this.color, this.mark});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final track = Container(
       height: 10,
       decoration: BoxDecoration(
         color: kBgCard,
@@ -991,6 +1007,24 @@ class _Bar extends StatelessWidget {
           ),
         ),
       ),
+    );
+    final m = mark;
+    if (m == null || m.isNaN) return track;
+    // Rows sit 6 px apart, so 18 px ticks join into one dotted median line.
+    return SizedBox(
+      height: 18,
+      child: LayoutBuilder(builder: (context, c) {
+        final x = (m.clamp(0.0, 1.0) * c.maxWidth - 1).clamp(0.0, c.maxWidth - 2);
+        return Stack(alignment: Alignment.centerLeft, children: [
+          track,
+          Positioned(
+            left: x,
+            top: 0,
+            bottom: 0,
+            child: Container(width: 2, color: kText.withValues(alpha: 0.55)),
+          ),
+        ]);
+      }),
     );
   }
 }
@@ -1080,9 +1114,18 @@ class _SampleStats extends StatelessWidget {
     final u = unit.contains('%') ? '%' : '';
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-          'Median ${formatValue(_median(values))}$u · mean ${formatValue(mean)}$u · '
-          '${values.length} countries, each counted once',
+      // A small tick before "Median" keys the tick drawn in every bar track.
+      child: Text.rich(
+          TextSpan(children: [
+            WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: Container(
+                    width: 2, height: 12, margin: const EdgeInsets.only(right: 6),
+                    color: kText.withValues(alpha: 0.55))),
+            TextSpan(
+                text: 'Median ${formatValue(_median(values))}$u · mean ${formatValue(mean)}$u · '
+                    '${values.length} countries, each counted once'),
+          ]),
           style: TextStyle(fontSize: 12, color: kTextDim)),
     );
   }
@@ -1091,7 +1134,8 @@ class _SampleStats extends StatelessWidget {
 class _MedianRule extends StatelessWidget {
   final double value;
   final String unit;
-  const _MedianRule({required this.value, required this.unit});
+  final String? note;
+  const _MedianRule({required this.value, required this.unit, this.note});
 
   @override
   Widget build(BuildContext context) {
@@ -1102,7 +1146,7 @@ class _MedianRule extends StatelessWidget {
         Expanded(child: Divider(color: c, thickness: 1, height: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text('median ${formatValue(value)}${unit.contains('%') ? '%' : ''}',
+          child: Text('median ${formatValue(value)}${unit.contains('%') ? '%' : ''}${note == null ? '' : ' · $note'}',
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
         ),
         Expanded(child: Divider(color: c, thickness: 1, height: 1)),

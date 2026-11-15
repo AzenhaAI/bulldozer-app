@@ -37,7 +37,12 @@ class BrandFooter extends StatelessWidget {
       spacing: fontSize * 0.5,
       runSpacing: 2,
       children: [
-        Text('BullDozer Stats · azenha.ai/bulldozer', style: t),
+        // The name in capitals and the address in a lighter weight: set in
+        // one run they read as one blur of text (owner, 15 Nov 2026).
+        Text('BULLDOZER STATS',
+            style: t.copyWith(fontWeight: FontWeight.w900, letterSpacing: fontSize * 0.12)),
+        Text('azenha.ai/bulldozer',
+            style: t.copyWith(fontWeight: FontWeight.w500, color: color.withValues(alpha: color.a * 0.8))),
         Row(mainAxisSize: MainAxisSize.min, children: [
           _mark(_apple, color, icon),
           SizedBox(width: fontSize * 0.2),
