@@ -19,8 +19,8 @@ import 'stats_basics_page.dart';
 ///
 /// Flutter's deep linking (FlutterDeepLinkingEnabled / flutter_deeplinking_enabled)
 /// hands the URL's path to the Navigator as a route name ("/economy"); the
-/// "open" host is not part of it. A leading "open" segment is skipped anyway,
-/// so a link written as bulldozerstats:///open/economy still lands.
+/// "open" host is not part of it — except on an Android cold start, see
+/// [deepLinkShell]. A leading "open" segment is skipped anyway.
 /// Apple refused to review an in-app event without a deep link, and 1.39.0
 /// had none (15 Nov 2026).
 const kTabLinks = {'home': 0, 'ask': 1, 'stats': 2, 'biz': 3, 'polls': 4, 'geo': 5, 'edu': 6};
@@ -28,7 +28,32 @@ const kTabLinks = {'home': 0, 'ask': 1, 'stats': 2, 'biz': 3, 'polls': 4, 'geo':
 /// A tab asked for by a link; the shell listens and switches.
 final shellTabRequest = ValueNotifier<int?>(null);
 
+/// Builds the tabs, set by the app. On an Android cold start Flutter hands the
+/// whole URL ("bulldozerstats://open/economy") over as the only initial route;
+/// a name without a leading '/' does not stack `home` under it, so the linked
+/// screen opened with nothing beneath it, a tab link left a blank screen and
+/// Back closed the app (review, 15 Nov 2026). Such a route brings the tabs
+/// itself and then opens the link's path over them, as iOS and warm starts do.
+Widget Function()? deepLinkShell;
+
 Route<dynamic> deepLinkRoute(RouteSettings s) {
+  final uri = Uri.tryParse(s.name ?? '');
+  final shell = deepLinkShell;
+  if (uri != null && uri.hasScheme && shell != null) {
+    final path = uri.pathSegments.where((p) => p.isNotEmpty).join('/');
+    var opened = false;
+    return MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
+        builder: (ctx) {
+          if (!opened && path.isNotEmpty) {
+            opened = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (ctx.mounted) Navigator.of(ctx).pushNamed('/$path');
+            });
+          }
+          return shell();
+        });
+  }
   var seg = Uri.tryParse(s.name ?? '')?.pathSegments.where((p) => p.isNotEmpty).toList() ?? const <String>[];
   if (seg.isNotEmpty && seg.first == 'open') seg = seg.sublist(1);
   final page = seg.isEmpty ? '' : seg.first.toLowerCase();

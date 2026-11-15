@@ -82,6 +82,11 @@ class BulldozerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Rebuilds the whole tree on theme toggle — the k-colors are getters
     // backed by themeNotifier, same palettes as the site.
+    // The tabs for a link that arrives as a whole URL (Android cold start);
+    // it follows the theme switch the way `home` does.
+    deepLinkShell ??= () => ValueListenableBuilder(
+        valueListenable: themeNotifier,
+        builder: (_, _, _) => HomeShell(key: ValueKey(isLight)));
     return ValueListenableBuilder(
       valueListenable: themeNotifier,
       builder: (_, _, _) => MaterialApp(
@@ -98,9 +103,10 @@ class BulldozerApp extends StatelessWidget {
         ),
         // new key on toggle → the whole tree rebuilds with the new palette
         home: HomeShell(key: ValueKey(isLight)),
-        // bulldozerstats://open/<screen> — see deep_links.dart. With `home`
-        // as '/', a cold start from a link gets the tabs and the linked
-        // screen on the stack, so Back returns to the tabs.
+        // bulldozerstats://open/<screen> — see deep_links.dart. A link
+        // arrives as '/economy' over `home` (iOS, warm starts) or as the
+        // whole URL on an Android cold start, where deepLinkRoute brings
+        // the tabs itself; either way Back returns to the tabs.
         onGenerateRoute: deepLinkRoute,
       ),
     );

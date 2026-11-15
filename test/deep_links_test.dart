@@ -38,6 +38,36 @@ void main() {
     expect(find.text('tabs'), findsOneWidget);
   });
 
+  group('Android cold start: the whole URL is the only initial route', () {
+    setUp(() => deepLinkShell = () => const Text('tabs'));
+    tearDown(() => deepLinkShell = null);
+
+    testWidgets('a screen link gets the tabs beneath it', (t) async {
+      await t.pumpWidget(app('bulldozerstats://open/basics'));
+      await t.pumpAndSettle();
+      expect(find.byType(StatsBasicsPage), findsOneWidget);
+      t.state<NavigatorState>(find.byType(Navigator)).pop();
+      await t.pumpAndSettle();
+      expect(find.text('tabs'), findsOneWidget);
+    });
+
+    testWidgets('a tab link shows the tabs, not a blank screen', (t) async {
+      shellTabRequest.value = null;
+      await t.pumpWidget(app('bulldozerstats://open/biz'));
+      await t.pumpAndSettle();
+      expect(shellTabRequest.value, 3);
+      expect(find.text('tabs'), findsOneWidget);
+      expect(t.state<NavigatorState>(find.byType(Navigator)).canPop(), isFalse);
+    });
+
+    testWidgets('an unknown link leaves the tabs', (t) async {
+      await t.pumpWidget(app('bulldozerstats://open/nope'));
+      await t.pumpAndSettle();
+      expect(find.text('tabs'), findsOneWidget);
+      expect(t.state<NavigatorState>(find.byType(Navigator)).canPop(), isFalse);
+    });
+  });
+
   testWidgets('a tab link asks the shell for the tab and leaves the tabs showing', (t) async {
     shellTabRequest.value = null;
     await t.pumpWidget(app('/biz'));
