@@ -36,7 +36,7 @@ const DSF = SIZE.startsWith('ipad') || SIZE === 'mini' ? 2 : 3;
 const OUT = join(ROOT, `store/screenshots/ios-${SIZE}`);
 
 // Six NavigationDestinations spread evenly; icons sit just above the home indicator.
-const TABS = ['home', 'stats', 'biz', 'polls', 'geo', 'edu'];
+const TABS = ['home', 'ask-ai', 'stats', 'biz', 'polls', 'geo', 'edu']; // seven tabs since Ask AI joined the bar
 const tabX = (i) => Math.round((VW / TABS.length) * (i + 0.5));
 // Derived, not hardcoded: the bar hugs the bottom, so a shorter viewport moves it
 // up with the same offset. A fixed 886 happened to still land inside the bar at
