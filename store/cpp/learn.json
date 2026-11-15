@@ -1,0 +1,16 @@
+{
+ "name": "Learn statistics",
+ "deepLink": "bulldozerstats://open/basics",
+ "locales": {
+  "en-US": {
+   "promotionalText": "Median, percentage points, margins of error, trends: each term with its formula and a worked example on real data. Then try the country quiz.",
+   "APP_IPHONE_67": "learn-6.9",
+   "APP_IPAD_PRO_3GEN_129": "learn-ipad",
+   "keywords": [
+    "statistics",
+    "trivia",
+    "facts"
+   ]
+  }
+ }
+}

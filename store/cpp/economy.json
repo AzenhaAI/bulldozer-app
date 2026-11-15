@@ -1,0 +1,16 @@
+{
+ "name": "Economy & markets",
+ "deepLink": "bulldozerstats://open/economy",
+ "locales": {
+  "en-US": {
+   "promotionalText": "GDP, inflation, jobs, bond yields and currencies for 43 economies, plus oil and gold. Every ranking shows the median, the mean and the source.",
+   "APP_IPHONE_67": "economy-6.9",
+   "APP_IPAD_PRO_3GEN_129": "economy-ipad",
+   "keywords": [
+    "economy",
+    "gdp",
+    "indicators"
+   ]
+  }
+ }
+}

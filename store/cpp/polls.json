@@ -1,0 +1,16 @@
+{
+ "name": "Polls & opinion",
+ "deepLink": "bulldozerstats://open/polls",
+ "locales": {
+  "en-US": {
+   "promotionalText": "Surveys from around the world on democracy, trust, happiness and bribes. Margins of error shown as a range of places, not a false exact rank.",
+   "APP_IPHONE_67": "polls-6.9",
+   "APP_IPAD_PRO_3GEN_129": "polls-ipad",
+   "keywords": [
+    "polls",
+    "rankings",
+    "compare"
+   ]
+  }
+ }
+}
