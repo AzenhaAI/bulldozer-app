@@ -756,6 +756,7 @@ class _DatasetPageState extends State<DatasetPage> {
       ..sort((a, b) =>
           _asc ? a.value.compareTo(b.value) : b.value.compareTo(a.value));
     final shown = _showAll ? rows : rows.take(20).toList();
+    final ranges = _rankRanges(rows);
     final maxV = rows.isEmpty
         ? 1.0
         : rows.map((o) => o.value.abs()).reduce((a, b) => a > b ? a : b);
@@ -845,6 +846,17 @@ class _DatasetPageState extends State<DatasetPage> {
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ] else ...[
           if (rows.length >= 3) SampleStats(values: [for (final o in rows) o.value], unit: ds.unit),
+          // Surveys and estimates with a published margin: a single place
+          // overstates what a sample can tell apart (statistical review,
+          // 15 Nov 2026: 36 of 37 neighbouring Afrobarometer pairs overlap).
+          if (ranges != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                  'Ranks are shown as ranges: where two countries\' ${ds.ciLabel.isEmpty ? 'margins of error' : 'uncertainty intervals'} overlap, '
+                  'the data cannot tell which is higher.',
+                  style: TextStyle(fontSize: 11.5, color: kTextDim, height: 1.35)),
+            ),
           for (var i = 0; i < shown.length; i++) ...[
             // Where the median falls in the ranking, so a row reads against it.
             if (rows.length >= 3 && i == _medianSlot(shown, rows))
@@ -853,6 +865,7 @@ class _DatasetPageState extends State<DatasetPage> {
               // Equal values share a rank (1 + countries strictly higher), as on
               // country profiles; sort order used to spread a tie over 62 places.
               rank: 1 + rows.where((o) => o.value > shown[i].value).length,
+              rankRange: ranges?[shown[i]],
               obs: shown[i],
               fraction: maxV == 0 ? 0 : (shown[i].value.abs() / maxV),
               negative: shown[i].value < 0,
@@ -956,8 +969,35 @@ class _DatasetPageState extends State<DatasetPage> {
   }
 }
 
+/// Bounds of a reading: the source's interval, else value ± margin of error.
+(double, double)? _bounds(Observation o) =>
+    o.interval ?? (o.moe == null ? null : (o.value - o.moe!, o.value + o.moe!));
+
+/// Rank ranges for a ranking whose readings carry bounds: a country can sit no
+/// higher than 1 + the countries whose whole interval lies above its own, and
+/// no lower than 1 + the countries whose interval reaches above its lower end.
+/// Null when fewer than half the rows have bounds.
+Map<Observation, (int, int)>? _rankRanges(List<Observation> rows) {
+  final b = {for (final o in rows) o: _bounds(o)};
+  if (rows.length < 3 || b.values.where((x) => x != null).length * 2 < rows.length) return null;
+  final out = <Observation, (int, int)>{};
+  for (final o in rows) {
+    final mine = b[o] ?? (o.value, o.value);
+    var surelyAbove = 0, maybeAbove = 0;
+    for (final q in rows) {
+      if (identical(q, o)) continue;
+      final other = b[q] ?? (q.value, q.value);
+      if (other.$1 > mine.$2) surelyAbove++;
+      if (other.$2 > mine.$1) maybeAbove++;
+    }
+    out[o] = (1 + surelyAbove, 1 + maybeAbove);
+  }
+  return out;
+}
+
 class _BarRow extends StatelessWidget {
   final int rank;
+  final (int, int)? rankRange;
   final Observation obs;
   final double fraction;
   final bool negative;
@@ -965,6 +1005,7 @@ class _BarRow extends StatelessWidget {
   final VoidCallback onTap;
   const _BarRow(
       {required this.rank,
+      this.rankRange,
       required this.obs,
       required this.fraction,
       required this.negative,
@@ -980,8 +1021,11 @@ class _BarRow extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-                width: 26,
-                child: Text('$rank',
+                width: rankRange == null ? 26 : 46,
+                child: Text(
+                    rankRange == null || rankRange!.$1 == rankRange!.$2
+                        ? '$rank'
+                        : '${rankRange!.$1}–${rankRange!.$2}',
                     style: TextStyle(fontSize: 11, color: kTextDim))),
             SizedBox(
               width: 110,
