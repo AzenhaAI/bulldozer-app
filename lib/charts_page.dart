@@ -707,8 +707,9 @@ class _DatasetPageState extends State<DatasetPage> {
   void _share() {
     final ds = _ds;
     if (ds == null) return;
-    final rows = ds.data.where((o) => o.period == _period).toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    // The card shows what the screen shows: same year view, same sort order.
+    final rows = _rowsFor(ds, _period)
+      ..sort((a, b) => _asc ? a.value.compareTo(b.value) : b.value.compareTo(a.value));
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => SharePreviewPage(
         tag: ds.source,
@@ -717,7 +718,7 @@ class _DatasetPageState extends State<DatasetPage> {
           for (final o in rows.take(6))
             ('${flagFromIso(o.iso)} ${o.entity}', o.value)
         ],
-        footer: '$_period · ${ds.unit}',
+        footer: '${_period == kLatestView ? 'latest reading per country' : _period} · ${ds.unit}',
         all: [for (final o in rows) o.value],
         unit: ds.unit,
       ),
@@ -751,7 +752,7 @@ class _DatasetPageState extends State<DatasetPage> {
 
   Widget _buildBody() {
     final ds = _ds!;
-    final rows = ds.data.where((o) => o.period == _period).toList()
+    final rows = _rowsFor(ds, _period)
       ..sort((a, b) =>
           _asc ? a.value.compareTo(b.value) : b.value.compareTo(a.value));
     final shown = _showAll ? rows : rows.take(20).toList();
@@ -787,6 +788,7 @@ class _DatasetPageState extends State<DatasetPage> {
           periods: ds.periods,
           selected: _period,
           projectedFrom: ds.projectedFrom,
+          latestOption: ds.latestPerCountry,
           onSelected: (p) => setState(() => _period = p),
         ),
         const SizedBox(height: 12),
@@ -1146,7 +1148,33 @@ class _MedianRule extends StatelessWidget {
 /// The year a ranking opens on: the newest observed year. IMF series end in
 /// the IMF's projection for the current year, and a forecast ranked as a
 /// result read as fact (statistical review, 15 Nov 2026).
+/// The "Latest" year view: each country's newest observed reading, for
+/// surveys run in different years in different countries — ranking only the
+/// newest year left 4 countries for extreme poverty 2025 (review, 15 Nov 2026).
+const kLatestView = 'Latest';
+
+List<Observation> _rowsFor(Dataset ds, String? period) {
+  if (period != kLatestView) return ds.data.where((o) => o.period == period).toList();
+  final last = _defaultObserved(ds);
+  final lastY = int.tryParse(RegExp(r'\d{4}').stringMatch(last ?? '') ?? '') ?? 0;
+  final best = <String, Observation>{};
+  for (final o in ds.data) {
+    if (o.iso.isEmpty || last == null || o.period.compareTo(last) > 0) continue;
+    final y = int.tryParse(RegExp(r'\d{4}').stringMatch(o.period) ?? '') ?? 0;
+    if (lastY - y > 10) continue;
+    final cur = best[o.iso];
+    if (cur == null || o.period.compareTo(cur.period) > 0) best[o.iso] = o;
+  }
+  return best.values.toList();
+}
+
 String? _defaultPeriod(Dataset ds) {
+  if (ds.periods.isEmpty) return null;
+  if (ds.latestPerCountry && ds.periods.length > 1) return kLatestView;
+  return _defaultObserved(ds);
+}
+
+String? _defaultObserved(Dataset ds) {
   if (ds.periods.isEmpty) return null;
   final pf = ds.projectedFrom;
   if (pf == null) return ds.periods.last;
@@ -1162,8 +1190,13 @@ class _YearStrip extends StatelessWidget {
   final String? selected;
   final double? projectedFrom;
   final ValueChanged<String> onSelected;
+  final bool latestOption;
   const _YearStrip(
-      {required this.periods, required this.selected, required this.projectedFrom, required this.onSelected});
+      {required this.periods,
+      required this.selected,
+      required this.projectedFrom,
+      required this.onSelected,
+      this.latestOption = false});
 
   bool _projected(String p) {
     final pf = projectedFrom;
@@ -1179,7 +1212,7 @@ class _YearStrip extends StatelessWidget {
           ? const SizedBox.shrink()
           : Text(periods.first, style: TextStyle(fontSize: 12, color: kTextDim));
     }
-    final newestFirst = periods.reversed.toList();
+    final newestFirst = [if (latestOption) kLatestView, ...periods.reversed];
     return SizedBox(
       height: 36,
       child: ListView.separated(
