@@ -138,7 +138,9 @@ class _ChartsPageState extends State<ChartsPage> {
         // stand at 100% internet use, and one of them was named the leader.
         final ties = rows.where((r) => r.value == o.value).length;
         final y = int.tryParse(RegExp(r'\d{4}').stringMatch(last) ?? '') ?? 0;
-        final est = p.$3.startsWith('imf-') && y >= DateTime.now().year - 1;
+        // An estimate only where the series says the projection starts.
+        final pf = ds.projectedFrom;
+        final est = pf != null && y >= pf;
         final when = est ? '$last est.' : last;
         out.add(RecordFact(
             emoji: p.$1,

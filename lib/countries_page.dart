@@ -1083,7 +1083,8 @@ String _rankMeaning(CountryItem it) {
   final end = low ? 'lowest' : 'highest';
   final tie = it.ties > 1 ? ', tied with ${it.ties - 1} other ${it.ties == 2 ? 'country' : 'countries'}' : '';
   final pos = n == 1 ? 'the $end value$tie' : '$n$th $end value$tie';
-  final head = '#${it.rank} of ${it.total} countries: $pos';
+  // A tie at an end has no single place worth printing ("#105 of 166").
+  final head = n == 1 && it.ties > 1 ? 'Of ${it.total} countries: $pos' : '#${it.rank} of ${it.total} countries: $pos';
   if (it.better.isEmpty) return '$head. Here that is where the country stands, not a judgement of good or bad.';
   final dir = it.better == 'high' ? 'Higher is better here' : 'Lower is better here';
   final g = _standing(it);

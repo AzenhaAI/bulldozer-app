@@ -84,6 +84,9 @@ class _ComparePageState extends State<ComparePage> {
     final latest = <String, Observation>{};
     for (final o in _ds?.data ?? const <Observation>[]) {
       if (o.iso.isEmpty || !o.value.isFinite) continue;
+      // Observed years only, like the bars above it.
+      final pf = _ds?.projectedFrom;
+      if (pf != null && (double.tryParse(RegExp(r'\d{4}').stringMatch(o.period) ?? '') ?? 0) >= pf) continue;
       final cur = latest[o.iso];
       if (cur == null || o.period.compareTo(cur.period) > 0) latest[o.iso] = o;
     }
