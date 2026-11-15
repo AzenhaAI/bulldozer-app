@@ -15,7 +15,7 @@ zooms to the data so every change is visible.
 | Caption (4) | "−1.6 pp since 2013"; % for money/people; growth rates: compound average ("compound average +2.0% per year, 2019–2025") |
 | Uncertainty (5) | Survey series: band = 95% margin of error (Kish effective n; the site's `scripts/tools/moe.py`), in `moe` on each observation. IMF: years ≥ `projectedFrom` on a shaded "IMF forecast" stretch, out of the trend |
 | Smoothing (6) | ≥ 20 readings: LOWESS curve (statsmodels-identical) over a faint yearly line |
-| Trend | Dashed Theil–Sen line over observed years when ≥ 6 readings, Mann–Kendall p < 0.05 and the same direction in both halves; money/people fitted on logs (rate in % per year) |
+| Trend | Dashed Theil–Sen line over observed years when ≥ 6 readings, Mann–Kendall p < 0.05 (corrected for serial correlation, Yue & Wang 2004), the same direction in both halves, and on surveys a fitted change over ~1.4 margins of error; money/people fitted on logs (rate in % per year) |
 | Also | x by year (waves at their midpoint); straight segments (a curve invented values); round ticks with a 0 line; a key line under the chart |
 
 The home "trend" card now shows the median of the same countries in every
