@@ -640,6 +640,8 @@ class _CountryPageState extends State<CountryPage> {
                     unit: item.unit,
                     mode: (snap.data?.changeMode.isEmpty ?? true) ? null : snap.data!.changeMode,
                     margins: [for (final o in series) o.moe],
+              intervals: [for (final o in series) o.interval],
+              bandLabel: (snap.data?.ciLabel ?? "").isEmpty ? null : snap.data!.ciLabel,
                     projectedFrom: snap.data?.projectedFrom,
                     reference: series.length >= 2 ? snap.data?.medianIn(series.last.period)?.value : null,
                     referenceLabel: 'Median, ${snap.data?.medianIn(series.last.period)?.n ?? 0} countries',
@@ -682,6 +684,18 @@ class _CountryPageState extends State<CountryPage> {
         const SizedBox(height: 6),
         Text('How: ${ds.method}', style: dim),
       ],
+      // The source's own uncertainty, where it publishes one (WHO estimates).
+      ...() {
+        final mine = ds.data.where((o) => o.iso == widget.country.iso && o.period == item.period && o.interval != null);
+        final iv = mine.isEmpty ? null : mine.first.interval;
+        if (iv == null) return <Widget>[];
+        return [
+          const SizedBox(height: 6),
+          Text('${ds.ciLabel.isEmpty ? 'Uncertainty interval' : ds.ciLabel}: '
+              '${formatValue(iv.$1)}–${formatValue(iv.$2)} — the figure is an estimate, and ranks inside '
+              'that range are not distinct.', style: dim),
+        ];
+      }(),
       const SizedBox(height: 6),
       Text(
           'Source: ${ds.source}${ds.vintage.isNotEmpty ? ', ${ds.vintage}' : ''} · '

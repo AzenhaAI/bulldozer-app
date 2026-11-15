@@ -900,7 +900,11 @@ class _DatasetPageState extends State<DatasetPage> {
       obs.period,
       if (peers.length >= 3) '#${higher + 1} of ${peers.length}${tied > 1 ? ' (tied with ${tied - 1})' : ''}',
       if (med != null && peers.length >= 3)
-        'median ${formatValue(med.value)}$u — ${obs.value > med.value ? 'above' : obs.value < med.value ? 'below' : 'at'} it',
+        'median ${formatValue(med.value)}$u — ${obs.value > med.value ? 'above' : obs.value < med.value ? 'below' : 'at'} it'
+            // With a published interval, say whether the gap is more than noise.
+            '${obs.interval != null && (med.value >= obs.interval!.$1 && med.value <= obs.interval!.$2) ? ', within the uncertainty' : ''}',
+      if (obs.interval != null)
+        '${ds.ciLabel.isEmpty ? 'interval' : ds.ciLabel} ${formatValue(obs.interval!.$1)}–${formatValue(obs.interval!.$2)}$u',
     ].join(' · ');
     showModalBottomSheet(
       context: context,
@@ -934,6 +938,8 @@ class _DatasetPageState extends State<DatasetPage> {
               unit: ds.unit,
               mode: ds.changeMode.isEmpty ? null : ds.changeMode,
               margins: [for (final o in series) o.moe],
+              intervals: [for (final o in series) o.interval],
+              bandLabel: ds.ciLabel.isEmpty ? null : ds.ciLabel,
               projectedFrom: ds.projectedFrom,
               // The median of the year being looked at, not of the series' last
               // year (for IMF that was the forecast year).

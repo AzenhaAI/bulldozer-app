@@ -106,8 +106,15 @@ class Observation {
   /// 95% margin of error (survey series; the site's scripts/tools/moe.py), or null.
   final double? moe;
 
+  /// The source's own uncertainty bounds, where it publishes them (WHO,
+  /// V-Dem, CPI, WGI, WHR, PISA): see the dataset's ciLabel for the level.
+  final double? lo, hi;
+  (double, double)? get interval => lo != null && hi != null ? (lo!, hi!) : null;
+
   Observation.fromJson(Map<String, dynamic> j)
       : moe = (j['moe'] as num?)?.toDouble(),
+        lo = (j['lo'] as num?)?.toDouble(),
+        hi = (j['hi'] as num?)?.toDouble(),
         entity = j['entity'] ?? '',
         group = j['group'] ?? '',
         period = '${j['period'] ?? ''}',
@@ -137,8 +144,13 @@ class Dataset {
   /// country's latest reading, not one calendar year.
   final bool latestPerCountry;
 
+  /// What the rows' lo/hi bounds are, e.g. "95% uncertainty interval (WHO)";
+  /// empty when the source publishes none.
+  final String ciLabel;
+
   Dataset.fromJson(Map<String, dynamic> j)
       : changeMode = j['changeMode'] ?? '',
+        ciLabel = '${j['ciLabel'] ?? ''}',
         latestPerCountry = j['latestPerCountry'] == true,
         projectedFrom = double.tryParse('${j['projectedFrom'] ?? ''}'),
         slug = j['slug'] ?? '',

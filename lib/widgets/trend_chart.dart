@@ -36,6 +36,13 @@ class TrendChart extends StatelessWidget {
   /// 95% margin of error per point (same order as [points]); null where unknown.
   final List<double?>? margins;
 
+  /// Published uncertainty bounds per point (lower, upper), e.g. WHO's 95%
+  /// interval or V-Dem's 68% one; they win over [margins] where given.
+  final List<(double, double)?>? intervals;
+
+  /// What the band is, for the key ("95% uncertainty interval (WHO)").
+  final String? bandLabel;
+
   /// First projected year (IMF WEO: the release year and after).
   final double? projectedFrom;
 
@@ -54,6 +61,8 @@ class TrendChart extends StatelessWidget {
     this.unit = '',
     this.mode,
     this.margins,
+    this.intervals,
+    this.bandLabel,
     this.projectedFrom,
     this.reference,
     this.referenceLabel = 'Median',
@@ -65,10 +74,17 @@ class TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pts = <(String, double, double, double?)>[
+    (double, double)? bounds(int i) {
+      final iv = intervals != null && i < intervals!.length ? intervals![i] : null;
+      if (iv != null && iv.$1.isFinite && iv.$2.isFinite) return iv;
+      final m = margins != null && i < margins!.length ? margins![i] : null;
+      return m == null ? null : (points[i].$2 - m, points[i].$2 + m);
+    }
+
+    final pts = <(String, double, double, (double, double)?)>[
       for (var i = 0; i < points.length; i++)
         if (points[i].$2.isFinite && periodYear(points[i].$1).isFinite)
-          (points[i].$1, periodYear(points[i].$1), points[i].$2, margins != null && i < margins!.length ? margins![i] : null)
+          (points[i].$1, periodYear(points[i].$1), points[i].$2, bounds(i))
     ]..sort((a, b) => a.$2.compareTo(b.$2));
 
     if (pts.length < 2) {
@@ -97,7 +113,7 @@ class TrendChart extends StatelessWidget {
     final (lo, hi) = yDomain([
       ...values,
       for (final p in pts)
-        if (p.$4 != null) ...[p.$3 - p.$4!, p.$3 + p.$4!],
+        if (p.$4 != null) ...[p.$4!.$1, p.$4!.$2],
       if (showLine) ...[trend.at(trend.x0), trend.at(trend.x1)],
     ]);
     // The reference joins the chart only when it is inside the data's range:
@@ -109,7 +125,7 @@ class TrendChart extends StatelessWidget {
     final x0 = pts.first.$2, x1 = pts.last.$2;
     final xPad = (x1 - x0) * 0.03 + 0.2; // whole markers at the edges
 
-    LineChartBarData series(List<(String, double, double, double?)> s,
+    LineChartBarData series(List<(String, double, double, (double, double)?)> s,
             {Color? color, double width = 2.5, bool dots = true}) =>
         LineChartBarData(
           spots: [for (final p in s) FlSpot(p.$2, p.$3)],
@@ -136,13 +152,13 @@ class TrendChart extends StatelessWidget {
     if (hasBand) {
       final withM = [for (final p in pts) if (p.$4 != null) p];
       bars.add(LineChartBarData(
-          spots: [for (final p in withM) FlSpot(p.$2, p.$3 - p.$4!)],
+          spots: [for (final p in withM) FlSpot(p.$2, p.$4!.$1)],
           color: Colors.transparent,
           barWidth: 0,
           dotData: const FlDotData(show: false)));
       bandLo = bars.length - 1;
       bars.add(LineChartBarData(
-          spots: [for (final p in withM) FlSpot(p.$2, p.$3 + p.$4!)],
+          spots: [for (final p in withM) FlSpot(p.$2, p.$4!.$2)],
           color: Colors.transparent,
           barWidth: 0,
           dotData: const FlDotData(show: false)));
@@ -184,7 +200,7 @@ class TrendChart extends StatelessWidget {
         ? changeLine([for (final p in actual.isEmpty ? pts : actual) (p.$1, p.$2, p.$3)], _mode, unit: unit, trend: trend)
         : '';
     final key = <String>[
-      if (hasBand) 'band: margin of error (95%, about)',
+      if (hasBand) 'band: ${bandLabel ?? 'margin of error (95%, about)'}',
       if (smooth != null) 'thick: smoothed',
       if (showLine) 'dashed: trend',
       if (refInside) 'dotted: $referenceLabel',
@@ -201,12 +217,12 @@ class TrendChart extends StatelessWidget {
         final plotW = (box.maxWidth.isFinite ? box.maxWidth : 340) - 46;
         final pxPerYear = plotW / ((x1 - x0) + 2 * xPad);
         double w(String l) => l.length * 5.8 + 8;
-        double centre((String, double, double, double?) p) {
+        double centre((String, double, double, (double, double)?) p) {
           final c = (p.$2 - x0 + xPad) * pxPerYear;
           return c.clamp(w(p.$1) / 2, plotW - w(p.$1) / 2).toDouble();
         }
 
-        final kept = <(String, double, double, double?)>[];
+        final kept = <(String, double, double, (double, double)?)>[];
         for (final p in [pts.first, pts.last, ...pts.sublist(1, pts.length - 1)]) {
           if (kept.every((q) => (centre(p) - centre(q)).abs() >= (w(p.$1) + w(q.$1)) / 2 + 6)) kept.add(p);
         }
@@ -296,7 +312,7 @@ class TrendChart extends StatelessWidget {
                     if (p.isEmpty) return null;
                     final q = p.first;
                     final tag = proj != null && q.$2 >= proj ? ' (IMF forecast)' : '';
-                    final m = q.$4 != null ? ' ± ${formatValue(q.$4!)}' : '';
+                    final m = q.$4 != null ? ' (${formatValue(q.$4!.$1)}–${formatValue(q.$4!.$2)})' : '';
                     return LineTooltipItem(
                       '${q.$1}$tag\n${formatValue(q.$3)}$m',
                       TextStyle(color: kText, fontSize: 12, fontWeight: FontWeight.w600),
