@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'map_maker_page.dart';
 import 'people_chart_page.dart';
+import 'stats_basics_page.dart';
 import 'theme.dart';
 
 /// Edu tab — mirrors the site's /edu section: a field guide to dashboards,
@@ -94,7 +95,7 @@ class EduPage extends StatelessWidget {
         const SizedBox(height: 14),
         // Tools that run in the app, ahead of the reading list. Testers asked
         // for poster maps (R10) and people charts (R14); more makers join as they ship.
-        Text('MAKE YOUR OWN',
+        Text('LEARN AND MAKE',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1, color: kAmber)),
         const SizedBox(height: 6),
         for (final m in <(String, String, String, Widget Function())>[
@@ -104,6 +105,13 @@ class EduPage extends StatelessWidget {
             'Turn any of our indicators into a poster map: pick a region, '
                 'name the colour classes, share the image — with its source on it.',
             () => const MapMakerPage(),
+          ),
+          (
+            '📐',
+            'Statistics basics',
+            'Median vs mean, percent vs percentage points, rates, margins of error, '
+                'the trend test — every formula behind the numbers here, with worked examples.',
+            () => const StatsBasicsPage(),
           ),
           (
             '🧍',
