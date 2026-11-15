@@ -182,34 +182,30 @@ class _ChartsPageState extends State<ChartsPage> {
     }
   }
 
-  /// World average per period for the featured dataset — the site's "how has
-  /// this moved" line. Empty when there is nothing to draw a line through.
-  List<(String, double)> _worldAverage() {
+  /// The median country per period over a fixed panel (countries present in
+  /// every year), so the line moves because countries moved, not because the
+  /// set of reporters changed. It was a plain mean of whoever reported,
+  /// labelled "WORLD" (statistical review, 15 Nov 2026).
+  ({List<(String, double)> points, int n})? _worldMedian() {
     final ds = _featDs;
-    if (ds == null) return const [];
-    final byPeriod = <String, List<double>>{};
-    for (final o in ds.data) {
-      byPeriod.putIfAbsent(o.period, () => []).add(o.value);
-    }
-    final periods = byPeriod.keys.toList()..sort();
-    if (periods.length < 2) return const [];
-    return [
-      for (final p in periods)
-        (p, byPeriod[p]!.reduce((a, b) => a + b) / byPeriod[p]!.length)
-    ];
+    if (ds == null) return null;
+    final pm = ds.panelMedians();
+    if (pm == null || pm.points.length < 2) return null;
+    return pm;
   }
 
   /// The wide-screen companion for a hero that is a snapshot: where the
   /// snapshot says who leads today, this says which way the world has moved.
   /// Null when the dataset has a single period, and the ranking runs instead.
   Widget? _trendCompanion(CatalogEntry e) {
-    final avg = _worldAverage();
-    if (avg.length < 2) return null;
+    final wm = _worldMedian();
+    if (wm == null) return null;
+    final avg = wm.points;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('WORLD ${e.title.toUpperCase()}',
+        Text('MEDIAN OF ${wm.n} COUNTRIES · ${e.title.toUpperCase()}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -835,7 +831,11 @@ class _DatasetPageState extends State<DatasetPage> {
             ),
           ),
           const SizedBox(height: 8),
-          ChoroLegend(low: 'Low', high: 'High'),
+          ChoroLegend(
+              low: 'Low',
+              high: 'High',
+              values: [for (final o in rows) if (o.iso.isNotEmpty) o.value],
+              unit: ds.unit),
           const SizedBox(height: 6),
           SampleStats(values: [for (final o in rows) o.value], unit: ds.unit),
           const SizedBox(height: 6),
@@ -848,7 +848,9 @@ class _DatasetPageState extends State<DatasetPage> {
             if (rows.length >= 3 && i == _medianSlot(shown, rows))
               _MedianRule(value: _median([for (final o in rows) o.value]), unit: ds.unit),
             _BarRow(
-              rank: _asc ? rows.length - i : i + 1, // rank in the full ranking
+              // Equal values share a rank (1 + countries strictly higher), as on
+              // country profiles; sort order used to spread a tie over 62 places.
+              rank: 1 + rows.where((o) => o.value > shown[i].value).length,
               obs: shown[i],
               fraction: maxV == 0 ? 0 : (shown[i].value.abs() / maxV),
               negative: shown[i].value < 0,
@@ -885,8 +887,22 @@ class _DatasetPageState extends State<DatasetPage> {
     final ds = _ds!;
     final series = ds.data.where((o) => o.entity == obs.entity).toList()
       ..sort((a, b) => a.period.compareTo(b.period));
+    // Where this reading stands in its own year — a single reading opened to
+    // a lone number with no year, rank or median (testers, 15 Nov 2026).
+    final peers = [for (final o in ds.data) if (o.period == obs.period && o.iso.isNotEmpty) o.value];
+    final higher = peers.where((v) => v > obs.value).length;
+    final tied = peers.where((v) => v == obs.value).length;
+    final med = ds.medianIn(obs.period);
+    final u = ds.unit.contains('%') ? '%' : '';
+    final context0 = [
+      obs.period,
+      if (peers.length >= 3) '#${higher + 1} of ${peers.length}${tied > 1 ? ' (tied with ${tied - 1})' : ''}',
+      if (med != null && peers.length >= 3)
+        'median ${formatValue(med.value)}$u — ${obs.value > med.value ? 'above' : obs.value < med.value ? 'below' : 'at'} it',
+    ].join(' · ');
     showModalBottomSheet(
       context: context,
+      showDragHandle: true,
       backgroundColor: kBgElev,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
@@ -907,6 +923,8 @@ class _DatasetPageState extends State<DatasetPage> {
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             Text('${ds.title} · ${ds.unit}',
                 style: TextStyle(fontSize: 12, color: kTextDim)),
+            const SizedBox(height: 4),
+            Text(context0, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kText)),
             const SizedBox(height: 16),
             TrendChart(
               points: [for (final o in series) (o.period, o.value)],
@@ -915,8 +933,10 @@ class _DatasetPageState extends State<DatasetPage> {
               mode: ds.changeMode.isEmpty ? null : ds.changeMode,
               margins: [for (final o in series) o.moe],
               projectedFrom: ds.projectedFrom,
-              reference: series.length >= 2 ? ds.medianIn(series.last.period)?.value : null,
-              referenceLabel: 'Median, ${ds.medianIn(series.last.period)?.n ?? 0} countries',
+              // The median of the year being looked at, not of the series' last
+              // year (for IMF that was the forecast year).
+              reference: series.length >= 2 ? med?.value : null,
+              referenceLabel: 'Median ${obs.period}, ${med?.n ?? 0} countries',
             ),
             const SizedBox(height: 4),
             chartWatermark,
@@ -1113,7 +1133,7 @@ class _MedianRule extends StatelessWidget {
         Expanded(child: Divider(color: c, thickness: 1, height: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text('median ${formatValue(value)}${unit.contains('%') ? '%' : ''}${note == null ? '' : ' · $note'}',
+          child: Text('median ${formatWithUnit(value, unit)}${note == null ? '' : ' · $note'}',
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
         ),
         Expanded(child: Divider(color: c, thickness: 1, height: 1)),

@@ -164,7 +164,9 @@ class Dataset {
     final ps = periods;
     final byEnt = <String, Map<String, double>>{};
     for (final o in data) {
-      (byEnt[o.iso.isEmpty ? o.entity : o.iso] ??= {})[o.period] = o.value;
+      // Rows without an ISO code are aggregates or sub-national units.
+      if (o.iso.isEmpty) continue;
+      (byEnt[o.iso] ??= {})[o.period] = o.value;
     }
     final panel = [for (final m in byEnt.values) if (ps.every(m.containsKey)) m];
     if (panel.length < 3) return null;
@@ -219,6 +221,9 @@ class CountryItem {
   /// 'high' or 'low' where one direction is plainly better, '' where the rank
   /// is no judgement (opinions, spending, population) — testers, 2 Nov 2026.
   final String better;
+  /// How many countries share this exact value (1 when none do): 62 countries
+  /// sit at FAO's 2.5% undernourishment floor, tied best, not "#105 of 166".
+  final int ties;
 
   CountryItem.fromJson(Map<String, dynamic> j)
       : slug = j['slug'] ?? '',
@@ -232,7 +237,13 @@ class CountryItem {
         total = j['total'] ?? 0,
         first = j['first'] is String ? j['first'] : '',
         years = j['years'] is int ? j['years'] : 0,
-        better = '${j['better'] ?? ''}';
+        better = '${j['better'] ?? ''}',
+        ties = j['ties'] is int && (j['ties'] as int) > 1 ? j['ties'] as int : 1;
+
+  /// Place counted from the top: 1 + countries strictly higher.
+  int get fromTop => rank;
+  /// Place counted from the bottom: 1 + countries strictly lower.
+  int get fromBottom => total - rank - ties + 2;
 }
 
 class Country {

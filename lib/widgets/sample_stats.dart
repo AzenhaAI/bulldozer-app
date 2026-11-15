@@ -36,7 +36,7 @@ class SampleStats extends StatelessWidget {
   Widget build(BuildContext context) {
     if (values.length < 3) return const SizedBox.shrink();
     final mean = values.reduce((a, b) => a + b) / values.length;
-    final u = unit.contains('%') ? '%' : '';
+    String f(double v) => formatWithUnit(v, unit.startsWith('%') ? unit : '');
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text.rich(
@@ -49,7 +49,7 @@ class SampleStats extends StatelessWidget {
                     margin: const EdgeInsets.only(right: 6),
                     color: tickColor ?? kText.withValues(alpha: 0.55))),
             TextSpan(
-                text: '${prefix}Median ${formatValue(medianOf(values))}$u · mean ${formatValue(mean)}$u · '
+                text: '${prefix}Median ${f(medianOf(values))} · mean ${f(mean)} · '
                     '${values.length} countries, each counted once'),
           ]),
           style: TextStyle(fontSize: fontSize, color: color ?? kTextDim)),

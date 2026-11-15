@@ -455,10 +455,11 @@ class _CountryPageState extends State<CountryPage> {
     }
     // Rank views are a flat list across topics — like the site's rank sort.
     if (_sort == 'rank' || _sort == 'rankw') {
-      final dir = _sort == 'rank' ? 1 : -1;
-      final sorted = [...rest]..sort((a, b) => dir *
-          ((a.total == 0 ? 1 : a.rank / a.total)
-              .compareTo(b.total == 0 ? 1 : b.rank / b.total)));
+      // Best and worst on each indicator's own terms; neutral ones last.
+      final judged = rest.where((it) => it.better.isNotEmpty && it.total > 1).toList();
+      final neutral = rest.where((it) => !(it.better.isNotEmpty && it.total > 1)).toList();
+      judged.sort((a, b) => _bestness(a).compareTo(_bestness(b)));
+      final sorted = [...(_sort == 'rank' ? judged : judged.reversed), ...neutral];
       return [
         const SizedBox(height: 10),
         for (final it in sorted)
@@ -1031,20 +1032,34 @@ String _when(CountryItem it) => _isEstimate(it) ? '${it.period} est.' : it.perio
 /// thirds most of a list was coloured and the colour said little (2 Nov 2026).
 int _standing(CountryItem it) {
   if (it.total <= 0 || it.better.isEmpty) return 0;
-  final top = it.rank <= it.total / 4, bottom = it.rank > it.total * 3 / 4;
-  if (!top && !bottom) return 0;
-  return (top == (it.better == 'high')) ? 1 : -1;
+  // Ties count in the country's favour on both ends: a value shared by 62
+  // countries at the bottom is "tied lowest", not spread over the middle.
+  final top = it.fromTop <= it.total / 4, bottom = it.fromBottom <= it.total / 4;
+  if (top && !bottom) return it.better == 'high' ? 1 : -1;
+  if (bottom && !top) return it.better == 'low' ? 1 : -1;
+  return 0;
+}
+
+/// 0 is the best place on the indicator's own terms, 1 the worst; neutral
+/// indicators sort after every judged one (statistical review, 15 Nov 2026:
+/// "Rank — best first" put the highest child mortality first).
+double _bestness(CountryItem it) {
+  if (it.total <= 1 || it.better.isEmpty) return 2;
+  final place = it.better == 'high' ? it.fromTop : it.fromBottom;
+  return (place - 1) / (it.total - 1);
 }
 
 /// The answer to "#5 of 120 — is that good or bad?" (a tester, 2 Nov 2026).
 String _rankMeaning(CountryItem it) {
   // Past the middle, count from the bottom: "150th highest" read like a high
   // place for what is the 30th lowest (a tester, 2 Nov 2026).
-  final low = it.rank > (it.total + 1) / 2;
-  final n = low ? it.total - it.rank + 1 : it.rank;
+  final low = it.fromBottom < it.fromTop;
+  final n = low ? it.fromBottom : it.fromTop;
   final th = (n % 100 >= 11 && n % 100 <= 13) ? 'th' : const {1: 'st', 2: 'nd', 3: 'rd'}[n % 10] ?? 'th';
-  final pos = n == 1 ? (low ? 'the lowest' : 'the highest') : '$n$th ${low ? 'lowest' : 'highest'}';
-  final head = '#${it.rank} of ${it.total}: $pos value of ${it.total} countries';
+  final end = low ? 'lowest' : 'highest';
+  final tie = it.ties > 1 ? ', tied with ${it.ties - 1} other ${it.ties == 2 ? 'country' : 'countries'}' : '';
+  final pos = n == 1 ? 'the $end value$tie' : '$n$th $end value$tie';
+  final head = '#${it.rank} of ${it.total}: $pos, of ${it.total} countries';
   if (it.better.isEmpty) return '$head. Here that is where the country stands, not a judgement of good or bad.';
   final dir = it.better == 'high' ? 'Higher is better here' : 'Lower is better here';
   final g = _standing(it);
