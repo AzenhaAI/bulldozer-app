@@ -1,10 +1,13 @@
-BullDozer turns the world into numbers you can actually explore. Compare countries across 270+ indicators covering the economy, society, business and the environment — with fast charts, world maps, country profiles, a data quiz and Ask AI. Free, with no account, no ads and no tracking.
+BullDozer turns the world into numbers you can actually explore. Compare countries across 290 indicators covering the economy, society, business and the environment — with fast charts, world maps, country profiles, a data quiz and Ask AI. Free, with no account, no ads and no tracking.
 
 ASK AI (BETA)
 Pick a country and ask in your own words — "How healthy are people?", "Is the economy growing?". The answer is written from BullDozer's published figures with the source and year of each, and any number not found in our data is held back. AI answers can be wrong, so the figures are always shown alongside. The app asks once before your first question is sent.
 
+ECONOMY THIS WEEK
+GDP growth, inflation, unemployment, budget and current-account balances, 10-year bond yields and currencies for 43 economies, with oil, gold and commodity prices — each figure with its own period and official source, refreshed weekly.
+
 CHARTS & RANKINGS
-Browse 270+ indicators, search them, filter by topic and rank every country on any of them. Switch periods to see how the ranking changes, and tap any country bar to open its trend over time.
+Browse 290 indicators, search them, filter by topic and rank every country on any of them. Every ranking shows the median and the mean, ties share a place, and survey rankings show the range of places a country could hold within the margin of error. Tap any country bar to open its trend over time.
 
 COUNTRY PROFILES
 Pick a country from a searchable list with flags and get the full picture: a map zoomed to the country, headline macro figures, a short encyclopedic summary, and every available indicator grouped into Statistics and Surveys.
@@ -20,6 +23,9 @@ Every dataset has a world choropleth coloured by the data. Tap a country on the 
 
 DATA STORIES
 A feed of featured stories with live mini charts and quick facts — a fresh angle on the numbers every time you open the app.
+
+LEARN
+Statistics basics: median and mean, percentage points, rates, margins of error and trend tests — each with its formula and a worked example. Plus a map maker and a people chart for your own posters.
 
 QUIZ
 "Guess the Country": data facts are your hints, and the fewer hints you use, the higher your score. A painless way to build real data literacy — for students, teachers and anyone who loves world facts.

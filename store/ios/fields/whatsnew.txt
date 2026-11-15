@@ -1,12 +1,13 @@
-Built from our testers' requests:
+Checked by a statistician, an economist, a data designer and a data journalist — and rebuilt where they found problems:
 
-• Every figure has a caption: what it measures, how it is calculated, the source, the year and the licence, with a link to the full method.
-• See a trend before you tap: rows read "2018 → 2025" when there is a series behind them and "2024 only" when there is a single reading.
-• "#5 of 120 — good or bad?" Ranks are green or red only where one direction is plainly better, and tapping a figure says it in words.
-• Tap anywhere outside a search box to put the keyboard away.
-• People chart (Edu): columns of 100 figures — compare countries on one question, see what people die of, or draw your own table. Share it as an image with the source printed on it.
-• Map maker (Edu): turn any indicator into a poster map with named colour classes.
-• Read about AI (Ask AI): AI news, long reads, images & video, papers of the week and Andrej Karpathy — and a guide to making images and video with AI, now one tap from Ask AI.
-• Works offline: the whole catalogue ships inside the app, "Download all data" keeps the latest copy, and a lost connection now says so with Retry.
-• One number per question: where two sources measure the same thing, the freshest one is shown; older series are marked historical.
-• About shows the exact version and build.
+• Economy this week (Biz): GDP, inflation, jobs, bond yields and currencies for 43 economies, plus oil, gold and commodity prices — each figure with its own period and source.
+• Median and mean on every ranking, and a median mark in every bar, so one country reads against the rest.
+• Fairer ranks: equal values share a place, colours follow whether higher or lower is better, and forecasts are never ranked as facts.
+• Uncertainty shown where sources publish it: WHO estimates come with their interval, and survey rankings show the range of places a country could hold.
+• Trend lines only for steady trends, now corrected for year-to-year runs.
+• Years in one scrolling row, opening on the latest actual year; a "Latest" view for surveys run in different years.
+• Maps coloured in five classes with the values in the legend; the bubble chart has labelled axes and taps.
+• Search forgives typos and suggests where to start.
+• Statistics basics (Edu): median, percentage points, margins of error, trends — each with its formula and an example.
+• Every chart and shared image carries the BullDozer Stats name and where to get the app.
+• Fresh data: IMF October 2026 outlook, homicide rates from the UN (UNODC), Corruption Perceptions Index 2025.

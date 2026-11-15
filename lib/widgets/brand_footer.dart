@@ -42,39 +42,58 @@ class BrandFooter extends StatelessWidget {
     final sub = dim ?? kTextDim;
     final t = TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: sub);
     final icon = fontSize * 1.25;
-    return Wrap(
-      alignment: align == MainAxisAlignment.center
-          ? WrapAlignment.center
-          : align == MainAxisAlignment.end
-              ? WrapAlignment.end
-              : WrapAlignment.start,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: fontSize * 0.5,
-      runSpacing: 2,
+    final cross = align == MainAxisAlignment.center
+        ? CrossAxisAlignment.center
+        : align == MainAxisAlignment.end
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start;
+    final fit = align == MainAxisAlignment.center
+        ? Alignment.center
+        : align == MainAxisAlignment.end
+            ? Alignment.centerRight
+            : Alignment.centerLeft;
+    // Two fixed lines: the stores, then the name with its address — always
+    // last and always whole. A wrapping row once nearly cut the name off
+    // (owner, 15 Nov 2026); on a narrow screen each line shrinks instead.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: cross,
       children: [
-        // The name in capitals and the address in a lighter weight: set in
-        // one run they read as one blur of text (owner, 15 Nov 2026).
-        Text('BULLDOZER STATS',
-            style: t.copyWith(
-                color: mark,
-                fontWeight: FontWeight.w900,
-                letterSpacing: fontSize * 0.12)),
-        Text('azenha.ai/bulldozer',
-            // Underlined so it reads as an address to type, not part of the name.
-            style: t.copyWith(
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
-                decorationColor: sub,
-                decorationThickness: 1.2)),
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          _mark(_apple, sub, icon),
-          SizedBox(width: fontSize * 0.2),
-          Text('App Store', style: t.copyWith(fontWeight: FontWeight.w600)),
-          SizedBox(width: fontSize * 0.6),
-          _mark(_play, sub, icon * 0.9),
-          SizedBox(width: fontSize * 0.25),
-          Text('Google Play', style: t.copyWith(fontWeight: FontWeight.w600)),
-        ]),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: fit,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            _mark(_apple, sub, icon),
+            SizedBox(width: fontSize * 0.2),
+            Text('App Store', style: t.copyWith(fontWeight: FontWeight.w600)),
+            SizedBox(width: fontSize * 0.6),
+            _mark(_play, sub, icon * 0.9),
+            SizedBox(width: fontSize * 0.25),
+            Text('Google Play', style: t.copyWith(fontWeight: FontWeight.w600)),
+          ]),
+        ),
+        SizedBox(height: fontSize * 0.25),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: fit,
+          child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+            // The name in capitals and the address in a lighter weight: set in
+            // one run they read as one blur of text (owner, 15 Nov 2026).
+            Text('BULLDOZER STATS',
+                style: t.copyWith(
+                    color: mark,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: fontSize * 0.12)),
+            SizedBox(width: fontSize * 0.6),
+            Text('azenha.ai/bulldozer',
+                // Underlined so it reads as an address to type, not part of the name.
+                style: t.copyWith(
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                    decorationColor: sub,
+                    decorationThickness: 1.2)),
+          ]),
+        ),
       ],
     );
   }
