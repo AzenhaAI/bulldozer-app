@@ -23,7 +23,7 @@ import urllib.request
 
 SITE = 'https://azenha.ai/bulldozer'
 INDEXES = ['manifest', 'catalog', 'country-index', 'country-meta', 'stories',
-           'releases', 'brands', 'cities', 'quiz-pool']
+           'releases', 'brands', 'cities', 'quiz-pool', 'economy']
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'offline', 'data.json.gz')
 
 

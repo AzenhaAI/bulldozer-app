@@ -29,6 +29,7 @@ import 'quiz_page.dart';
 import 'responsive.dart';
 import 'story_page.dart';
 import 'theme.dart';
+import 'economy_week_page.dart';
 
 void main() {
   runApp(const BulldozerApp());
@@ -169,6 +170,8 @@ class _HomeShellState extends State<HomeShell> {
                   featuredSlug: 'wb-market-cap',
                   featuredStyle: 'podium',
                   topCards: [
+                    // The weekly table first: the one thing on Biz that changes every week.
+                    const EconomyWeekCard(),
                     _BizEntryCard(
                       emoji: '🏆',
                       title: 'Top brands',
