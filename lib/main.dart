@@ -496,14 +496,7 @@ class _NavPill extends StatelessWidget {
 /// Opens the country quiz as its own screen (it used to be a tab, so it has
 /// no Scaffold of its own).
 void openQuiz(BuildContext context) {
-  Navigator.of(context).push(MaterialPageRoute(
-    builder: (_) => Scaffold(
-      appBar: AppBar(
-          title: const Text('Country Quiz',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700))),
-      body: const SafeArea(child: QuizPage()),
-    ),
-  ));
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const QuizScreen()));
 }
 
 class HomePage extends StatefulWidget {

@@ -84,6 +84,17 @@ void main() {
     expect(t.state<NavigatorState>(find.byType(Navigator)).canPop(), isFalse);
   });
 
+  testWidgets('every screen link opens a screen with a way back', (t) async {
+    // The quiz link once pushed a bare page: white, no app bar, no back arrow.
+    for (final r in ['/quiz', '/basics']) {
+      await t.pumpWidget(app(r));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 500));
+      expect(find.byType(BackButton), findsOneWidget, reason: r);
+      await t.pumpWidget(const SizedBox());
+    }
+  });
+
   test('dataset links resolve every slug in the baked catalog', () {
     expect(catalog, isNotEmpty);
     for (final e in catalog.take(50)) {

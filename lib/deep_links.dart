@@ -65,7 +65,7 @@ Route<dynamic> deepLinkRoute(RouteSettings s) {
     case 'economy':
       return screen(const EconomyWeekPage());
     case 'quiz':
-      return screen(const QuizPage());
+      return screen(const QuizScreen());
     case 'basics':
       return screen(const StatsBasicsPage());
     case 'dataset':

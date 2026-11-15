@@ -7,6 +7,22 @@ import 'ask_review.dart';
 import 'theme.dart';
 import 'widgets/load_error.dart';
 
+/// The quiz as a screen of its own: QuizPage was a tab once and has no
+/// Scaffold. The menu and the bulldozerstats://open/quiz link both open this;
+/// the link used to push the bare page, which showed white with no back
+/// arrow (16 Nov 2026).
+class QuizScreen extends StatelessWidget {
+  const QuizScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(
+            title: const Text('Country Quiz',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700))),
+        body: const SafeArea(child: QuizPage()),
+      );
+}
+
 const _rounds = 10;
 int _roundsThisGame = _rounds;
 const _maxHints = 5;
