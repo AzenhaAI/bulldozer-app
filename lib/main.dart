@@ -30,6 +30,7 @@ import 'responsive.dart';
 import 'story_page.dart';
 import 'theme.dart';
 import 'economy_week_page.dart';
+import 'deep_links.dart';
 
 void main() {
   runApp(const BulldozerApp());
@@ -97,6 +98,10 @@ class BulldozerApp extends StatelessWidget {
         ),
         // new key on toggle → the whole tree rebuilds with the new palette
         home: HomeShell(key: ValueKey(isLight)),
+        // bulldozerstats://open/<screen> — see deep_links.dart. With `home`
+        // as '/', a cold start from a link gets the tabs and the linked
+        // screen on the stack, so Back returns to the tabs.
+        onGenerateRoute: deepLinkRoute,
       ),
     );
   }
@@ -139,6 +144,25 @@ class _HomeShellState extends State<HomeShell> {
   // they had the theme switch on.
   int get _tab => _shellTab;
   set _tab(int v) => _shellTab = v;
+
+  @override
+  void initState() {
+    super.initState();
+    shellTabRequest.addListener(_onTabLink);
+  }
+
+  @override
+  void dispose() {
+    shellTabRequest.removeListener(_onTabLink);
+    super.dispose();
+  }
+
+  void _onTabLink() {
+    final i = shellTabRequest.value;
+    if (i == null || !mounted) return;
+    shellTabRequest.value = null;
+    setState(() => _tab = i);
+  }
 
   @override
   Widget build(BuildContext context) {

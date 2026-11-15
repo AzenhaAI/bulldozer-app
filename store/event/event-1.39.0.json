@@ -1,0 +1,21 @@
+{
+ "referenceName": "1.39 Economy this week",
+ "badge": "MAJOR_UPDATE",
+ "purpose": "APPROPRIATE_FOR_ALL_USERS",
+ "priority": "NORMAL",
+ "primaryLocale": "en-US",
+ "publishStart": "2026-11-17T09:00:00Z",
+ "eventStart": "2026-11-18T09:00:00Z",
+ "eventEnd": "2026-12-16T09:00:00Z",
+ "card": "card-1920x1080.png",
+ "details": "details-1080x1920.png",
+ "locales": {
+  "en-US": {
+   "name": "Economy this week",
+   "short": "GDP, inflation and jobs for 43 economies",
+   "long": "Headline figures for 43 economies plus oil, gold and bond yields, each with its period and source. Sort any column."
+  }
+ },
+ "deepLink": null,
+ "copyTerritoriesFrom": "6829941260"
+}
