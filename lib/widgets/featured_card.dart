@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'brand_footer.dart';
+
 import '../api.dart' show formatValue;
 import '../palette.dart';
 import '../theme.dart';
@@ -102,6 +104,9 @@ class HeroShell extends StatelessWidget {
                   ),
               ],
             ),
+            // Every hero is a chart people screenshot: carry the name.
+            const SizedBox(height: 8),
+            BrandFooter(color: kTextDim, fontSize: 9, align: MainAxisAlignment.start),
           ],
         ),
       ),
@@ -287,6 +292,8 @@ class FeaturedCard extends StatelessWidget {
             Text(footer,
                 style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w600, color: kAmber)),
+            const SizedBox(height: 8),
+            BrandFooter(color: kTextDim, fontSize: 9, align: MainAxisAlignment.start),
           ],
         ),
       ),

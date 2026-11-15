@@ -942,6 +942,7 @@ class _CountryPageState extends State<CountryPage> {
               ],
             ),
           ],
+          chartWatermark,
         ],
       ),
     );

@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'widgets/brand_footer.dart';
+import 'widgets/sample_stats.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -20,12 +21,18 @@ class ShareCard extends StatelessWidget {
   final String title;
   final List<(String, double)> bars; // (label, value) desc
   final String footer;
+  /// Every value in the ranking, not only the bars drawn: the card states the
+  /// median and mean of the whole sample and ticks the median in each bar.
+  final List<double> all;
+  final String unit;
   const ShareCard(
       {super.key,
       required this.tag,
       required this.title,
       required this.bars,
-      required this.footer});
+      required this.footer,
+      this.all = const [],
+      this.unit = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +45,8 @@ class ShareCard extends StatelessWidget {
     const amber = Color(0xFFFFB000);
     const text = Color(0xFFE7E9EC);
     const dim = Color(0xFF9AA1A9);
+    final med = all.length >= 3 ? medianOf(all) : double.nan;
+    final medFrac = med.isNaN || med < 0 || maxV == 0 ? null : (med / maxV).clamp(0.0, 1.0);
     return Container(
       width: 400,
       padding: const EdgeInsets.all(22),
@@ -92,7 +101,15 @@ class ShareCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   height: 1.2,
                   color: text)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          if (all.length >= 3)
+            SampleStats(
+                values: all,
+                unit: unit,
+                color: dim,
+                tickColor: text.withValues(alpha: 0.6),
+                fontSize: 11),
+          const SizedBox(height: 2),
           for (final b in bars.take(6))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 3),
@@ -107,22 +124,37 @@ class ShareCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Container(
-                      height: 9,
-                      decoration: BoxDecoration(
-                          color: card,
-                          borderRadius: BorderRadius.circular(4)),
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor:
-                            (maxV == 0 ? 0.0 : b.$2.abs() / maxV)
-                                .clamp(0.03, 1.0),
-                        child: Container(
+                    child: SizedBox(
+                      height: 17,
+                      child: LayoutBuilder(builder: (context, c) {
+                        final bar = Container(
+                          height: 9,
                           decoration: BoxDecoration(
-                              color: amber,
+                              color: card,
                               borderRadius: BorderRadius.circular(4)),
-                        ),
-                      ),
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor:
+                                (maxV == 0 ? 0.0 : b.$2.abs() / maxV)
+                                    .clamp(0.03, 1.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: amber,
+                                  borderRadius: BorderRadius.circular(4)),
+                            ),
+                          ),
+                        );
+                        if (medFrac == null) return Align(alignment: Alignment.centerLeft, child: bar);
+                        return Stack(alignment: Alignment.centerLeft, children: [
+                          bar,
+                          Positioned(
+                            left: (medFrac * c.maxWidth - 1).clamp(0.0, c.maxWidth - 2),
+                            top: 0,
+                            bottom: 0,
+                            child: Container(width: 2, color: text.withValues(alpha: 0.6)),
+                          ),
+                        ]);
+                      }),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -156,12 +188,16 @@ class SharePreviewPage extends StatefulWidget {
   final String title;
   final List<(String, double)> bars;
   final String footer;
+  final List<double> all;
+  final String unit;
   const SharePreviewPage(
       {super.key,
       required this.tag,
       required this.title,
       required this.bars,
-      required this.footer});
+      required this.footer,
+      this.all = const [],
+      this.unit = ''});
 
   @override
   State<SharePreviewPage> createState() => _SharePreviewPageState();
@@ -219,7 +255,9 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
                       tag: widget.tag,
                       title: widget.title,
                       bars: widget.bars,
-                      footer: widget.footer),
+                      footer: widget.footer,
+                      all: widget.all,
+                      unit: widget.unit),
                 ),
               ),
             ),

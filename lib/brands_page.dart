@@ -53,8 +53,9 @@ class _BrandsPageState extends State<BrandsPage> {
     final year = brands.isEmpty ? 0 : brands.first.year;
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-      itemCount: brands.length + 1,
+      itemCount: brands.length + 2,
       itemBuilder: (_, i) {
+        if (i == brands.length + 1) return chartWatermark;
         if (i == 0) {
           return Padding(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),

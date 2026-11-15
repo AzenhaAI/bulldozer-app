@@ -161,6 +161,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   '${points.length} countries · tap a dot for its name and values',
                   style: TextStyle(fontSize: 11, color: kTextDim)),
             ],
+            chartWatermark,
           ],
         ],
     );

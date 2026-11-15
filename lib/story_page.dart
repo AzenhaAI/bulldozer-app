@@ -8,6 +8,7 @@ import 'api.dart';
 import 'flags.dart';
 import 'palette.dart';
 import 'theme.dart';
+import 'widgets/sample_stats.dart';
 import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/region_legend.dart';
@@ -197,7 +198,8 @@ class _StoryPageState extends State<StoryPage> {
         ),
         const SizedBox(height: 18),
         Text('Top 15', style: _h()),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
+        SampleStats(values: [for (final o in rows) o.value], unit: _main!.unit),
         for (var i = 0; i < top.length; i++)
           _BarRow(
               rank: i + 1,

@@ -94,8 +94,9 @@ class _CitiesPageState extends State<CitiesPage> {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            itemCount: rows.length,
+            itemCount: rows.length + 1,
             itemBuilder: (_, i) {
+              if (i == rows.length) return chartWatermark;
               final c = rows[i];
               final frac = maxV == 0 ? 0.0 : c.value / maxV;
               return Padding(

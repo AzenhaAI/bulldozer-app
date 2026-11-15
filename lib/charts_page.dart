@@ -8,6 +8,7 @@ import 'responsive.dart';
 import 'share_card.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'widgets/sample_stats.dart';
 import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/entrance.dart';
@@ -721,6 +722,8 @@ class _DatasetPageState extends State<DatasetPage> {
             ('${flagFromIso(o.iso)} ${o.entity}', o.value)
         ],
         footer: '$_period · ${ds.unit}',
+        all: [for (final o in rows) o.value],
+        unit: ds.unit,
       ),
     ));
   }
@@ -841,10 +844,12 @@ class _DatasetPageState extends State<DatasetPage> {
           const SizedBox(height: 8),
           ChoroLegend(low: 'Low', high: 'High'),
           const SizedBox(height: 6),
+          SampleStats(values: [for (final o in rows) o.value], unit: ds.unit),
+          const SizedBox(height: 6),
           Text('Tap a country for its trend · $_period · ${ds.unit}',
               style: TextStyle(fontSize: 11, color: kTextDim)),
         ] else ...[
-          if (rows.length >= 3) _SampleStats(values: [for (final o in rows) o.value], unit: ds.unit),
+          if (rows.length >= 3) SampleStats(values: [for (final o in rows) o.value], unit: ds.unit),
           for (var i = 0; i < shown.length; i++) ...[
             // Where the median falls in the ranking, so a row reads against it.
             if (rows.length >= 3 && i == _medianSlot(shown, rows))
@@ -1098,37 +1103,6 @@ int _medianSlot(List<Observation> shown, List<Observation> rows) {
     if (desc ? shown[i].value < m : shown[i].value > m) return i;
   }
   return -1;
-}
-
-/// "Median 168 · mean 182 · 185 countries": the middle of the sample next to
-/// its average, so a single bar has something to be read against (owner,
-/// 14 Nov 2026). Unweighted — every country counts once.
-class _SampleStats extends StatelessWidget {
-  final List<double> values;
-  final String unit;
-  const _SampleStats({required this.values, required this.unit});
-
-  @override
-  Widget build(BuildContext context) {
-    final mean = values.reduce((a, b) => a + b) / values.length;
-    final u = unit.contains('%') ? '%' : '';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      // A small tick before "Median" keys the tick drawn in every bar track.
-      child: Text.rich(
-          TextSpan(children: [
-            WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: Container(
-                    width: 2, height: 12, margin: const EdgeInsets.only(right: 6),
-                    color: kText.withValues(alpha: 0.55))),
-            TextSpan(
-                text: 'Median ${formatValue(_median(values))}$u · mean ${formatValue(mean)}$u · '
-                    '${values.length} countries, each counted once'),
-          ]),
-          style: TextStyle(fontSize: 12, color: kTextDim)),
-    );
-  }
 }
 
 class _MedianRule extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'catalog_store.dart';
 import 'theme.dart';
+import 'widgets/sample_stats.dart';
 import 'widgets/search_sheet.dart';
 
 const _maxCountries = 5;
@@ -67,6 +68,17 @@ class _ComparePageState extends State<ComparePage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Each country's latest value: the sample the world median is taken over.
+  List<double> _worldLatest() {
+    final latest = <String, Observation>{};
+    for (final o in _ds?.data ?? const <Observation>[]) {
+      if (o.iso.isEmpty || !o.value.isFinite) continue;
+      final cur = latest[o.iso];
+      if (cur == null || o.period.compareTo(cur.period) > 0) latest[o.iso] = o;
+    }
+    return [for (final o in latest.values) o.value];
   }
 
   double? _latest(String iso) {
@@ -197,6 +209,13 @@ class _ComparePageState extends State<ComparePage> {
                     : (r.$2!.abs() / maxAbs),
                 negative: (r.$2 ?? 0) < 0,
               ),
+          // Five countries alone have no middle worth naming: set them
+          // against the median of every country's latest reading.
+          if (_ds != null && _selected.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SampleStats(values: _worldLatest(), unit: _indicator?.unit ?? '', prefix: 'World, latest reading each: '),
+            chartWatermark,
+          ],
         ],
     );
     if (widget.embedded) return body;

@@ -320,7 +320,9 @@ class _QuizPageState extends State<QuizPage> {
         Text(_verdict(),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 14, height: 1.4)),
-        const SizedBox(height: 20),
+        // A screenshot of the score should say where it came from.
+        chartWatermark,
+        const SizedBox(height: 12),
         FilledButton.icon(
           style: FilledButton.styleFrom(
               backgroundColor: kAmber, foregroundColor: kBg),
