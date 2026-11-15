@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,19 +14,82 @@ import 'theme.dart';
 /// download is a straight fetch + share. Country exports are built on device
 /// from the country index (there is no per-country CSV endpoint).
 class CsvExport {
-  /// Downloads `/data/{slug}.csv` and opens the system share sheet.
-  static Future<void> dataset(
-      BuildContext context, String slug, String title) async {
+  /// Downloads `/data/{slug}.csv` and opens the system share sheet. The file
+  /// starts with `# …` comment lines naming the source, licence, unit and the
+  /// dataset page, so a CSV passed on still says where it came from. Pass [ds]
+  /// when the caller already holds the dataset; otherwise its metadata is
+  /// fetched (best-effort — the CSV is shared without the header if that fails).
+  static Future<void> dataset(BuildContext context, String slug, String title,
+      {Dataset? ds}) async {
     _toast(context, 'Preparing $title.csv…');
     try {
-      final res = await http.get(Uri.parse('$kBaseUrl/data/$slug.csv'));
-      if (res.statusCode != 200) throw 'HTTP ${res.statusCode}';
+      final meta = ds != null
+          ? Future<Dataset?>.value(ds)
+          : fetchDataset(slug)
+              .timeout(_timeout)
+              .then<Dataset?>((d) => d, onError: (_) => null);
+      final http.Response res;
+      try {
+        res = await http
+            .get(Uri.parse('$kBaseUrl/data/$slug.csv'))
+            .timeout(_timeout);
+      } on TimeoutException {
+        throw const _ExportError(
+            'Couldn\'t download the data — the connection timed out.');
+      } on Exception {
+        throw const _ExportError(
+            'Couldn\'t download the data — check the connection.');
+      }
+      if (res.statusCode == 404) {
+        throw const _ExportError(
+            'This dataset has no CSV download yet.');
+      }
+      if (res.statusCode != 200) {
+        throw _ExportError(
+            'Couldn\'t download the data — the server answered ${res.statusCode}. Try again later.');
+      }
+      final header = csvHeader(slug, title, await meta);
+      var body = res.bodyBytes.toList();
+      // A UTF-8 byte-order mark belongs at the very start of the file.
+      final bom = body.length >= 3 &&
+          body[0] == 0xEF && body[1] == 0xBB && body[2] == 0xBF;
+      if (bom) body = body.sublist(3);
+      final bytes = <int>[
+        if (bom) ...[0xEF, 0xBB, 0xBF],
+        ...utf8.encode(header),
+        ...body
+      ];
       if (!context.mounted) return;
-      await _shareBytes(context, res.bodyBytes, '$slug.csv',
-          '$title — BullDozer · azenha.ai/bulldozer');
-    } catch (e) {
-      if (context.mounted) _toast(context, 'Couldn\'t export: $e');
+      await _shareBytes(context, bytes, '$slug.csv',
+          '$title — BullDozer Stats · azenha.ai/bulldozer');
+    } on _ExportError catch (e) {
+      if (context.mounted) _toast(context, e.message);
+    } catch (_) {
+      if (context.mounted) {
+        _toast(context, 'Couldn\'t export the CSV. Please try again.');
+      }
     }
+  }
+
+  static const _timeout = Duration(seconds: 20);
+
+  /// The `# …` lines put before the site's CSV: title, source, licence, unit
+  /// and where the dataset lives.
+  @visibleForTesting
+  static String csvHeader(String slug, String title, Dataset? ds) {
+    String clean(String v) => v.replaceAll(RegExp(r'[\r\n]+'), ' ').trim();
+    final lines = <String>[
+      '# ${clean(ds?.title.isNotEmpty == true ? ds!.title : title)}',
+      if (ds != null && ds.source.isNotEmpty) '# Source: ${clean(ds.source)}',
+      if (ds != null && ds.license.isNotEmpty)
+        '# Licence: ${clean(ds.license)}',
+      if (ds != null && ds.unit.isNotEmpty) '# Unit: ${clean(ds.unit)}',
+      '# Dataset: $kSiteUrl/dataset/$slug/',
+      if (ds != null && ds.url.isNotEmpty)
+        '# Publisher page: ${clean(ds.url)}',
+      '# Exported from BullDozer Stats · azenha.ai/bulldozer',
+    ];
+    return '${lines.join('\n')}\n';
   }
 
   /// Builds a CSV of every indicator for one country (mirrors the site's
@@ -57,7 +121,9 @@ class CsvExport {
           name,
           '${c.name} — ${c.items.length} indicators · azenha.ai/bulldozer');
     } catch (e) {
-      if (context.mounted) _toast(context, 'Couldn\'t export: $e');
+      if (context.mounted) {
+        _toast(context, 'Couldn\'t export the CSV. Please try again.');
+      }
     }
   }
 
@@ -78,4 +144,9 @@ class CsvExport {
       content: Text(msg, style: TextStyle(color: kText, fontSize: 12)),
     ));
   }
+}
+
+class _ExportError implements Exception {
+  final String message;
+  const _ExportError(this.message);
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../theme.dart';
+
 /// The project's name, address and the two stores, under every chart and on
 /// every shared image: a picture passed around with only "azenha.ai/bulldozer"
 /// under it did not say what the app was called or where to get it (owner,
@@ -18,14 +20,27 @@ Widget _mark(String d, Color c, double size) => SvgPicture.string(
     );
 
 class BrandFooter extends StatelessWidget {
+  /// The "BULLDOZER STATS" wordmark colour, drawn at full strength.
   final Color color;
+
+  /// The address and the store marks; the theme's dim text when null. Pass it
+  /// on fixed-colour images (share card, posters) whose background is not the
+  /// app theme's.
+  final Color? dim;
   final double fontSize;
   final MainAxisAlignment align;
-  const BrandFooter({super.key, required this.color, this.fontSize = 11, this.align = MainAxisAlignment.center});
+  const BrandFooter(
+      {super.key,
+      required this.color,
+      this.dim,
+      this.fontSize = 11,
+      this.align = MainAxisAlignment.center});
 
   @override
   Widget build(BuildContext context) {
-    final t = TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: color);
+    final mark = color.withValues(alpha: 1);
+    final sub = dim ?? kTextDim;
+    final t = TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: sub);
     final icon = fontSize * 1.25;
     return Wrap(
       alignment: align == MainAxisAlignment.center
@@ -40,21 +55,23 @@ class BrandFooter extends StatelessWidget {
         // The name in capitals and the address in a lighter weight: set in
         // one run they read as one blur of text (owner, 15 Nov 2026).
         Text('BULLDOZER STATS',
-            style: t.copyWith(fontWeight: FontWeight.w900, letterSpacing: fontSize * 0.12)),
+            style: t.copyWith(
+                color: mark,
+                fontWeight: FontWeight.w900,
+                letterSpacing: fontSize * 0.12)),
         Text('azenha.ai/bulldozer',
             // Underlined so it reads as an address to type, not part of the name.
             style: t.copyWith(
                 fontWeight: FontWeight.w500,
-                color: color.withValues(alpha: color.a * 0.8),
                 decoration: TextDecoration.underline,
-                decorationColor: color.withValues(alpha: color.a * 0.8),
+                decorationColor: sub,
                 decorationThickness: 1.2)),
         Row(mainAxisSize: MainAxisSize.min, children: [
-          _mark(_apple, color, icon),
+          _mark(_apple, sub, icon),
           SizedBox(width: fontSize * 0.2),
           Text('App Store', style: t.copyWith(fontWeight: FontWeight.w600)),
           SizedBox(width: fontSize * 0.6),
-          _mark(_play, color, icon * 0.9),
+          _mark(_play, sub, icon * 0.9),
           SizedBox(width: fontSize * 0.25),
           Text('Google Play', style: t.copyWith(fontWeight: FontWeight.w600)),
         ]),

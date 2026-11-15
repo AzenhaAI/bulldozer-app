@@ -450,7 +450,7 @@ class _ChartsPageState extends State<ChartsPage> {
                     labelStyle: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _topic == t ? kBg : kText),
+                        color: _topic == t ? kOnAmber : kText),
                     onSelected: (_) => setState(() => _topic = t),
                   ),
                 ),
@@ -656,7 +656,7 @@ class _DatasetPageState extends State<DatasetPage> {
       final ds = await fetchDataset(widget.entry.slug);
       setState(() {
         _ds = ds;
-        _period = ds.periods.isEmpty ? null : ds.periods.last;
+        _period = _defaultPeriod(ds);
       });
     } catch (e) {
       if (mounted) setState(() => _error = e);
@@ -676,7 +676,7 @@ class _DatasetPageState extends State<DatasetPage> {
             onPressed: _ds == null
                 ? null
                 : () => CsvExport.dataset(
-                    context, widget.entry.slug, widget.entry.title),
+                    context, widget.entry.slug, widget.entry.title, ds: _ds),
           ),
           IconButton(
             icon: const Icon(Icons.ios_share),
@@ -785,20 +785,13 @@ class _DatasetPageState extends State<DatasetPage> {
           ),
         ],
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 6,
-          children: [
-            for (final p in ds.periods)
-              ChoiceChip(
-                label: Text(p, style: const TextStyle(fontSize: 12)),
-                selected: _period == p,
-                showCheckmark: false,
-                labelStyle: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: _period == p ? kBg : kText),
-                onSelected: (_) => setState(() => _period = p),
-              ),
-          ],
+        // One scrolling row, opened at the newest year: 35 years as a wrapped
+        // grid of chips filled the first screen (owner, 15 Nov 2026).
+        _YearStrip(
+          periods: ds.periods,
+          selected: _period,
+          projectedFrom: ds.projectedFrom,
+          onSelected: (p) => setState(() => _period = p),
         ),
         const SizedBox(height: 12),
         // Bars / Map view toggle.
@@ -1061,13 +1054,13 @@ class _ViewToggle extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: selected ? kBg : kTextDim),
+            Icon(icon, size: 16, color: selected ? kOnAmber : kTextDim),
             const SizedBox(width: 6),
             Text(label,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: selected ? kBg : kText)),
+                    color: selected ? kOnAmber : kText)),
           ],
         ),
       ),
@@ -1125,6 +1118,69 @@ class _MedianRule extends StatelessWidget {
         ),
         Expanded(child: Divider(color: c, thickness: 1, height: 1)),
       ]),
+    );
+  }
+}
+
+
+/// The year a ranking opens on: the newest observed year. IMF series end in
+/// the IMF's projection for the current year, and a forecast ranked as a
+/// result read as fact (statistical review, 15 Nov 2026).
+String? _defaultPeriod(Dataset ds) {
+  if (ds.periods.isEmpty) return null;
+  final pf = ds.projectedFrom;
+  if (pf == null) return ds.periods.last;
+  final observed = ds.periods
+      .where((p) => (double.tryParse(RegExp(r'\d{4}').stringMatch(p) ?? '') ?? 0) < pf)
+      .toList();
+  return observed.isEmpty ? ds.periods.last : observed.last;
+}
+
+/// Years as one horizontal row of chips, newest at the right and in view.
+class _YearStrip extends StatelessWidget {
+  final List<String> periods;
+  final String? selected;
+  final double? projectedFrom;
+  final ValueChanged<String> onSelected;
+  const _YearStrip(
+      {required this.periods, required this.selected, required this.projectedFrom, required this.onSelected});
+
+  bool _projected(String p) {
+    final pf = projectedFrom;
+    if (pf == null) return false;
+    final y = double.tryParse(RegExp(r'\d{4}').stringMatch(p) ?? '');
+    return y != null && y >= pf;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (periods.length < 2) {
+      return periods.isEmpty
+          ? const SizedBox.shrink()
+          : Text(periods.first, style: TextStyle(fontSize: 12, color: kTextDim));
+    }
+    final newestFirst = periods.reversed.toList();
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        // Reversed so the newest year starts in view at the right edge.
+        reverse: true,
+        itemCount: newestFirst.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
+        itemBuilder: (_, i) {
+          final p = newestFirst[i];
+          final on = p == selected;
+          return ChoiceChip(
+            label: Text(_projected(p) ? '$p est.' : p, style: const TextStyle(fontSize: 12)),
+            selected: on,
+            showCheckmark: false,
+            visualDensity: VisualDensity.compact,
+            labelStyle: TextStyle(fontWeight: FontWeight.w600, color: on ? kOnAmber : kText),
+            onSelected: (_) => onSelected(p),
+          );
+        },
+      ),
     );
   }
 }

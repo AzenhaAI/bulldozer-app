@@ -55,14 +55,14 @@ class _CountriesPageState extends State<CountriesPage> {
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 avatar: Icon(labels[v]!.$2,
-                    size: 16, color: _view == v ? kBg : kTextDim),
+                    size: 16, color: _view == v ? kOnAmber : kTextDim),
                 label: Text(labels[v]!.$1),
                 selected: _view == v,
                 showCheckmark: false,
                 labelStyle: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _view == v ? kBg : kText),
+                    color: _view == v ? kOnAmber : kText),
                 onSelected: (_) => setState(() => _view = v),
               ),
             ),

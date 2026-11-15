@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -174,7 +175,7 @@ class ShareCard extends StatelessWidget {
           Text(footer,
               style: const TextStyle(fontSize: 11, color: dim)),
           const SizedBox(height: 4),
-          const BrandFooter(color: amber, align: MainAxisAlignment.start),
+          const BrandFooter(color: amber, dim: dim, align: MainAxisAlignment.start),
         ],
       ),
     );
@@ -207,34 +208,68 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
   final _boundaryKey = GlobalKey();
   bool _busy = false;
 
+  final _buttonKey = GlobalKey();
+
+  /// Captures the card and opens the share sheet. The first tap used to spin
+  /// for ~8 s and then do nothing (reviewers, 15 Nov 2026): the capture ran
+  /// before the card's first paint had settled, and on iPad the sheet needs an
+  /// anchor rect or it never appears. Now the button stays busy until the
+  /// sheet is up, the capture is bounded, and any failure says so.
   Future<void> _share() async {
+    if (_busy) return;
     setState(() => _busy = true);
     try {
-      final boundary = _boundaryKey.currentContext!.findRenderObject()
-          as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3);
-      final bytes =
-          (await image.toByteData(format: ui.ImageByteFormat.png))!
-              .buffer
-              .asUint8List();
-      final dir = await getTemporaryDirectory();
-      final file = await _writeTemp(dir.path, bytes);
-      await SharePlus.instance.share(ShareParams(
-        files: [XFile(file)],
-        text: '${widget.title} — via BullDozer · azenha.ai/bulldozer',
-      ));
+      final file = await _capture().timeout(const Duration(seconds: 12));
+      if (!mounted) return;
+      final origin = _anchorRect();
+      // On iOS the call returns when the sheet is dismissed; on Android once
+      // it is up. Either way a call that has not returned after a minute is
+      // an open sheet, not a failure — release the button quietly.
+      await SharePlus.instance
+          .share(ShareParams(
+            files: [XFile(file, mimeType: 'image/png')],
+            text: '${widget.title} — BullDozer Stats · azenha.ai/bulldozer',
+            sharePositionOrigin: origin,
+          ))
+          .timeout(const Duration(seconds: 60), onTimeout: () => ShareResult.unavailable);
+    } on TimeoutException {
+      _fail('Creating the image took too long. Please try again.');
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Couldn\'t create the image.')));
-      }
+      _fail('Couldn\'t share the image. Please try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
+  Future<String> _capture() async {
+    // Let the card finish painting (fonts, the SVG store marks) first.
+    await WidgetsBinding.instance.endOfFrame;
+    final boundary = _boundaryKey.currentContext?.findRenderObject()
+        as RenderRepaintBoundary?;
+    if (boundary == null) throw StateError('card not on screen');
+    final image = await boundary.toImage(pixelRatio: 3);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    if (data == null) throw StateError('no image data');
+    final dir = await getTemporaryDirectory();
+    return _writeTemp(dir.path, data.buffer.asUint8List());
+  }
+
+  /// The Share button's rect — the iPad share popover anchors to it.
+  Rect? _anchorRect() {
+    final box = _buttonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  void _fail(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   Future<String> _writeTemp(String dir, Uint8List bytes) async {
-    final path = '$dir/bulldozer_share.png';
+    // A fresh name each time: some share targets cache by path.
+    final path = '$dir/bulldozer_share_${DateTime.now().millisecondsSinceEpoch}.png';
     await _FileWriter.write(path, bytes);
     return path;
   }
@@ -267,18 +302,22 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
+                key: _buttonKey,
                 onPressed: _busy ? null : _share,
                 style: FilledButton.styleFrom(
-                    backgroundColor: kAmber, foregroundColor: kBg),
+                    backgroundColor: kAmber,
+                    foregroundColor: kOnAmber,
+                    disabledBackgroundColor: kAmber.withValues(alpha: 0.55),
+                    disabledForegroundColor: kOnAmber),
                 icon: _busy
                     ? const SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.black))
+                            strokeWidth: 2, color: kOnAmber))
                     : const Icon(Icons.share),
-                label: const Text('Share image',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                label: Text(_busy ? 'Preparing…' : 'Share image',
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ),

@@ -25,6 +25,15 @@ Color get kTextDim => isLight ? const Color(0xFF5F6670) : const Color(0xFF9AA1A9
 Color get kAmber => isLight ? const Color(0xFFC07F00) : const Color(0xFFFFB000);
 Color get kOrange => isLight ? const Color(0xFFD95F00) : const Color(0xFFFF7A00);
 Color get kUp => isLight ? const Color(0xFF0E8A5F) : const Color(0xFF34D399);
+/// Amber for text and thin marks: the light theme's chart amber (C07F00) is
+/// 3.1:1 on the page, below the 4.5:1 that small text needs (reviewers,
+/// 15 Nov 2026), so light text uses a darker bronze (5.2:1); dark keeps FFB000.
+Color get kAmberText =>
+    isLight ? const Color(0xFF8F5E00) : const Color(0xFFFFB000);
+
+/// Ink on an amber fill (selected chips, amber buttons) — dark in both themes:
+/// the light page colour on amber read 3.1:1, white 1.8:1.
+const kOnAmber = Color(0xFF1A1300);
 Color get kDown => isLight ? const Color(0xFFD43D3D) : const Color(0xFFF87171);
 
 Future<File?> _themeFile() async {
@@ -86,8 +95,24 @@ ThemeData buildTheme() {
     chipTheme: base.chipTheme.copyWith(
       backgroundColor: kBgCard,
       selectedColor: kAmber,
+      checkmarkColor: kOnAmber,
       side: BorderSide(color: kBorder, width: 0.5),
-      labelStyle: TextStyle(fontSize: 12, color: kText),
+      // Dark ink on the amber of a selected chip, the theme's text otherwise.
+      labelStyle: TextStyle(
+          fontSize: 12,
+          color: WidgetStateColor.resolveWith((s) =>
+              s.contains(WidgetState.selected) ? kOnAmber : kText)),
+      secondaryLabelStyle: const TextStyle(fontSize: 12, color: kOnAmber),
+    ),
+    // Snackbars in the theme's own card colours, like the ones the CSV export
+    // and Explore build: the Material default is an inverse surface, which
+    // came out beige in the dark theme (reviewers, 15 Nov 2026).
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: kBgCard,
+      contentTextStyle: TextStyle(fontSize: 13, color: kText),
+      actionTextColor: kAmberText,
+      closeIconColor: kTextDim,
+      elevation: 6,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: kBgElev,
@@ -143,8 +168,10 @@ Widget get brandTagline => Text.rich(
     );
 
 /// Subtle attribution line for chart views — sits under the caption so a
-/// screenshot carries the source without covering any data.
+/// screenshot carries the source without covering any data. The wordmark is
+/// full-strength amber (0.6 alpha measured 1.9:1 in the light theme), the
+/// address and store marks the theme's dim text.
 Widget get chartWatermark => Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 2),
-      child: BrandFooter(color: kAmber.withValues(alpha: 0.6)),
+      child: BrandFooter(color: kAmberText),
     );

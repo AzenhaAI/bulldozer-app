@@ -59,6 +59,13 @@ class _AskPageState extends State<AskPage> {
   List<Country>? _countries;
   String _query = '';
   _Brief? _brief;
+
+  /// Per standout slug (for the brief on screen): how many other countries
+  /// share its exact value in that period, and whether that value is the
+  /// world's maximum/minimum. The brief gives tied countries the same rank, so
+  /// "#1 of 214" for electricity at 100% was 1 of 121 at 100% (reviewers,
+  /// 15 Nov 2026) — read from the dataset itself, best-effort.
+  final Map<String, ({int others, bool extreme})> _ties = {};
   bool _loading = false;
   String? _error;
   final _qCtl = TextEditingController();
@@ -215,7 +222,14 @@ class _AskPageState extends State<AskPage> {
     });
     try {
       final j = await fetchJson('/data/brief/${c.iso.toLowerCase()}.json');
-      if (mounted) setState(() => _brief = _Brief.fromJson(j as Map<String, dynamic>));
+      if (mounted) {
+        final brief = _Brief.fromJson(j as Map<String, dynamic>);
+        setState(() {
+          _brief = brief;
+          _ties.clear();
+        });
+        _loadTies(brief);
+      }
       // The summary the tester asked for, without having to ask for it — or
       // the question typed after the country, if there was one.
       if (mounted) {
@@ -405,6 +419,33 @@ class _AskPageState extends State<AskPage> {
     ];
   }
 
+  Future<void> _loadTies(_Brief b) async {
+    for (final s in b.standouts) {
+      final slug = '${s['slug']}';
+      final v = (s['value'] as num?)?.toDouble();
+      if (v == null) continue;
+      fetchDataset(slug).then((ds) {
+        if (!mounted || _brief != b) return;
+        final t = standoutTie(ds, '${s['period']}', v, '${s['side']}', b.iso);
+        if (t != null) setState(() => _ties[slug] = t);
+      }).catchError((_) {});
+    }
+  }
+
+  /// "#4 of 179 — among the highest in the world", or, when the value is the
+  /// world's ceiling shared by many, "at the maximum, shared with 120 other
+  /// countries" — a tie is not a record.
+  String _standing(Map<String, dynamic> s) {
+    final high = s['side'] == 'high';
+    final t = _ties['${s['slug']}'];
+    if (t != null && t.others > 0) {
+      final n = '${t.others} other ${t.others == 1 ? 'country' : 'countries'}';
+      if (t.extreme) return 'at the ${high ? 'maximum' : 'minimum'}, shared with $n';
+      return '#${s['rank']} of ${s['total']}, tied with $n — among the ${high ? 'highest' : 'lowest'} in the world';
+    }
+    return '#${s['rank']} of ${s['total']} — among the ${high ? 'highest' : 'lowest'} in the world';
+  }
+
   List<Widget> _facts(_Brief b, Country? country) {
     return [
       const SizedBox(height: 18),
@@ -439,7 +480,7 @@ class _AskPageState extends State<AskPage> {
             title: Text('${s['title']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             subtitle: Text(
                 '${_withUnit(s['value'] as num, '${s['unit']}')} (${s['period']}) · '
-                '#${s['rank']} of ${s['total']} — among the ${s['side'] == 'high' ? 'highest' : 'lowest'} in the world\n'
+                '${_standing(s)}\n'
                 'Source: ${s['source']}',
                 style: TextStyle(fontSize: 12, color: kTextDim, height: 1.35)),
             isThreeLine: true,
@@ -519,4 +560,36 @@ class GuideBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// How many countries other than [iso] share [value] in [period] of [ds]
+/// (each country's latest reading when the period has none), and whether
+/// that value is the extreme on [side] ('high' → maximum, 'low' → minimum).
+/// Null when the dataset has no readings to compare.
+({int others, bool extreme})? standoutTie(
+    Dataset ds, String period, double value, String side, String iso) {
+  final byIso = <String, Observation>{};
+  for (final o in ds.data) {
+    if (o.iso.isEmpty || !o.value.isFinite) continue;
+    if (o.period == period) byIso[o.iso] = o;
+  }
+  if (byIso.isEmpty) {
+    for (final o in ds.data) {
+      if (o.iso.isEmpty || !o.value.isFinite) continue;
+      final cur = byIso[o.iso];
+      if (cur == null || o.period.compareTo(cur.period) > 0) byIso[o.iso] = o;
+    }
+  }
+  if (byIso.isEmpty) return null;
+  final tol = 1e-6 * (value.abs() > 1 ? value.abs() : 1);
+  var others = 0;
+  var hi = double.negativeInfinity, lo = double.infinity;
+  for (final e in byIso.entries) {
+    final x = e.value.value;
+    if (x > hi) hi = x;
+    if (x < lo) lo = x;
+    if (e.key != iso && (x - value).abs() <= tol) others++;
+  }
+  final extreme = side == 'low' ? value <= lo + tol : value >= hi - tol;
+  return (others: others, extreme: extreme);
 }

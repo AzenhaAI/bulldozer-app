@@ -756,7 +756,7 @@ class _Poster extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 2),
-                child: BrandFooter(color: dim, fontSize: 7.5, align: MainAxisAlignment.end),
+                child: BrandFooter(color: dark ? const Color(0xFFFFB000) : const Color(0xFF8F5E00), dim: dim, fontSize: 7.5, align: MainAxisAlignment.end),
               ),
             ],
           ),

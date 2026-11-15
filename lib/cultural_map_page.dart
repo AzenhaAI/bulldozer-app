@@ -60,6 +60,9 @@ class _CulturalMapPageState extends State<CulturalMapPage> {
   String? _error;
   _CPt? _sel;
 
+  /// Zone picked in the legend — its dots stay bright, the rest fade.
+  String? _zoneHi;
+
   @override
   void initState() {
     super.initState();
@@ -134,7 +137,7 @@ class _CulturalMapPageState extends State<CulturalMapPage> {
         Text(
             'Every society on two axes: survival → self-expression values (→) '
             'and traditional → secular values (↑). Colours are cultural zones. '
-            'Tap a dot.',
+            'Tap a dot to name it; tap a zone to pick it out.',
             style: TextStyle(fontSize: 13, color: kTextDim, height: 1.45)),
         const SizedBox(height: 14),
         AspectRatio(
@@ -143,11 +146,65 @@ class _CulturalMapPageState extends State<CulturalMapPage> {
             return GestureDetector(
               onTapDown: (d) => _onTap(d.localPosition, box.biggest, pts),
               child: CustomPaint(
-                painter: _CulturalPainter(pts, _sel),
+                painter: _CulturalPainter(pts, _sel, zone: _zoneHi),
                 child: const SizedBox.expand(),
               ),
             );
           }),
+        ),
+        const SizedBox(height: 10),
+        // Zone legend, right under the chart so the colours can be read off
+        // without scrolling. Tapping a zone highlights its countries.
+        Text('CULTURAL ZONES',
+            style: TextStyle(
+                fontSize: 10,
+                letterSpacing: 1,
+                fontWeight: FontWeight.w700,
+                color: kTextDim)),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final z in _zmeta.entries)
+              InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => setState(
+                    () => _zoneHi = _zoneHi == z.key ? null : z.key),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _zoneHi == z.key
+                        ? z.value.$2.withValues(alpha: 0.18)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: _zoneHi == z.key ? z.value.$2 : kBorder,
+                        width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                              color: z.value.$2, shape: BoxShape.circle)),
+                      const SizedBox(width: 5),
+                      Text(
+                          '${z.value.$1} · ${pts.where((p) => p.zone == z.key).length}',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: _zoneHi == z.key ? kText : kTextDim,
+                              fontWeight: _zoneHi == z.key
+                                  ? FontWeight.w600
+                                  : FontWeight.w400)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
         if (_sel != null)
           Container(
@@ -180,27 +237,6 @@ class _CulturalMapPageState extends State<CulturalMapPage> {
               ],
             ),
           ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 6,
-          children: [
-            for (final z in _zmeta.entries)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                          color: z.value.$2, shape: BoxShape.circle)),
-                  const SizedBox(width: 5),
-                  Text(z.value.$1,
-                      style: TextStyle(fontSize: 11, color: kTextDim)),
-                ],
-              ),
-          ],
-        ),
         const SizedBox(height: 14),
         Center(
           child: TextButton.icon(
@@ -209,7 +245,7 @@ class _CulturalMapPageState extends State<CulturalMapPage> {
                 mode: LaunchMode.inAppBrowserView),
             icon: Icon(Icons.article_outlined, size: 18, color: kAmber),
             label: Text('Full story on the web',
-                style: TextStyle(color: kAmber, fontWeight: FontWeight.w600)),
+                style: TextStyle(color: kAmberText, fontWeight: FontWeight.w600)),
           ),
         ),
         chartWatermark,
@@ -255,7 +291,8 @@ class _Geo {
 class _CulturalPainter extends CustomPainter {
   final List<_CPt> pts;
   final _CPt? sel;
-  _CulturalPainter(this.pts, this.sel);
+  final String? zone;
+  _CulturalPainter(this.pts, this.sel, {this.zone});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -268,16 +305,25 @@ class _CulturalPainter extends CustomPainter {
     canvas.drawRRect(
         RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)),
         border);
-    _axisText(canvas, 'self-expression →', Offset(size.width - 8, size.height - 6),
-        alignRight: true);
-    _axisText(canvas, '↑ secular', const Offset(8, 14));
+    // Labels and axis captions must not overlap: each placed box is kept and
+    // later labels try the other sides of their dot, or are left out (a tap
+    // on the dot still names it). IDN and IRN used to print as one "IDRN".
+    final taken = <Rect>[];
+    taken.add(_axisText(canvas, 'self-expression →',
+        Offset(size.width - 8, size.height - 6),
+        alignRight: true));
+    taken.add(_axisText(canvas, '↑ secular', const Offset(8, 14)));
 
     for (final p in pts) {
       final o = geo.project(p);
       final c = _zmeta[p.zone]?.$2 ?? kTextDim;
       final isSel = identical(p, sel);
+      final faded = zone != null && p.zone != zone && !isSel;
       canvas.drawCircle(
-          o, isSel ? 7 : 4.5, Paint()..color = c.withValues(alpha: isSel ? 1 : 0.8));
+          o,
+          isSel ? 7 : 4.5,
+          Paint()
+            ..color = c.withValues(alpha: isSel ? 1 : (faded ? 0.18 : 0.8)));
       if (isSel) {
         canvas.drawCircle(
             o,
@@ -287,22 +333,65 @@ class _CulturalPainter extends CustomPainter {
               ..style = PaintingStyle.stroke
               ..strokeWidth = 1.6);
       }
-      if (_anchors.contains(p.iso) || isSel) {
-        final tp = TextPainter(
-          text: TextSpan(
-              text: p.iso,
-              style: TextStyle(
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w700,
-                  color: kText.withValues(alpha: 0.85))),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        tp.paint(canvas, o + const Offset(5, -10));
+    }
+
+    // The selected dot is labelled first, then the anchors (all of a
+    // highlighted zone's countries when one is picked), left to right.
+    final labelled = [
+      ?sel,
+      for (final p in pts)
+        if (!identical(p, sel) &&
+            (zone != null ? p.zone == zone : _anchors.contains(p.iso)))
+          p,
+    ];
+    final bounds = Offset.zero & size;
+    for (final p in labelled) {
+      final o = geo.project(p);
+      final isSel = identical(p, sel);
+      final tp = TextPainter(
+        text: TextSpan(
+            text: p.iso,
+            style: TextStyle(
+                fontSize: isSel ? 10 : 8.5,
+                fontWeight: FontWeight.w700,
+                color: kText.withValues(alpha: isSel ? 1 : 0.85))),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final w = tp.width, h = tp.height;
+      final r = isSel ? 9.0 : 5.0;
+      final candidates = [
+        Offset(o.dx + r, o.dy - h - 1), // up-right (the old spot)
+        Offset(o.dx + r, o.dy + 1), // down-right
+        Offset(o.dx - r - w, o.dy - h - 1), // up-left
+        Offset(o.dx - r - w, o.dy + 1), // down-left
+        Offset(o.dx - w / 2, o.dy - r - h), // above
+        Offset(o.dx - w / 2, o.dy + r), // below
+      ];
+      Rect? spot;
+      for (final at in candidates) {
+        final rect = (at & Size(w, h)).inflate(1);
+        if (!bounds.contains(rect.topLeft) ||
+            !bounds.contains(rect.bottomRight)) {
+          continue;
+        }
+        if (taken.any((t) => t.overlaps(rect))) continue;
+        spot = rect;
+        break;
       }
+      // The selected label always shows — at its first in-frame spot.
+      spot ??= isSel ? (candidates.first & Size(w, h)).inflate(1) : null;
+      if (spot == null) continue;
+      taken.add(spot);
+      if (isSel) {
+        canvas.drawRRect(
+            RRect.fromRectAndRadius(spot.inflate(1), const Radius.circular(3)),
+            Paint()..color = kBg.withValues(alpha: 0.85));
+      }
+      tp.paint(canvas, spot.topLeft + const Offset(1, 1));
     }
   }
 
-  void _axisText(Canvas canvas, String s, Offset at, {bool alignRight = false}) {
+  Rect _axisText(Canvas canvas, String s, Offset at, {bool alignRight = false}) {
     final tp = TextPainter(
       text: TextSpan(
           text: s,
@@ -310,12 +399,14 @@ class _CulturalPainter extends CustomPainter {
               fontSize: 10, fontWeight: FontWeight.w600, color: kTextDim)),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, alignRight ? at - Offset(tp.width, tp.height) : at - Offset(0, tp.height));
+    final topLeft = alignRight ? at - Offset(tp.width, tp.height) : at - Offset(0, tp.height);
+    tp.paint(canvas, topLeft);
+    return topLeft & tp.size;
   }
 
   @override
   bool shouldRepaint(_CulturalPainter old) =>
-      old.pts != pts || old.sel != sel;
+      old.pts != pts || old.sel != sel || old.zone != zone;
 }
 
 /// Compact, non-interactive cultural map for the Polls hero — same dots and

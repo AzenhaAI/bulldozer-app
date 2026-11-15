@@ -117,15 +117,19 @@ class HomeShell extends StatefulWidget {
 /// the second tab every later index moved by one and the menu did not: in
 /// 1.33.0 "Statistics" opened Ask AI, "Edu" opened Geo, and Edu could not be
 /// reached from the menu at all. One list means inserting a tab moves both.
+///
+/// The menu leads with the same name as the tab ("Stats"), with the longer
+/// description under it: "Statistics" in the menu and "Stats" on the bar read
+/// as two different places (reviewers, 15 Nov 2026).
 const _tabs = <(IconData, String, String)>[
-  // icon, bottom-bar label, menu label
-  (Icons.home_outlined, 'Home', 'Home'),
-  (Icons.auto_awesome_outlined, 'Ask AI', 'Ask AI'),
+  // icon, bottom-bar label, menu description ('' = none)
+  (Icons.home_outlined, 'Home', ''),
+  (Icons.auto_awesome_outlined, 'Ask AI', 'A brief on any country'),
   (Icons.bar_chart_outlined, 'Stats', 'Statistics'),
   (Icons.business_center_outlined, 'Biz', 'Business & markets'),
-  (Icons.how_to_vote_outlined, 'Polls', 'Polls'),
-  (Icons.public_outlined, 'Geo', 'Countries'),
-  (Icons.school_outlined, 'Edu', 'Edu'),
+  (Icons.how_to_vote_outlined, 'Polls', 'Surveys and opinion'),
+  (Icons.public_outlined, 'Geo', 'Countries, compare, maps'),
+  (Icons.school_outlined, 'Edu', 'Learn and make'),
 ];
 
 class _HomeShellState extends State<HomeShell> {
@@ -193,12 +197,21 @@ class _HomeShellState extends State<HomeShell> {
         ),
         ),
       ),
+      // Seven tabs leave ~53 pt each on a phone, narrower than Material's
+      // fixed 64 pt indicator: the selected pill of the last tab (Edu) was
+      // cut off at the right edge (reviewers, 15 Nov 2026). The bar's own
+      // indicator is off and each selected icon draws a pill that fits.
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
+        indicatorColor: Colors.transparent,
         onDestinationSelected: (i) => setState(() => _tab = i),
         destinations: [
           for (final (icon, label, _) in _tabs)
-            NavigationDestination(icon: Icon(icon), label: label),
+            NavigationDestination(
+                icon: Icon(icon),
+                selectedIcon: _NavPill(icon),
+                label: label,
+                tooltip: label),
         ],
       ),
     );
@@ -226,8 +239,8 @@ class _HomeShellState extends State<HomeShell> {
               child: brandTagline,
             ),
             Divider(color: kBorder, height: 1),
-            for (final (n, (icon, _, menuLabel)) in _tabs.indexed)
-              _menuItem(context, icon, menuLabel, n),
+            for (final (n, (icon, label, about)) in _tabs.indexed)
+              _menuItem(context, icon, label, about, n),
             Divider(color: kBorder, height: 1),
             ListTile(
               leading: Text(isLight ? '🌙' : '☀️',
@@ -406,7 +419,8 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  Widget _menuItem(BuildContext context, IconData icon, String label, int tab) {
+  Widget _menuItem(
+      BuildContext context, IconData icon, String label, String about, int tab) {
     final selected = _tab == tab;
     return ListTile(
       leading:
@@ -415,7 +429,10 @@ class _HomeShellState extends State<HomeShell> {
           style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: selected ? kAmber : kText)),
+              color: selected ? kAmberText : kText)),
+      subtitle: about.isEmpty
+          ? null
+          : Text(about, style: TextStyle(fontSize: 12, color: kTextDim)),
       selected: selected,
       onTap: () {
         setState(() => _tab = tab);
@@ -423,6 +440,24 @@ class _HomeShellState extends State<HomeShell> {
       },
     );
   }
+}
+
+/// The selected-tab pill, sized to its icon so it fits a narrow destination
+/// (the bar's built-in indicator is a fixed 64 pt).
+class _NavPill extends StatelessWidget {
+  final IconData icon;
+  const _NavPill(this.icon);
+
+  @override
+  Widget build(BuildContext context) => Container(
+        // 42 pt wide: inside a destination even on a 320 pt phone (45 pt).
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: kAmber.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(icon),
+      );
 }
 
 /// Opens the country quiz as its own screen (it used to be a tab, so it has

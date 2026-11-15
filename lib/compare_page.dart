@@ -39,9 +39,8 @@ class _ComparePageState extends State<ComparePage> {
   void initState() {
     super.initState();
     if (widget.initial != null) _selected.add(widget.initial!);
-    // Default indicator: the first one on the initial country when we came
-    // from a country profile. Otherwise the first of these that the catalog
-    // actually carries — not catalog[0], which is alphabetical and landed the
+    // Default indicator: the first of these that the catalog (and the
+    // initial country, when we came from a profile) actually carries — not catalog[0], which is alphabetical and landed the
     // Geo tab on "Acceptance of Homosexuality (EVS)" as its opening view. A
     // headline economic measure is the neutral thing to compare first.
     const preferred = [
@@ -50,10 +49,20 @@ class _ComparePageState extends State<ComparePage> {
       'gapminder-life-expectancy',
       'gapminder-income',
     ];
-    final slug = widget.initial?.items.isNotEmpty == true
-        ? widget.initial!.items.first.slug
-        : (preferred.where(catalogBySlug.containsKey).firstOrNull ??
-            (catalog.isNotEmpty ? catalog.first.slug : null));
+    // Survey sets (Eurobarometer, EVS, ISSP) cover a few dozen countries and
+    // are no neutral opening view — never land on one by default.
+    bool neutral(String s) =>
+        !s.startsWith('eb-') && !s.startsWith('evs-') && !s.startsWith('issp-');
+    final bySlug = catalogBySlug;
+    final own = [
+      for (final it in widget.initial?.items ?? const <CountryItem>[]) it.slug
+    ];
+    final slug = preferred
+            .where((p) => bySlug.containsKey(p) && (own.isEmpty || own.contains(p)))
+            .firstOrNull ??
+        own.where((s) => bySlug.containsKey(s) && neutral(s)).firstOrNull ??
+        preferred.where(bySlug.containsKey).firstOrNull ??
+        catalog.map((e) => e.slug).where(neutral).firstOrNull;
     _indicator = slug != null ? catalogBySlug[slug] : null;
     if (_indicator != null) _load();
   }
@@ -81,11 +90,20 @@ class _ComparePageState extends State<ComparePage> {
     return [for (final o in latest.values) o.value];
   }
 
-  double? _latest(String iso) {
-    final rows = (_ds?.data ?? []).where((o) => o.iso == iso).toList();
+  Observation? _latest(String iso) {
+    final rows = (_ds?.data ?? [])
+        .where((o) => o.iso == iso && o.value.isFinite)
+        .toList();
     if (rows.isEmpty) return null;
     rows.sort((a, b) => a.period.compareTo(b.period));
-    return rows.last.value;
+    return rows.last;
+  }
+
+  /// "2024", or "2026 est." for an IMF year at or past the first projected one.
+  String _yearLabel(String period) {
+    final from = _ds?.projectedFrom;
+    final y = double.tryParse(period.length >= 4 ? period.substring(0, 4) : period);
+    return from != null && y != null && y >= from ? '$period est.' : period;
   }
 
   void _pickIndicator() {
@@ -122,10 +140,15 @@ class _ComparePageState extends State<ComparePage> {
     final rows = _selected
         .map((c) => (c, _latest(c.iso)))
         .toList()
-      ..sort((a, b) => (b.$2 ?? -1e30).compareTo(a.$2 ?? -1e30));
-    final maxAbs = rows
-        .map((r) => (r.$2 ?? 0).abs())
-        .fold<double>(0, (a, b) => a > b ? a : b);
+      ..sort((a, b) =>
+          (b.$2?.value ?? -1e30).compareTo(a.$2?.value ?? -1e30));
+    // Bars scale to the largest latest value of any country, so a single
+    // country reads against the world, not as a full bar of itself.
+    final world = _worldLatest();
+    final maxAbs = [
+      ...world.map((v) => v.abs()),
+      ...rows.map((r) => (r.$2?.value ?? 0).abs()),
+    ].fold<double>(0, (a, b) => a > b ? a : b);
 
     final body = ListView(
         padding: const EdgeInsets.all(16),
@@ -202,18 +225,25 @@ class _ComparePageState extends State<ComparePage> {
             for (final r in rows)
               _CompareBar(
                 name: r.$1.name,
-                value: r.$2,
+                value: r.$2?.value,
+                year: r.$2 == null ? null : _yearLabel(r.$2!.period),
                 unit: _indicator!.unit,
                 fraction: maxAbs == 0 || r.$2 == null
                     ? 0
-                    : (r.$2!.abs() / maxAbs),
-                negative: (r.$2 ?? 0) < 0,
+                    : (r.$2!.value.abs() / maxAbs),
+                negative: (r.$2?.value ?? 0) < 0,
               ),
+          if (_ds != null && _selected.isNotEmpty && !_loading)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text('Bars scale to the highest value of any country.',
+                  style: TextStyle(fontSize: 11, color: kTextDim)),
+            ),
           // Five countries alone have no middle worth naming: set them
           // against the median of every country's latest reading.
           if (_ds != null && _selected.isNotEmpty) ...[
             const SizedBox(height: 10),
-            SampleStats(values: _worldLatest(), unit: _indicator?.unit ?? '', prefix: 'World, latest reading each: '),
+            SampleStats(values: world, unit: _indicator?.unit ?? '', prefix: 'World, latest reading each: '),
             chartWatermark,
           ],
         ],
@@ -232,12 +262,14 @@ class _ComparePageState extends State<ComparePage> {
 class _CompareBar extends StatelessWidget {
   final String name;
   final double? value;
+  final String? year;
   final String unit;
   final double fraction;
   final bool negative;
   const _CompareBar({
     required this.name,
     required this.value,
+    this.year,
     required this.unit,
     required this.fraction,
     required this.negative,
@@ -253,14 +285,32 @@ class _CompareBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(name,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
-              Text(value == null ? 'no data' : formatValue(value!),
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: value == null ? kTextDim : kText)),
+              Expanded(
+                child: Text(name,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(width: 8),
+              Text.rich(
+                TextSpan(children: [
+                  TextSpan(
+                      text: value == null
+                          ? 'no data'
+                          : formatWithUnit(value!, unit),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: value == null ? kTextDim : kText)),
+                  if (value != null && year != null && year!.isNotEmpty)
+                    TextSpan(
+                        text: '  $year',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: kTextDim)),
+                ]),
+              ),
             ],
           ),
           const SizedBox(height: 4),

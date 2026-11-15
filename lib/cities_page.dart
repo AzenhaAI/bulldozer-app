@@ -79,7 +79,7 @@ class _CitiesPageState extends State<CitiesPage> {
                     labelStyle: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _metric == i ? kBg : kText),
+                        color: _metric == i ? kOnAmber : kText),
                     onSelected: (_) => setState(() => _metric = i),
                   ),
                 ),
