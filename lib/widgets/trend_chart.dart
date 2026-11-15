@@ -103,7 +103,16 @@ class TrendChart extends StatelessWidget {
     final trend = showTrend
         ? trendOf([for (final p in pts) (p.$2, p.$3)], projectedFrom: proj, log: _mode == 'pct')
         : null;
-    final showLine = trend != null && trend.clear;
+    // Where readings carry a margin or interval, the fitted change over the
+    // whole span must also clear it: two survey readings differ only when the
+    // gap exceeds ~1.4 margins of error (√2 · 1.96 SE). A trend inside the
+    // noise of the survey is not drawn (statistical review, 15 Nov 2026).
+    final halfWidths = [for (final p in actual) if (p.$4 != null) (p.$4!.$2 - p.$4!.$1) / 2]..sort();
+    final typicalMargin = halfWidths.isEmpty ? 0.0 : halfWidths[halfWidths.length ~/ 2];
+    final clearsNoise = trend == null ||
+        typicalMargin == 0 ||
+        (trend.at(trend.x1) - trend.at(trend.x0)).abs() > 1.4 * typicalMargin;
+    final showLine = trend != null && trend.clear && clearsNoise;
     final smooth = pts.length >= kSmoothMinPoints
         ? lowess([for (final p in pts) p.$2], [for (final p in pts) p.$3])
         : null;

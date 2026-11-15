@@ -105,6 +105,35 @@ double _phi(double z) {
   return (s: s, z: z, p: 2 * (1 - _phi(z.abs())));
 }
 
+/// Mann–Kendall p corrected for serial correlation (Yue & Wang 2004, effective
+/// sample size): yearly series move in runs, and the plain test calls a random
+/// walk a "steady trend" 30–41% of the time (statistical review, 15 Nov 2026).
+/// The residuals from the Theil–Sen line give the lag-1 autocorrelation r;
+/// with AR(1) correlations r^k, Var(S) grows by
+///   n/n* = 1 + 2/(n(n−1)(n−2)) · Σ_{k=1}^{n−1} (n−k)(n−k−1)(n−k−2) r^k,
+/// applied only when r > 0 (negative correlation is left alone, as in the paper).
+double mannKendallCorrectedP(List<double> xs, List<double> ys, ({double slope, double intercept}) line) {
+  final mk = mannKendall(ys);
+  final n = ys.length;
+  if (n < 4 || mk.z == 0) return mk.p;
+  final e = [for (var i = 0; i < n; i++) ys[i] - (line.intercept + line.slope * xs[i])];
+  final mean = e.reduce((a, b) => a + b) / n;
+  var num = 0.0, den = 0.0;
+  for (var i = 0; i < n; i++) {
+    den += (e[i] - mean) * (e[i] - mean);
+    if (i > 0) num += (e[i] - mean) * (e[i - 1] - mean);
+  }
+  final r = den == 0 ? 0.0 : num / den;
+  if (r <= 0) return mk.p;
+  var sum = 0.0;
+  for (var k = 1; k < n; k++) {
+    sum += (n - k) * (n - k - 1) * (n - k - 2) * math.pow(r, k);
+  }
+  final factor = 1 + 2 / (n * (n - 1) * (n - 2)) * sum;
+  final z = mk.z / math.sqrt(factor);
+  return 2 * (1 - _phi(z.abs()));
+}
+
 const kTrendMinPoints = 6;
 const kTrendP = 0.05;
 const kSmoothMinPoints = 20;
@@ -114,7 +143,8 @@ class Trend {
   final double slope, intercept, p, x0, x1;
   final int n;
 
-  /// A steady direction: ≥ 6 readings, Mann–Kendall p < 0.05, same sign in both halves.
+  /// A steady direction: ≥ 6 readings, Mann–Kendall p < 0.05 after the
+  /// serial-correlation correction, same sign in both halves.
   final bool clear;
 
   /// Fitted on log(y): levels that grow by a percentage.
@@ -139,14 +169,14 @@ Trend? trendOf(List<(double, double)> points, {double? projectedFrom, bool log =
   final useLog = log && pts.every((p) => p.$2 > 0);
   final xs = [for (final p in pts) p.$1], ys = [for (final p in pts) useLog ? math.log(p.$2) : p.$2];
   final ts = theilSen(xs, ys);
-  final mk = mannKendall(ys);
+  final p = mannKendallCorrectedP(xs, ys, ts);
   // The same direction in each half: a rise then a fall is not one trend.
   final h = pts.length ~/ 2;
   final s1 = theilSen(xs.sublist(0, h), ys.sublist(0, h)).slope;
   final s2 = theilSen(xs.sublist(xs.length - h), ys.sublist(ys.length - h)).slope;
   final steady = s1.sign == ts.slope.sign && s2.sign == ts.slope.sign;
-  return Trend(ts.slope, ts.intercept, mk.p, pts.length,
-      pts.length >= kTrendMinPoints && mk.p < kTrendP && ts.slope != 0 && steady, xs.first, xs.last, useLog);
+  return Trend(ts.slope, ts.intercept, p, pts.length,
+      pts.length >= kTrendMinPoints && p < kTrendP && ts.slope != 0 && steady, xs.first, xs.last, useLog);
 }
 
 /// LOWESS (Cleveland 1979; local linear, tricube weights over the

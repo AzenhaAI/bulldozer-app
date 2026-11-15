@@ -30,6 +30,11 @@ void main() {
   check(niceTicks(-10.7, 10.9, count: 5).join(',') == '-10.0,-5.0,0.0,5.0,10.0', 'round ticks with 0: ${niceTicks(-10.7, 10.9, count: 5)}');
   check(!trendOf([for (var i = 0; i < 8; i++) (2016.0 + i, [70, 74, 77, 78, 77, 74, 70, 66][i].toDouble())])!.clear, 'no trend through a rise then fall');
   check(trendOf([for (var i = 0; i < 8; i++) (2016.0 + i, 50 + i * 1.5)])!.clear, 'steady rise is a trend');
+  // A random walk of 12 steps is no trend, even when it drifts one way.
+  check(!trendOf([for (var i = 0; i < 12; i++) (2014.0 + i, [50, 51, 50.5, 52, 53, 52.5, 54, 55.5, 55, 56.5, 56, 57.5][i].toDouble())])!.clear ||
+      trendOf([for (var i = 0; i < 12; i++) (2014.0 + i, [50, 51, 50.5, 52, 53, 52.5, 54, 55.5, 55, 56.5, 56, 57.5][i].toDouble())])!.p >=
+          mannKendall([50, 51, 50.5, 52, 53, 52.5, 54, 55.5, 55, 56.5, 56, 57.5]).p,
+      'serial correlation never makes p smaller');
   check(periodYear('2021–2023') == 2022 && periodYear('2016') == 2016, 'periodYear');
   final lw = (jsonDecode(File('test/lowess_vectors.json').readAsStringSync())['cases'] as List).cast<Map>();
   for (final c in lw) {
