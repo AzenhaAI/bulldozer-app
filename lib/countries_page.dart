@@ -395,13 +395,16 @@ class _CountryPageState extends State<CountryPage> {
                 style: TextStyle(
                     fontSize: 10, color: kTextDim, height: 1.1)),
             const SizedBox(height: 2),
-            Text(formatValue(it.value),
+            Text(formatWithUnit(it.value, it.unit),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: kAmber,
                     height: 1.1)),
-            Text('#${it.rank} of ${it.total}${_isEstimate(it) ? ' · est.' : ''}',
+            // The year next to the rank: tiles mix indicators of different years.
+            Text('#${it.rank} of ${it.total} · ${it.period}${_isEstimate(it) ? ' est.' : ''}',
                 style: TextStyle(
                     fontSize: 10, color: kTextDim, height: 1.2)),
           ],

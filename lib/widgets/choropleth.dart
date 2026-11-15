@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../api.dart' show formatValue;
 import '../theme.dart';
 
 class GeoCountry {
@@ -34,7 +36,7 @@ Future<WorldGeo> loadWorldGeo() async {
       for (final ring in (poly as List)) {
         rings.add([
           for (final p in (ring as List))
-            Offset((p[0] as num).toDouble(), (p[1] as num).toDouble())
+            Offset((p[0] as num).toDouble(), (p[1] as num).toDouble()),
         ]);
       }
       polys.add(rings);
@@ -42,38 +44,240 @@ Future<WorldGeo> loadWorldGeo() async {
     countries.add(GeoCountry(c['iso'] ?? '', c['name'] ?? '', polys));
   }
   return _cached = WorldGeo(
-      (j['w'] as num).toDouble(), (j['h'] as num).toDouble(), countries);
+    (j['w'] as num).toDouble(),
+    (j['h'] as num).toDouble(),
+    countries,
+  );
 }
 
-/// A small gradient legend for choropleth maps: low label — ramp — high label.
+/// Legend for [Choropleth]: stepped swatches of the five quantile classes
+/// between the [low] and [high] captions, plus a hatched "No data" swatch.
+///
+/// Give it the same [values] the map gets and it prints the class breaks under
+/// the swatches (computed by [Choropleth.breaksFor], so legend and map agree);
+/// [unit] is shown next to "No data" ('%' is appended to the numbers instead).
+/// Without [values] it draws the swatches with captions only.
 class ChoroLegend extends StatelessWidget {
   final String low;
   final String high;
-  const ChoroLegend({super.key, required this.low, required this.high});
+  final Iterable<double>? values;
+  final String? unit;
+  const ChoroLegend({
+    super.key,
+    required this.low,
+    required this.high,
+    this.values,
+    this.unit,
+  });
+
+  String _fmt(double v) {
+    final s = formatValue(v);
+    return unit?.trim() == '%' ? '$s%' : s;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lowC = isLight ? const Color(0xFFF3E3C0) : const Color(0xFF7A5200);
-    final midC = isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
-    final highC = isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
-    return Row(
+    final dim = TextStyle(fontSize: 11, color: kTextDim);
+    final breaks = values == null
+        ? const <double>[]
+        : Choropleth.breaksFor(values!);
+    final hasValues = values != null && values!.any((v) => v.isFinite);
+    final n = hasValues ? breaks.length + 1 : Choropleth.classes;
+    final colors = [for (var k = 0; k < n; k++) Choropleth.classColor(k, n)];
+
+    final swatches = Row(
       children: [
-        Text(low, style: TextStyle(fontSize: 11, color: kTextDim)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Container(
-            height: 8,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              gradient: LinearGradient(colors: [lowC, midC, highC]),
+        for (var k = 0; k < n; k++)
+          Expanded(
+            child: Container(
+              height: 10,
+              margin: EdgeInsets.only(right: k == n - 1 ? 0 : 2),
+              decoration: BoxDecoration(
+                color: colors[k],
+                borderRadius: BorderRadius.horizontal(
+                  left: Radius.circular(k == 0 ? 3 : 0),
+                  right: Radius.circular(k == n - 1 ? 3 : 0),
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(high,
-            style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700, color: kAmber)),
       ],
+    );
+
+    final noData = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const _NoDataSwatch(),
+        const SizedBox(width: 5),
+        Text('No data', style: dim),
+      ],
+    );
+
+    if (!hasValues) {
+      return Row(
+        children: [
+          Text(low, style: dim),
+          const SizedBox(width: 8),
+          Expanded(child: swatches),
+          const SizedBox(width: 8),
+          Text(
+            high,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: kAmber,
+            ),
+          ),
+          const SizedBox(width: 12),
+          noData,
+        ],
+      );
+    }
+
+    // Break values sit under the boundaries between swatches.
+    final breakLabels = SizedBox(
+      height: 14,
+      child: LayoutBuilder(
+        builder: (ctx, cons) {
+          const labelW = 56.0;
+          final w = cons.maxWidth;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (var i = 0; i < breaks.length; i++)
+                Positioned(
+                  left: (w * (i + 1) / n - labelW / 2).clamp(
+                    0.0,
+                    max(0.0, w - labelW),
+                  ),
+                  top: 0,
+                  width: labelW,
+                  child: Text(
+                    _fmt(breaks[i]),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: kTextDim,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+
+    final u = unit?.trim() ?? '';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(low, style: dim),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: swatches,
+                  ),
+                  const SizedBox(height: 3),
+                  breakLabels,
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              high,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: kAmber,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            noData,
+            const Spacer(),
+            if (u.isNotEmpty && u != '%')
+              Flexible(
+                child: Text(
+                  u,
+                  style: dim,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Small no-data swatch: the map's neutral grey with its diagonal hatch.
+class _NoDataSwatch extends StatelessWidget {
+  const _NoDataSwatch();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(2),
+      child: SizedBox(
+        width: 14,
+        height: 10,
+        child: CustomPaint(painter: _HatchSwatchPainter(isLight)),
+      ),
+    );
+  }
+}
+
+class _HatchSwatchPainter extends CustomPainter {
+  final bool light;
+  _HatchSwatchPainter(this.light);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(rect, Paint()..color = Choropleth.noDataColor);
+    _paintHatch(canvas, rect);
+  }
+
+  @override
+  bool shouldRepaint(_HatchSwatchPainter old) => old.light != light;
+}
+
+/// Diagonal (/) hatch lines over [rect]; callers clip to the shape first.
+/// Lines sit on a canvas-wide grid (x + y = n · spacing), so neighbouring
+/// hatched shapes line up.
+void _paintHatch(Canvas canvas, Rect rect, {double spacing = 4}) {
+  final p = Paint()
+    ..color = Choropleth.noDataHatchColor
+    ..strokeWidth = 0.8
+    ..isAntiAlias = true;
+  final end = rect.right + rect.bottom;
+  for (
+    var c = ((rect.left + rect.top) / spacing).floor() * spacing;
+    c <= end;
+    c += spacing
+  ) {
+    canvas.drawLine(
+      Offset(c - rect.bottom, rect.bottom),
+      Offset(c - rect.top, rect.top),
+      p,
     );
   }
 }
@@ -87,10 +291,88 @@ class CapitalMarker {
   const CapitalMarker(this.name, this.x, this.y);
 }
 
-/// A world choropleth: fills each country by [values] (ISO3 → value) on the
-/// amber ramp; grey where there's no data. Tap a country to drill in.
+/// A world choropleth: fills each country by [values] (ISO3 → value) in five
+/// quantile classes on the amber ramp; hatched grey where there's no data.
+/// Tap a country to drill in. [ChoroLegend] with the same values shows the
+/// same classes.
 class Choropleth extends StatefulWidget {
+  /// Number of quantile classes (fewer when the data has too few distinct
+  /// values to fill them).
+  static const classes = 5;
+
+  // Sequential amber ramps, low → high, spaced roughly evenly in CIELAB L*.
+  // Light theme: light → dark (L* ≈ 92, 78, 64, 47, 31).
+  static const _rampLight = [
+    Color(0xFFFCE7A8),
+    Color(0xFFF2B640),
+    Color(0xFFD98A00),
+    Color(0xFFA65E00),
+    Color(0xFF6F3B00),
+  ];
+  // Dark theme: dark → bright (L* ≈ 33, 47, 62, 76, 90). The lowest class is
+  // a saturated brown, well above the no-data grey (L* ≈ 19).
+  static const _rampDark = [
+    Color(0xFF6B4500),
+    Color(0xFF9A6300),
+    Color(0xFFCC8600),
+    Color(0xFFF5AE1E),
+    Color(0xFFFFE08A),
+  ];
+
+  /// The five class colours, low → high, for the active theme.
+  static List<Color> get ramp => isLight ? _rampLight : _rampDark;
+
+  /// Neutral "land" grey for countries without data — no hue, so it can't be
+  /// read as the (warm) lowest class; drawn with a hatch on top.
+  static Color get noDataColor =>
+      isLight ? const Color(0xFFC8C5BE) : const Color(0xFF2A2F36);
+
+  /// Hatch line colour over [noDataColor].
+  static Color get noDataHatchColor =>
+      isLight ? const Color(0x40000000) : const Color(0x33FFFFFF);
+
+  /// Quantile class breaks for [values] (non-finite values ignored): the
+  /// ascending inner thresholds, at most [classes] − 1 of them. A value v is
+  /// in class k = number of breaks ≤ v, so class 0 is "under breaks[0]" and
+  /// the last class is "breaks.last and over". Duplicate thresholds (ties)
+  /// are merged, so there can be fewer classes; empty input gives [].
+  static List<double> breaksFor(Iterable<double> values) {
+    final v = values.where((x) => x.isFinite).toList()..sort();
+    if (v.isEmpty) return const [];
+    final out = <double>[];
+    for (var i = 1; i < classes; i++) {
+      final b = v[min(v.length - 1, (v.length * i / classes).floor())];
+      // A break at the minimum would leave class 0 empty; equal breaks would
+      // leave a class between them empty.
+      if (b > v.first && (out.isEmpty || b > out.last)) out.add(b);
+    }
+    return out;
+  }
+
+  /// Class index of [v] for [breaks] from [breaksFor].
+  static int classOf(double v, List<double> breaks) {
+    var k = 0;
+    while (k < breaks.length && v >= breaks[k]) {
+      k++;
+    }
+    return k;
+  }
+
+  /// Colour of class [k] out of [n] classes: five classes use the full ramp,
+  /// fewer take an evenly spread subset (one class sits mid-ramp).
+  static Color classColor(int k, int n) {
+    final r = ramp;
+    if (n <= 1) return r[r.length ~/ 2];
+    if (n >= r.length) return r[k.clamp(0, r.length - 1)];
+    return r[((k * (r.length - 1)) / (n - 1)).round().clamp(0, r.length - 1)];
+  }
+
+  /// Fill colour for value [v] given [breaks] from [breaksFor].
+  static Color colorFor(double v, List<double> breaks) =>
+      classColor(classOf(v, breaks), breaks.length + 1);
+
   final Map<String, double> values;
+
   /// Pre-computed fill per ISO. When set it wins over the amber ramp — used by
   /// the bivariate map, which blends two indicators into one colour.
   final Map<String, Color>? colorOverride;
@@ -98,14 +380,15 @@ class Choropleth extends StatefulWidget {
   final String? zoomIso; // zoom the view to this country (locator map)
   final CapitalMarker? capital; // labelled dot, like the site's CountryPanel
   final void Function(String iso, String name)? onTap;
-  const Choropleth(
-      {super.key,
-      required this.values,
-      this.colorOverride,
-      this.highlightIso,
-      this.zoomIso,
-      this.capital,
-      this.onTap});
+  const Choropleth({
+    super.key,
+    required this.values,
+    this.colorOverride,
+    this.highlightIso,
+    this.zoomIso,
+    this.capital,
+    this.onTap,
+  });
 
   @override
   State<Choropleth> createState() => _ChoroplethState();
@@ -160,10 +443,7 @@ class _ChoroplethState extends State<Choropleth> {
         child: Center(child: CircularProgressIndicator(color: kAmber)),
       );
     }
-    final vals =
-        widget.values.values.where((v) => v.isFinite).toList(growable: false);
-    final minV = vals.isEmpty ? 0.0 : vals.reduce(min);
-    final maxV = vals.isEmpty ? 1.0 : vals.reduce(max);
+    final breaks = Choropleth.breaksFor(widget.values.values);
 
     // View region in geo coords: whole world, or zoomed to one country.
     final aspect = geo.w / geo.h;
@@ -198,14 +478,26 @@ class _ChoroplethState extends State<Choropleth> {
           return GestureDetector(
             onTapUp: (d) {
               if (widget.onTap == null) return;
-              final c = _hitTest(d.localPosition.dx / zs + rx0,
-                  d.localPosition.dy / zs + ry0);
+              final c = _hitTest(
+                d.localPosition.dx / zs + rx0,
+                d.localPosition.dy / zs + ry0,
+              );
               if (c != null) widget.onTap!(c.iso, c.name);
             },
             child: CustomPaint(
               size: Size(cons.maxWidth, cons.maxHeight),
-              painter: _MapPainter(geo, widget.values, widget.colorOverride, minV, maxV,
-                  widget.highlightIso, rx0, ry0, zs, widget.capital),
+              painter: _MapPainter(
+                geo,
+                widget.values,
+                widget.colorOverride,
+                breaks,
+                widget.highlightIso,
+                rx0,
+                ry0,
+                zs,
+                widget.capital,
+                isLight,
+              ),
             ),
           );
         },
@@ -218,38 +510,39 @@ class _MapPainter extends CustomPainter {
   final WorldGeo geo;
   final Map<String, double> values;
   final Map<String, Color>? colorOverride;
-  final double minV;
-  final double maxV;
+  final List<double> breaks;
   final String? highlight;
   final double rx0;
   final double ry0;
   final double zs;
   final CapitalMarker? capital;
-  _MapPainter(this.geo, this.values, this.colorOverride, this.minV, this.maxV,
-      this.highlight, this.rx0, this.ry0, this.zs, this.capital);
+  final bool light; // theme at build time, so a theme flip repaints
+  _MapPainter(
+    this.geo,
+    this.values,
+    this.colorOverride,
+    this.breaks,
+    this.highlight,
+    this.rx0,
+    this.ry0,
+    this.zs,
+    this.capital,
+    this.light,
+  );
 
-  // Visible "land" grey so countries read on the background even with no
-  // data. Not static — the palette flips with the theme.
-  final _noData = Paint()
-    ..color = isLight ? const Color(0xFFDDD8CC) : const Color(0xFF2A2F36);
+  // Neutral "land" grey so countries read on the background even with no
+  // data; hatched in paint() so it can't pass for the lowest class.
+  final _noData = Paint()..color = Choropleth.noDataColor;
   final _border = Paint()
     ..color = isLight
         ? const Color(0x33000000) // dark hairline on the cream theme
         : const Color(0x66FFFFFF) // light hairline separates every country
     ..style = PaintingStyle.stroke
     ..strokeWidth = 0.8;
-  // Three-stop ramp so mid values separate instead of blending into one
-  // amber mass: dark → orange → bright (reversed lightness on light theme).
-  Color get _low => isLight ? const Color(0xFFF3E3C0) : const Color(0xFF7A5200);
-  Color get _mid => isLight ? const Color(0xFFE08900) : const Color(0xFFC96A00);
-  Color get _high => isLight ? const Color(0xFF7A3E00) : const Color(0xFFFFDE6B);
-
-  Color _ramp(double t) => t < 0.5
-      ? Color.lerp(_low, _mid, t * 2)!
-      : Color.lerp(_mid, _high, (t - 0.5) * 2)!;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final canvasRect = Offset.zero & size;
     for (final c in geo.countries) {
       final path = Path()..fillType = PathFillType.evenOdd;
       for (final poly in c.polys) {
@@ -280,18 +573,28 @@ class _MapPainter extends CustomPainter {
       } else if (v == null || !v.isFinite) {
         fill = _noData;
       } else {
-        final t = maxV > minV ? (v - minV) / (maxV - minV) : 0.5;
-        fill = Paint()..color = _ramp(t.clamp(0.0, 1.0));
+        fill = Paint()..color = Choropleth.colorFor(v, breaks);
       }
       canvas.drawPath(path, fill);
+      if (identical(fill, _noData)) {
+        // Hatch no-data shapes so they can't be read as the lowest class.
+        final r = path.getBounds().intersect(canvasRect);
+        if (r.width > 0 && r.height > 0) {
+          canvas.save();
+          canvas.clipPath(path);
+          _paintHatch(canvas, r, spacing: 5);
+          canvas.restore();
+        }
+      }
       canvas.drawPath(path, _border);
       if (c.iso == highlight) {
         canvas.drawPath(
-            path,
-            Paint()
-              ..color = kText
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 1.8);
+          path,
+          Paint()
+            ..color = kText
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.8,
+        );
       }
     }
     _paintCapital(canvas, size);
@@ -305,15 +608,19 @@ class _MapPainter extends CustomPainter {
     if (cx < 0 || cy < 0 || cx > size.width || cy > size.height) return;
     final r = (size.width * 0.008).clamp(2.5, 5.0);
     canvas.drawCircle(
-        Offset(cx, cy), r * 2.2, Paint()..color = kBg.withValues(alpha: 0.45));
+      Offset(cx, cy),
+      r * 2.2,
+      Paint()..color = kBg.withValues(alpha: 0.45),
+    );
     canvas.drawCircle(Offset(cx, cy), r, Paint()..color = kText);
     canvas.drawCircle(
-        Offset(cx, cy),
-        r,
-        Paint()
-          ..color = kBg
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1);
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..color = kBg
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
     if (cap.name.isEmpty) return;
     final fs = (size.width * 0.028).clamp(9.0, 13.0);
     final tp = TextPainter(
@@ -342,6 +649,8 @@ class _MapPainter extends CustomPainter {
   bool shouldRepaint(_MapPainter old) =>
       old.colorOverride != colorOverride ||
       old.values != values ||
+      !listEquals(old.breaks, breaks) ||
+      old.light != light ||
       old.highlight != highlight ||
       old.zs != zs ||
       old.rx0 != rx0 ||

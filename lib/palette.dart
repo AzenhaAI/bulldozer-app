@@ -1,24 +1,49 @@
 import 'package:flutter/material.dart';
 
-/// Region colour palette — a 1:1 port of the site's `src/lib/palette.ts`, so
-/// editorial charts (scatter, dot strips, group trends) read the same on the
-/// app and the web. Bars and choropleths stay amber (ranking / scale); region
-/// hues are only for grouping.
-const Map<String, Color> regionColor = {
-  'Europe & Central Asia': Color(0xFF60A5FA),
-  'Americas': Color(0xFFF59E0B),
-  'East Asia & Pacific': Color(0xFF34D399),
-  'South Asia': Color(0xFFA78BFA),
-  'Middle East & North Africa': Color(0xFFF472B6),
-  'Sub-Saharan Africa': Color(0xFFFB923C),
-  'Advanced / other': Color(0xFF94A3B8),
+import 'theme.dart';
+
+/// Region colour palette shared by the editorial charts (scatter, bubbles, dot
+/// strips, group trends). Bars and choropleths stay amber (ranking / scale);
+/// region hues are only for grouping.
+///
+/// The hues follow the Okabe–Ito colour-blind-safe set (amber, sky blue,
+/// bluish green, vermillion, reddish purple) plus a violet and a neutral grey,
+/// so Americas (brand amber) and Africa (vermillion) no longer blur together.
+/// Each region has a bright tone for the dark theme and a deeper tone for the
+/// light theme, both readable (≥ 3:1) on the page background.
+const Map<String, Color> _regionDark = {
+  'Europe & Central Asia': Color(0xFF56B4E9), // sky blue
+  'Americas': Color(0xFFF59E0B), // brand amber
+  'East Asia & Pacific': Color(0xFF2BB58C), // bluish green
+  'South Asia': Color(0xFFA78BFA), // violet
+  'Middle East & North Africa': Color(0xFFE07BB5), // reddish purple
+  'Sub-Saharan Africa': Color(0xFFE5602A), // vermillion
+  'Advanced / other': Color(0xFF94A3B8), // grey
   // Gapminder 4-region names
-  'Europe': Color(0xFF60A5FA),
-  'Asia': Color(0xFF34D399),
-  'Africa': Color(0xFFFB923C),
+  'Europe': Color(0xFF56B4E9),
+  'Asia': Color(0xFF2BB58C),
+  'Africa': Color(0xFFE5602A),
 };
 
-const Color kRegionOther = Color(0xFF94A3B8);
+const Map<String, Color> _regionLight = {
+  'Europe & Central Asia': Color(0xFF0072B2),
+  'Americas': Color(0xFFB57800),
+  'East Asia & Pacific': Color(0xFF00876A),
+  'South Asia': Color(0xFF7354C9),
+  'Middle East & North Africa': Color(0xFFB0458A),
+  'Sub-Saharan Africa': Color(0xFFC94F0C),
+  'Advanced / other': Color(0xFF64748B),
+  'Europe': Color(0xFF0072B2),
+  'Asia': Color(0xFF00876A),
+  'Africa': Color(0xFFC94F0C),
+};
+
+/// Region → colour for the active theme.
+Map<String, Color> get regionColor => isLight ? _regionLight : _regionDark;
+
+/// Colour for regions not in the palette (and missing regions).
+Color get kRegionOther =>
+    isLight ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
 
 Color colorFor(String? region) =>
     (region != null ? regionColor[region] : null) ?? kRegionOther;

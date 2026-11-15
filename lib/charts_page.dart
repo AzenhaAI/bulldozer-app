@@ -143,7 +143,7 @@ class _ChartsPageState extends State<ChartsPage> {
             iso: o.iso,
             caption: ties > 1 ? '${p.$2} · tied by $ties' : p.$2,
             when: when,
-            value: formatValue(o.value),
+            value: formatWithUnit(o.value, ds.unit),
             slug: p.$3));
       } catch (_) {}
     }

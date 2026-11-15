@@ -418,6 +418,33 @@ Future<List<QuizCountry>> fetchQuizPool() async => [
         QuizCountry.fromJson(c)
     ];
 
+/// A value with a short form of its unit, for tiles and records where the
+/// unit is not printed elsewhere: "1.5B" people, "\$52.8k", "3.1%",
+/// "4.2% of GDP", "73.2 yrs", "12 per 100k". Index and score units stay bare -
+/// their scale is in the indicator's description (testers, 15 Nov 2026: "1.5k"
+/// for India's population, "Inflation 3.10" with no %).
+String formatWithUnit(double v, String unit) {
+  final u = unit.trim();
+  final l = u.toLowerCase();
+  if (l == 'million') return formatValue(v * 1e6);
+  if (l == 'bn') return formatValue(v * 1e9);
+  if (l == 'usd bn' || l == 'intl\$ bn') return '\$${formatValue(v * 1e9)}';
+  if (l == 'usd' || l == 'intl\$' || l.startsWith('intl-\$') || l.contains('intl\$/')) {
+    return '\$${formatValue(v)}';
+  }
+  // Shares read to one decimal: "3.1%", not "3.10%".
+  final pct = v.abs() < 100 ? v.toStringAsFixed(1) : formatValue(v);
+  if (u == '%' || l == '% yoy' || l == '% per year') return '$pct%';
+  if (u.startsWith('%')) return '$pct$u';
+  if (l == 'years') return '${formatValue(v)} yrs';
+  if (l.startsWith('index') || l.startsWith('mean') || l.startsWith('estimate') ||
+      l.contains('score') || l.contains('pts') || l.contains('…') ||
+      u.isEmpty || l == 'count' || l == 'people') {
+    return formatValue(v);
+  }
+  return '${formatValue(v)} $u';
+}
+
 String formatValue(double v) {
   final abs = v.abs();
   if (abs >= 1e12) return '${(v / 1e12).toStringAsFixed(1)}T';
