@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Images for the App Store in-app event "Economy this week" (1.39.0).
+"""Images for the App Store in-app events.
 
-  python3 store/event/make_images.py
+  python3 store/event/make_images.py          # "Economy this week" (1.39.0)
+  python3 store/event/make_images.py learn    # "Learn with data" (Feb 2027)
+
+"Learn with data": the Map maker in front, the Edu tab behind; shots from the
+edu-app-analytics web build (16 Nov 2026), same 440x956 at 3x.
 
 Writes card-1920x1080.png (event card, 16:9) and details-1080x1920.png (event
 details page, 9:16). The App Store lays the event name and description over
@@ -10,7 +14,7 @@ table in front, the Biz tab with its headline card behind, on the app's dark
 field with an amber glow. Source shots come from the 1.39.0 (82) web build
 (scratch shot.mjs, 440x956 at 3x). Phone frame: Ativa flyer helper.
 """
-import os, importlib.util
+import os, sys, importlib.util
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -41,17 +45,20 @@ def put(bg, card, cx, cy):
     bg.alpha_composite(card, (x, y))
 
 
-def compose(W, H, glow, back, front, out):
+def compose(W, H, glow, back, front, out, srcs=('src-biz.png', 'src-economy.png')):
     bg = field(W, H, *glow).convert('RGBA')
-    put(bg, phone('src-biz.png', back[2], back[3]), back[0], back[1])
-    put(bg, phone('src-economy.png', front[2], front[3]), front[0], front[1])
+    put(bg, phone(srcs[0], back[2], back[3]), back[0], back[1])
+    put(bg, phone(srcs[1], front[2], front[3]), front[0], front[1])
     s = int(H * 0.012)  # amber stripe along the foot, as on the flyer
     ImageDraw.Draw(bg).rectangle((0, H - s, W, H), fill=AMBER)
     bg.convert('RGB').save(os.path.join(HERE, out))
     print(out)
 
 
+LEARN = len(sys.argv) > 1 and sys.argv[1] == 'learn'
+SRCS = ('src-edu.png', 'src-mapmaker.png') if LEARN else ('src-biz.png', 'src-economy.png')
+TAG = '-learn' if LEARN else ''
 # Card: two phones to the right, the table in front; the left half stays dark for the title.
-compose(1920, 1080, (1400, 600), (1180, 700, 470, 6), (1560, 760, 520, -6), 'card-1920x1080.png')
+compose(1920, 1080, (1400, 600), (1180, 700, 470, 6), (1560, 760, 520, -6), f'card{TAG}-1920x1080.png', SRCS)
 # Details page: the table phone in the upper part, Biz peeking behind; the foot stays free.
-compose(1080, 1920, (540, 760), (300, 700, 470, 7), (640, 820, 560, -4), 'details-1080x1920.png')
+compose(1080, 1920, (540, 760), (300, 700, 470, 7), (640, 820, 560, -4), f'details{TAG}-1080x1920.png', SRCS)

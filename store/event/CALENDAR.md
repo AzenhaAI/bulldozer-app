@@ -13,6 +13,7 @@ actually happened and the data is in the app before submitting.
 | 20 Nov – 18 Dec 2026 | Economy this week | weekly table, IMF WEO Oct 2026 | open/economy |
 | Dec 2026 – Jan 2027 | 2026 in numbers (year review) | records across Stats/Biz/Polls | open/stats |
 | late Jan – Feb 2027 | IMF outlook update | IMF WEO Update (January) | open/dataset/imf-gdp-growth |
+| 1 Feb – 1 Mar 2027 | Learn with data (new semester; draft `event-learn.json`) | Edu tools: map maker, people chart, statistics basics, app analytics guide | open/edu |
 | Feb – Mar 2027 | Corruption Perceptions Index 2026 | Transparency International (Feb) | open/dataset/cpi-corruption-perceptions |
 | Mar – Apr 2027 | Happiest countries 2027 | World Happiness Report (~20 Mar) | open/dataset/whr-happiness |
 | Apr – May 2027 | IMF April outlook | IMF WEO (April) | open/economy |

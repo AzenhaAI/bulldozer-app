@@ -1,0 +1,21 @@
+{
+ "referenceName": "Learn with data (Feb 2027)",
+ "badge": "SPECIAL_EVENT",
+ "purpose": "APPROPRIATE_FOR_ALL_USERS",
+ "priority": "NORMAL",
+ "primaryLocale": "en-US",
+ "publishStart": "2027-01-18T09:00:00Z",
+ "eventStart": "2027-02-01T09:00:00Z",
+ "eventEnd": "2027-03-01T09:00:00Z",
+ "card": "card-learn-1920x1080.png",
+ "details": "details-learn-1080x1920.png",
+ "locales": {
+  "en-US": {
+   "name": "Learn with data",
+   "short": "Make maps and charts, learn the stats behind them",
+   "long": "Poster maps, people charts, statistics basics with worked examples, and how app and site analytics really work."
+  }
+ },
+ "deepLink": "bulldozerstats://open/edu",
+ "copyTerritoriesFrom": "6829941260"
+}
