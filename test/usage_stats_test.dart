@@ -8,9 +8,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:bulldozer_app/usage_stats.dart';
 
-// Audience counters (aud.*) depend on the test device; leave them out.
+// Audience (aud.*) and period (active.*) counters are tested separately.
 Map strip(Object? counts) =>
-    Map.of(counts as Map)..removeWhere((k, _) => (k as String).startsWith('aud.'));
+    Map.of(counts as Map)
+      ..removeWhere((k, _) => (k as String).startsWith('aud.') || k.startsWith('active.'));
 
 List days(Map<String, dynamic> body) => [
       for (final d in body['days'] as List)
@@ -204,6 +205,36 @@ void main() {
     final c = (sent.last['days'] as List).single['counts'] as Map;
     expect(c['error.rangeerror.map_page_412'], 1);
     expect(jsonEncode(sent.last).contains('secret'), false);
+  });
+
+  test('active.week and active.month once per period', () async {
+    await start(); // Mon 16 Nov 2026
+    var c = (sent.last['days'] as List).single['counts'] as Map;
+    expect(c['active.week'], 1);
+    expect(c['active.month'], 1);
+    // Wednesday, same week and month: nothing new.
+    now = DateTime(2026, 11, 18, 9);
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await UsageStats.flush();
+    await UsageStats.flush();
+    c = (sent.last['days'] as List).single['counts'] as Map;
+    expect(c.containsKey('active.week'), false);
+    // Next Monday: a new week, same month.
+    now = DateTime(2026, 11, 23, 9);
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await UsageStats.flush();
+    await UsageStats.flush();
+    c = (sent.last['days'] as List).single['counts'] as Map;
+    expect(c['active.week'], 1);
+    expect(c.containsKey('active.month'), false);
+    // 1 December: a new week and month.
+    now = DateTime(2026, 12, 1, 9);
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await UsageStats.flush();
+    await UsageStats.flush();
+    c = (sent.last['days'] as List).single['counts'] as Map;
+    expect(c['active.week'], 1);
+    expect(c['active.month'], 1);
   });
 
   test('bad names are ignored', () async {

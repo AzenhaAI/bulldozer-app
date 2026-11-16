@@ -33,6 +33,8 @@
 // - A/B experiments: `experiments` at init; each install gets one arm,
 //   stored locally; retention is split by arm; read it with variant();
 // - funnels: funnel('onboarding', 'step') counts each step once per install;
+// - unique actives: active.week / active.month count each install once per
+//   calendar week / month (WAU, MAU); DAU is the server's daily "opened";
 // - audience: once a day, UI language, phone/tablet, dark/light, large text;
 // - errors: catchErrors() counts uncaught Dart errors by type and code
 //   location in the app (never the message text) -> errors per version.
@@ -85,6 +87,8 @@ class UsageStats with WidgetsBindingObserver {
   final Map<String, String> _tags = {}; // cohort segments: source, exp_*
   final Set<String> _funnelDone = {};
   String? _audienceDay;
+  String? _weekMarked; // ISO week (its Monday) already counted in active.week
+  String? _monthMarked; // calendar month already counted in active.month
   static final _cleanRe = RegExp(r'[^a-z0-9_]');
 
   static String _clean(String s, int max) {
@@ -260,9 +264,28 @@ class UsageStats with WidgetsBindingObserver {
     if (!_enabled || _app == null) return;
     final today = _today;
     _countAudience(today);
+    _countPeriods();
     if (_activeSentDay == today) return;
     _pending.putIfAbsent(today, () => _DayTally()).active = true;
     _scheduleSave();
+  }
+
+  // Unique actives without an ID: each install adds 1 the first time it is
+  // opened in a calendar week (Monday-Sunday) and a calendar month, so the
+  // sums of active.week / active.month are WAU / MAU.
+  void _countPeriods() {
+    final now = _now();
+    final d = DateTime(now.year, now.month, now.day);
+    final week = _day(d.subtract(Duration(days: d.weekday - 1)));
+    final month = _day(d).substring(0, 7);
+    if (_weekMarked != week) {
+      _weekMarked = week;
+      _count('active.week', 1);
+    }
+    if (_monthMarked != month) {
+      _monthMarked = month;
+      _count('active.month', 1);
+    }
   }
 
   // Once a day: coarse device settings, no identifiers, no location.
@@ -446,6 +469,8 @@ class UsageStats with WidgetsBindingObserver {
         'tags': _tags,
         'funnel': _funnelDone.toList(),
         'aud_day': _audienceDay,
+        'week': _weekMarked,
+        'month': _monthMarked,
         'pending': {for (final e in _pending.entries) e.key: e.value.toJson()},
       }));
     } catch (_) {
@@ -468,6 +493,8 @@ class UsageStats with WidgetsBindingObserver {
     _tags.clear();
     _funnelDone.clear();
     _audienceDay = null;
+    _weekMarked = null;
+    _monthMarked = null;
     if (j == null) {
       _enabled = true;
       _installDay = existingUser ? null : _today;
@@ -496,6 +523,10 @@ class UsageStats with WidgetsBindingObserver {
     if (f is List) _funnelDone.addAll(f.whereType<String>());
     final ad = j['aud_day'];
     _audienceDay = ad is String ? ad : null;
+    final wk = j['week'];
+    _weekMarked = wk is String ? wk : null;
+    final mo = j['month'];
+    _monthMarked = mo is String ? mo : null;
     return false;
   }
 }
