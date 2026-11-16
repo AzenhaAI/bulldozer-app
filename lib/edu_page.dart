@@ -42,6 +42,13 @@ class EduPage extends StatelessWidget {
         '/edu/#pipeline',
       ),
       (
+        '📱',
+        'App analytics',
+        'Where app numbers come from — App Store Connect, Google Play, GA4 and Cloudflare — '
+            'how late each one lands, how they are stitched by channel, and the usual traps.',
+        '/edu/app-analytics/',
+      ),
+      (
         '🎓',
         'Free places to learn',
         'Dataviz craft, SQL practice, scraping and the best public data journalism, hand-picked.',
@@ -74,7 +81,7 @@ class EduPage extends StatelessWidget {
       ),
     ];
 
-    // Eight links and nothing else — this is the one tab a wide layout cannot
+    // Nine links and nothing else — this is the one tab a wide layout cannot
     // help. Stretched to the full 1280 the cards became long thin strips over a
     // field of empty black; held to a reading column they read as a deliberate
     // index, which is what they are. The rest of the app fills the width; this
