@@ -15,6 +15,7 @@ import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
+import 'usage.dart';
 
 class CountriesPage extends StatefulWidget {
   const CountriesPage({super.key});
@@ -336,7 +337,10 @@ const _priority = <String, List<List<String>>>{
   ],
 };
 
-class _CountryPageState extends State<CountryPage> {
+class _CountryPageState extends State<CountryPage> with UsageScreen<CountryPage> {
+  @override
+  String get usageScreenName => 'country';
+
   String? _wiki;
   // Mirrors the site's country panel controls: group by topic (default) or
   // sort by world rank, plus a free-text filter over indicator titles.
@@ -349,6 +353,7 @@ class _CountryPageState extends State<CountryPage> {
   @override
   void initState() {
     super.initState();
+    usageCountry(widget.country.iso);
     _loadWiki();
     _loadMeta();
   }

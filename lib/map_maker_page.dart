@@ -14,6 +14,7 @@ import 'widgets/brand_footer.dart';
 import 'widgets/choropleth.dart' show WorldGeo, GeoCountry, loadWorldGeo;
 import 'widgets/load_error.dart';
 import 'widgets/search_sheet.dart';
+import 'usage.dart';
 
 /// Map maker (Edu): a poster map in a handful of named colour classes, the
 /// kind that travels on social media — but built from one of our indicators,
@@ -82,7 +83,10 @@ const _formats = <(String, double)>[
 /// The poster is laid out at this logical width and exported at 3× = 1080 px.
 const _posterW = 360.0;
 
-class _MapMakerPageState extends State<MapMakerPage> {
+class _MapMakerPageState extends State<MapMakerPage> with UsageScreen<MapMakerPage> {
+  @override
+  String get usageScreenName => 'map_maker';
+
   CatalogEntry? _entry;
   Dataset? _ds;
   Object? _error;
@@ -241,6 +245,7 @@ class _MapMakerPageState extends State<MapMakerPage> {
         files: [XFile(file.path)],
         text: '${_title.text.trim()} — made with BullDozer · azenha.ai/bulldozer',
       ));
+      usageFeature('map_shared');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -332,7 +337,10 @@ class _MapMakerPageState extends State<MapMakerPage> {
                     items: catalog,
                     label: (e) => e.title,
                     sub: (e) => e.source,
-                    onPick: _pick,
+                    onPick: (e) {
+                      usageContentDataset(e.slug);
+                      _pick(e);
+                    },
                   ),
                 ),
               ),

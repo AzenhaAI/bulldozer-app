@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'usage.dart';
 
 /// Native (condensed) Inglehart–Welzel cultural map — a port of the site's
 /// CulturalMap: X = self-expression values, Y = secular values, dots coloured
@@ -55,7 +56,10 @@ class _CPt {
   const _CPt(this.iso, this.name, this.zone, this.x, this.y);
 }
 
-class _CulturalMapPageState extends State<CulturalMapPage> {
+class _CulturalMapPageState extends State<CulturalMapPage> with UsageScreen<CulturalMapPage> {
+  @override
+  String get usageScreenName => 'cultural_map';
+
   List<_CPt>? _pts;
   String? _error;
   _CPt? _sel;

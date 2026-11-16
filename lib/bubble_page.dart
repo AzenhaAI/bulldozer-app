@@ -10,6 +10,7 @@ import 'theme.dart';
 import 'widgets/chart_rules.dart' show niceTicks, yDomain;
 import 'widgets/region_legend.dart';
 import 'widgets/search_sheet.dart';
+import 'usage.dart';
 
 /// Gapminder-style animated bubble chart — a native port of the site's
 /// BubbleChart: three indicators merged on iso+year (X, Y, bubble size),
@@ -26,7 +27,10 @@ class _Bubble {
   const _Bubble(this.iso, this.name, this.region, this.x, this.y, this.s);
 }
 
-class _BubblePageState extends State<BubblePage> {
+class _BubblePageState extends State<BubblePage> with UsageScreen<BubblePage> {
+  @override
+  String get usageScreenName => 'bubbles';
+
   // sensible defaults, same as the site
   String _xSlug = 'gapminder-income';
   String _ySlug = 'gapminder-life-expectancy';
@@ -46,6 +50,7 @@ class _BubblePageState extends State<BubblePage> {
   @override
   void initState() {
     super.initState();
+    usageFirstChart();
     _load();
   }
 
@@ -128,6 +133,7 @@ class _BubblePageState extends State<BubblePage> {
       label: (e) => e.title,
       sub: (e) => e.source,
       onPick: (e) {
+        usageContentDataset(e.slug);
         _timer?.cancel();
         setState(() {
           _playing = false;

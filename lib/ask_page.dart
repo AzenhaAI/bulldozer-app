@@ -13,6 +13,7 @@ import 'countries_page.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/ai_reading.dart';
+import 'usage.dart';
 
 /// "Ask AI" — type a country, get what the catalogue holds on it and where it
 /// stands out in the world, plus an answer in words from bot.azenha.ai/ask.
@@ -88,6 +89,7 @@ class _AskPageState extends State<AskPage> {
       return;
     }
     if (!mounted) return;
+    usageFeature('ask_sent');
     setState(() {
       _asking = true;
       _answer = null;
@@ -211,6 +213,7 @@ class _AskPageState extends State<AskPage> {
 
   Future<void> _ask(Country c, [String? question]) async {
     FocusScope.of(context).unfocus();
+    usageCountry(c.iso);
     setState(() {
       _loading = true;
       _error = null;

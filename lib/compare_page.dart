@@ -5,6 +5,7 @@ import 'catalog_store.dart';
 import 'theme.dart';
 import 'widgets/sample_stats.dart';
 import 'widgets/search_sheet.dart';
+import 'usage.dart';
 
 const _maxCountries = 5;
 
@@ -29,7 +30,10 @@ class ComparePage extends StatefulWidget {
   State<ComparePage> createState() => _ComparePageState();
 }
 
-class _ComparePageState extends State<ComparePage> {
+class _ComparePageState extends State<ComparePage> with UsageScreen<ComparePage> {
+  @override
+  String get usageScreenName => 'compare';
+
   final List<Country> _selected = [];
   CatalogEntry? _indicator;
   Dataset? _ds;

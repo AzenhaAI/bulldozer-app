@@ -5,6 +5,7 @@ import 'api.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/load_error.dart';
+import 'usage.dart';
 
 /// Most-valuable global brands with their logos — the Biz section's flagship
 /// content (mirrors the site's /logos). Logos are Wikimedia Commons renders.
@@ -14,7 +15,10 @@ class BrandsPage extends StatefulWidget {
   State<BrandsPage> createState() => _BrandsPageState();
 }
 
-class _BrandsPageState extends State<BrandsPage> {
+class _BrandsPageState extends State<BrandsPage> with UsageScreen<BrandsPage> {
+  @override
+  String get usageScreenName => 'brands';
+
   List<Brand>? _brands;
   String? _error;
 
