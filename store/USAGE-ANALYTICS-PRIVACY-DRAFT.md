@@ -35,27 +35,24 @@ Source of truth for the wording: `~/Projects/_stores/usage/README.md`,
 ## 1. Privacy policy paragraph (BullDozer page on azenha.ai; add PT/RU translations)
 
 > **Anonymous usage statistics.** The app counts, per day, which screens
-> and features were used and whether the app was opened. It also stores
-> its install date on your device. It sends these counts to our server
+> and features were used and whether the app was opened. It also counts app
+> errors (the kind of error and where in the app's code it happened, never
+> its content), coarse device settings (app language, phone or tablet, dark
+> or light theme, large text) and, on the first run, the channel the app was
+> installed from (for example a Google Play campaign). It keeps its install
+> date on your device. It sends these counts to our server
 > (Cloudflare, EU) without any identifier: no device ID, account, IP
 > address or advertising ID is stored. We use the totals only to improve
 > the app. You can turn this off in the menu -> Share anonymous usage
 > statistics.
 
-Note: BullDozer has no separate Settings screen; the switch sits in the side
-menu (the drawer opened from the top-right button). The README's wording says
-"Settings ->"; above it is adapted to "the menu ->".
-
-**Proposed addition (not in the README; for Kirill to accept or drop).** The
-README paragraph predates error counts, install source and audience
-counts. A policy that says only "which screens and features were used" now
-under-describes what is sent. Suggested sentence after the first one:
-
-> It also counts app errors (the kind of error and where in the app's code
-> it happened, never its content), coarse device settings (app language,
-> phone or tablet, dark or light theme, large text) and, on the first run,
-> the channel the app was installed from (for example a Google Play
-> campaign).
+Notes:
+- BullDozer has no separate Settings screen; the switch sits in the side
+  menu (the drawer opened from the top-right button). The README's wording
+  says "Settings ->"; above it is adapted to "the menu ->".
+- The second sentence (errors, device settings, install source) is not in
+  the README, whose paragraph predates those counts. Kirill accepted it on
+  16 Nov 2026. The paragraph goes on the website with the release.
 
 ## 2. App Store Connect → App Privacy (replaces "Data Not Collected")
 
