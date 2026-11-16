@@ -8,6 +8,15 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:bulldozer_app/usage_stats.dart';
 
+// Audience counters (aud.*) depend on the test device; leave them out.
+Map strip(Object? counts) =>
+    Map.of(counts as Map)..removeWhere((k, _) => (k as String).startsWith('aud.'));
+
+List days(Map<String, dynamic> body) => [
+      for (final d in body['days'] as List)
+        {'day': d['day'], 'active': d['active'], 'counts': strip(d['counts'])},
+    ];
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -16,7 +25,12 @@ void main() {
   late int status;
   late DateTime now;
 
-  Future<void> start({bool existing = false, String? keep}) async {
+  Future<void> start({
+    bool existing = false,
+    String? keep,
+    Future<String?> Function()? source,
+    Map<String, List<String>> experiments = const {},
+  }) async {
     stored = keep;
     await UsageStats.init(
       app: 'ativa',
@@ -24,6 +38,8 @@ void main() {
       read: () async => stored,
       write: (s) async => stored = s,
       existingUser: existing,
+      installSource: source,
+      experiments: experiments,
       platform: 'ios',
       now: () => now,
       client: MockClient((req) async {
@@ -45,7 +61,7 @@ void main() {
     expect(sent, hasLength(1));
     final b = sent.single;
     expect(b['install_day'], '2026-11-16');
-    expect(b['days'], [
+    expect(days(b), [
       {'day': '2026-11-16', 'active': true, 'counts': {'session.start': 1}},
     ]);
     expect(b.keys.toSet(), {'app', 'platform', 'version', 'install_day', 'days'});
@@ -59,7 +75,7 @@ void main() {
     await UsageStats.flush();
     final last = sent.last['days'] as List;
     expect(last.single['active'], false);
-    expect(last.single['counts'], {'screen.map': 1, 'onboarding.done': 1});
+    expect(strip(last.single['counts']), {'screen.map': 1, 'onboarding.done': 1});
 
     now = DateTime(2026, 11, 17, 9);
     WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -82,7 +98,7 @@ void main() {
     await UsageStats.flush();
     final days = sent.last['days'] as List;
     expect(days.single['active'], true);
-    expect(days.single['counts'], {'session.start': 1, 'feature.route_planned': 2});
+    expect(strip(days.single['counts']), {'session.start': 1, 'feature.route_planned': 2});
     sent.clear();
     await UsageStats.flush();
     expect(sent, isEmpty);
@@ -98,7 +114,7 @@ void main() {
     sent.clear();
     await start(keep: saved);
     expect(sent.single['install_day'], '2026-11-16');
-    expect((sent.single['days'] as List).single['counts'], {'session.start': 2, 'feature.x': 1});
+    expect(strip((sent.single['days'] as List).single['counts']), {'session.start': 2, 'feature.x': 1});
   });
 
   test('opt-out sends nothing and drops pending', () async {
@@ -141,6 +157,53 @@ void main() {
     await UsageStats.flush();
     final c2 = (sent.last['days'] as List).single['counts'] as Map;
     expect(c2['session.start'], 1);
+  });
+
+  test('install source and experiment arm travel as cohort tags', () async {
+    await start(source: () async => 'Flyer A6!', experiments: {'home': ['a', 'b']});
+    final tags = sent.single['tags'] as Map;
+    expect(tags['source'], 'flyer_a6_');
+    expect(['a', 'b'], contains(tags['exp_home']));
+    expect(UsageStats.variant('home'), tags['exp_home']);
+    // Kept across restarts, never re-rolled.
+    final saved = stored;
+    sent.clear();
+    await start(keep: saved, experiments: {'home': ['a', 'b']});
+    expect((sent.single['tags'] as Map)['exp_home'], tags['exp_home']);
+  });
+
+  test('existing users carry no tags', () async {
+    await start(existing: true, source: () async => 'x');
+    expect(sent.single.containsKey('tags'), false);
+  });
+
+  test('funnel steps count once per install; audience once a day', () async {
+    await start();
+    sent.clear();
+    UsageStats.funnel('onboarding', 'language_picked');
+    UsageStats.funnel('onboarding', 'language_picked');
+    await UsageStats.flush();
+    final c = (sent.last['days'] as List).single['counts'] as Map;
+    expect(c['funnel.onboarding.language_picked'], 1);
+    expect(c.keys.where((k) => (k as String).startsWith('aud.lang.')), isEmpty,
+        reason: 'audience was sent with the first batch of the day');
+  });
+
+  test('uncaught errors are counted by type and location only', () async {
+    await start();
+    sent.clear();
+    final prev = FlutterError.onError;
+    FlutterError.onError = (_) {};
+    UsageStats.catchErrors();
+    FlutterError.onError!(FlutterErrorDetails(
+      exception: RangeError('secret user text'),
+      stack: StackTrace.fromString('#0      MapPage.build (package:bulldozer/map_page.dart:412:7)'),
+    ));
+    FlutterError.onError = prev;
+    await UsageStats.flush();
+    final c = (sent.last['days'] as List).single['counts'] as Map;
+    expect(c['error.rangeerror.map_page_412'], 1);
+    expect(jsonEncode(sent.last).contains('secret'), false);
   });
 
   test('bad names are ignored', () async {

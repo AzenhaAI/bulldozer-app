@@ -26,11 +26,23 @@
 //   dataset...). Ids must come from the app's own catalog, never from text
 //   the user typed.
 //
+// What the big trackers (AppsFlyer, Adjust, AppMetrica, Yandex Metrica) are
+// known for, done without identifiers:
+// - install source (attribution): `installSource` at init, e.g. the Play
+//   install referrer's utm_source or a deep-link `src`; retention is split by it;
+// - A/B experiments: `experiments` at init; each install gets one arm,
+//   stored locally; retention is split by arm; read it with variant();
+// - funnels: funnel('onboarding', 'step') counts each step once per install;
+// - audience: once a day, UI language, phone/tablet, dark/light, large text;
+// - errors: catchErrors() counts uncaught Dart errors by type and code
+//   location in the app (never the message text) -> errors per version.
+//
 // Optional extra sinks (UsageSink) let an app forward the same calls to
 // another backend later, e.g. Firebase Analytics after explicit consent.
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -70,6 +82,15 @@ class UsageStats with WidgetsBindingObserver {
   DateTime? _fgStart; // foreground since
   DateTime? _bgAt; // went to background at
   static const _sessionGap = Duration(minutes: 30);
+  final Map<String, String> _tags = {}; // cohort segments: source, exp_*
+  final Set<String> _funnelDone = {};
+  String? _audienceDay;
+  static final _cleanRe = RegExp(r'[^a-z0-9_]');
+
+  static String _clean(String s, int max) {
+    final c = s.toLowerCase().replaceAll(_cleanRe, '_');
+    return c.length > max ? c.substring(0, max) : c;
+  }
   Timer? _saveTimer;
 
   /// Call once after WidgetsFlutterBinding.ensureInitialized().
@@ -86,6 +107,8 @@ class UsageStats with WidgetsBindingObserver {
     required Future<String?> Function() read,
     required Future<void> Function(String) write,
     bool existingUser = false,
+    Future<String?> Function()? installSource,
+    Map<String, List<String>> experiments = const {},
     List<UsageSink> sinks = const [],
     @visibleForTesting http.Client? client,
     @visibleForTesting DateTime Function()? now,
@@ -102,7 +125,10 @@ class UsageStats with WidgetsBindingObserver {
     if (client != null) s._client = client;
     if (now != null) s._now = now;
     s._platform = platform ?? _platformName();
-    await s._load(existingUser);
+    final firstRun = await s._load(existingUser);
+    if (firstRun && !existingUser) {
+      await s._assignCohortTags(installSource, experiments);
+    }
     s._markOpened();
     s._bgAt = null;
     s._startSession();
@@ -158,6 +184,39 @@ class UsageStats with WidgetsBindingObserver {
     event('content.$type.${clean.length > max ? clean.substring(0, max) : clean}');
   }
 
+  /// The arm this install got for an experiment declared at init, or null
+  /// (installs that predate the experiment, or analytics switched off).
+  static String? variant(String experiment) => _i._tags['exp_${_clean(experiment, 20)}'];
+
+  /// Count a funnel step once per install, e.g. funnel('onboarding', 'language_picked').
+  static void funnel(String name, String step) {
+    final s = _i;
+    if (!s._enabled || s._app == null) return;
+    final key = 'funnel.${_clean(name, 16)}.${_clean(step, 24)}';
+    if (!s._funnelDone.add(key)) return;
+    s._count(key, 1);
+  }
+
+  /// Count uncaught Dart errors as `error.<type>.<file>_<line>` (location in the
+  /// app's own code; the message text is never sent). Chains existing handlers.
+  static void catchErrors() {
+    final prevFlutter = FlutterError.onError;
+    FlutterError.onError = (details) {
+      _i._countError(details.exception, details.stack);
+      if (prevFlutter != null) {
+        prevFlutter(details);
+      } else {
+        FlutterError.presentError(details);
+      }
+    };
+    final dispatcher = PlatformDispatcher.instance;
+    final prevAsync = dispatcher.onError;
+    dispatcher.onError = (error, stack) {
+      _i._countError(error, stack);
+      return prevAsync?.call(error, stack) ?? false;
+    };
+  }
+
   /// Send what is pending now (also runs when the app goes to background).
   static Future<void> flush() => _i._flush();
 
@@ -200,9 +259,72 @@ class UsageStats with WidgetsBindingObserver {
   void _markOpened() {
     if (!_enabled || _app == null) return;
     final today = _today;
+    _countAudience(today);
     if (_activeSentDay == today) return;
     _pending.putIfAbsent(today, () => _DayTally()).active = true;
     _scheduleSave();
+  }
+
+  // Once a day: coarse device settings, no identifiers, no location.
+  void _countAudience(String today) {
+    if (_audienceDay == today) return;
+    _audienceDay = today;
+    try {
+      final d = PlatformDispatcher.instance;
+      final lang = _clean(d.locale.languageCode, 8);
+      if (lang.isNotEmpty) _count('aud.lang.$lang', 1);
+      if (d.views.isNotEmpty) {
+        final v = d.views.first;
+        final side = v.physicalSize.shortestSide / v.devicePixelRatio;
+        if (side > 0) _count(side >= 600 ? 'aud.form.tablet' : 'aud.form.phone', 1);
+      }
+      _count(d.platformBrightness.name == 'dark' ? 'aud.theme.dark' : 'aud.theme.light', 1);
+      _count(d.textScaleFactor >= 1.3 ? 'aud.text.large' : 'aud.text.normal', 1);
+    } catch (_) {
+      // Audience is optional.
+    }
+  }
+
+  void _countError(Object error, StackTrace? stack) {
+    try {
+      final type = _clean(error.runtimeType.toString(), 16);
+      var where = 'unknown';
+      final pkg = 'package:';
+      for (final line in (stack?.toString() ?? '').split('\n')) {
+        final i = line.indexOf(pkg);
+        if (i < 0 || line.contains('package:flutter/')) continue;
+        // e.g. (package:bulldozer/map_page.dart:412:7)
+        final m = RegExp(r'([A-Za-z0-9_]+)\.dart:(\d+)').firstMatch(line.substring(i));
+        if (m != null) {
+          where = '${_clean(m.group(1)!, 20)}_${m.group(2)}';
+          break;
+        }
+      }
+      final name = 'error.$type.$where';
+      _count(name.length > 48 ? name.substring(0, 48) : name, 1);
+    } catch (_) {
+      // Never let error counting throw.
+    }
+  }
+
+  Future<void> _assignCohortTags(
+      Future<String?> Function()? installSource, Map<String, List<String>> experiments) async {
+    if (installSource != null) {
+      String? src;
+      try {
+        src = await installSource().timeout(const Duration(seconds: 3));
+      } catch (_) {
+        src = null;
+      }
+      final clean = _clean(src ?? '', 32);
+      _tags['source'] = clean.isEmpty ? 'unknown' : clean;
+    }
+    final rnd = Random();
+    for (final e in experiments.entries.take(3)) {
+      if (e.value.isEmpty) continue;
+      _tags['exp_${_clean(e.key, 20)}'] = _clean(e.value[rnd.nextInt(e.value.length)], 32);
+    }
+    await _save();
   }
 
   @override
@@ -269,6 +391,7 @@ class UsageStats with WidgetsBindingObserver {
         'platform': _platform,
         'version': _version,
         'install_day': _installDay,
+        if (_installDay != null && _tags.isNotEmpty) 'tags': _tags,
         'days': [
           for (final e in sent.entries)
             {'day': e.key, 'active': e.value.active, 'counts': e.value.counts},
@@ -320,6 +443,9 @@ class UsageStats with WidgetsBindingObserver {
         'enabled': _enabled,
         'install_day': _installDay ?? 'legacy',
         'active_sent': _activeSentDay,
+        'tags': _tags,
+        'funnel': _funnelDone.toList(),
+        'aud_day': _audienceDay,
         'pending': {for (final e in _pending.entries) e.key: e.value.toJson()},
       }));
     } catch (_) {
@@ -327,7 +453,8 @@ class UsageStats with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _load(bool existingUser) async {
+  /// Returns true on the very first run with analytics.
+  Future<bool> _load(bool existingUser) async {
     Map<String, dynamic>? j;
     try {
       final raw = await _read();
@@ -338,12 +465,15 @@ class UsageStats with WidgetsBindingObserver {
       j = null;
     }
     _pending.clear();
+    _tags.clear();
+    _funnelDone.clear();
+    _audienceDay = null;
     if (j == null) {
       _enabled = true;
       _installDay = existingUser ? null : _today;
       _activeSentDay = null;
       await _save();
-      return;
+      return true;
     }
     _enabled = j['enabled'] != false;
     final inst = j['install_day'];
@@ -356,6 +486,17 @@ class UsageStats with WidgetsBindingObserver {
         if (k is String && v is Map) _pending[k] = _DayTally.fromJson(v);
       });
     }
+    final t = j['tags'];
+    if (t is Map) {
+      t.forEach((k, v) {
+        if (k is String && v is String) _tags[k] = v;
+      });
+    }
+    final f = j['funnel'];
+    if (f is List) _funnelDone.addAll(f.whereType<String>());
+    final ad = j['aud_day'];
+    _audienceDay = ad is String ? ad : null;
+    return false;
   }
 }
 

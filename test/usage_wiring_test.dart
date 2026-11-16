@@ -35,6 +35,8 @@ class _PageState extends State<_Page> with UsageScreen<_Page> {
 }
 
 void main() {
+  linkSourceTests();
+
   testWidgets('opening a page and coming back counts screens and transitions',
       (tester) async {
     String? stored;
@@ -82,5 +84,18 @@ void main() {
     expect(counts['nav.country.dataset'], 1);
     expect(counts['nav.dataset.country'], 1);
     expect(counts['nav.country.countries'], 1);
+  });
+}
+
+// Install source from the first link: '/' for a plain launch, a path with
+// ?src= on iOS, the whole URL on an Android cold start.
+void linkSourceTests() {
+  test('link source is the src parameter, or null', () {
+    expect(linkSourceForTest('/'), isNull);
+    expect(linkSourceForTest('/quiz'), isNull);
+    expect(linkSourceForTest('/quiz?src=flyer_a6'), 'flyer_a6');
+    expect(linkSourceForTest('bulldozerstats://open/economy?src=telegram'),
+        'telegram');
+    expect(linkSourceForTest('/quiz?src='), isNull);
   });
 }

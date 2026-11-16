@@ -2,13 +2,16 @@
 //
 // usage_stats.dart is a verbatim copy of the canonical module in
 // ~/Projects/_stores/usage/dart; everything app-specific lives here:
-// start-up, screen names, the activation flag and the content helpers.
+// start-up, install source, screen names, the activation flag, funnels and
+// the content helpers. No experiments run (none is declared at init).
 //
 // Names only ever come from code or the catalog (screen names, dataset slugs,
 // ISO codes). Nothing the reader types reaches an event name.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:play_install_referrer/play_install_referrer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'flags.dart';
@@ -47,11 +50,57 @@ Future<void> initUsage() async {
       read: () async => prefs.getString(_kStore),
       write: (s) => prefs.setString(_kStore, s),
       existingUser: existing,
+      installSource: _installSource,
     );
+    // Uncaught Dart errors as error.<type>.<file>_<line>; never the message.
+    UsageStats.catchErrors();
   } catch (_) {
     // No storage, no counters; the app works the same.
   }
 }
+
+/// The channel that brought this install, asked once, on its first run.
+/// Android: `utm_source` of the Play install referrer (`google-play` for an
+/// organic install). Otherwise, or when that is empty: the `src` parameter of
+/// the link the app was first opened with, e.g.
+/// bulldozerstats://open/quiz?src=flyer_a6. Null when neither exists; the
+/// module records that as `unknown`.
+Future<String?> _installSource() async {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    try {
+      final ref = (await PlayInstallReferrer.installReferrer).installReferrer;
+      if (ref != null && ref.isNotEmpty) {
+        final src = Uri.splitQueryString(ref)['utm_source'];
+        if (src != null && src.isNotEmpty) return src;
+      }
+    } catch (_) {
+      // Not installed from Play (sideloaded, emulator): fall through.
+    }
+  }
+  return _linkSource(
+      WidgetsBinding.instance.platformDispatcher.defaultRouteName);
+}
+
+/// The `src` query parameter of the route the app was started with: '/' for
+/// a plain launch, '/quiz?src=x' (iOS) or the whole URL (Android cold start).
+@visibleForTesting
+String? linkSourceForTest(String route) => _linkSource(route);
+
+String? _linkSource(String route) {
+  final src = Uri.tryParse(route)?.queryParameters['src'];
+  return (src == null || src.isEmpty) ? null : src;
+}
+
+/// A step of a multi-step flow, counted once per install
+/// (`funnel.<flow>.<step>`). Step conversion = step count / installs.
+///
+/// Flows:
+/// - quiz: start, answer, done
+/// - ask: brief (a country brief opened), consent (agreed to send questions
+///   to the AI), sent, answer (an answer was shown)
+/// - map: open (map maker), pick (an indicator chosen), share
+/// - share: preview (share card opened), shared
+void usageFunnel(String flow, String step) => UsageStats.funnel(flow, step);
 
 /// A feature use, e.g. usageFeature('csv_export') -> "feature.csv_export".
 void usageFeature(String name) => UsageStats.event('feature.$name');

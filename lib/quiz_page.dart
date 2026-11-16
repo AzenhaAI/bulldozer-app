@@ -73,6 +73,7 @@ class _QuizPageState extends State<QuizPage> with UsageScreen<QuizPage> {
       _score = 0;
       _results.clear();
       _setupRound();
+      usageFunnel('quiz', 'start');
       setState(() => _loading = false);
     } catch (e) {
       setState(() {
@@ -112,6 +113,7 @@ class _QuizPageState extends State<QuizPage> with UsageScreen<QuizPage> {
       _results.add(correct);
       if (correct) _score += _worth;
     });
+    usageFunnel('quiz', 'answer');
   }
 
   void _next() {
@@ -119,6 +121,7 @@ class _QuizPageState extends State<QuizPage> with UsageScreen<QuizPage> {
       if (_score > _best) _best = _score;
       setState(() => _round = _roundsThisGame); // finished screen
       usageFeature('quiz_done');
+      usageFunnel('quiz', 'done');
       // A finished round is someone who stayed. Fire-and-forget: AskReview
       // decides whether this is the third one, iOS decides whether to draw
       // anything, and nothing here waits on either.

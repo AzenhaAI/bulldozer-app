@@ -89,7 +89,9 @@ class _AskPageState extends State<AskPage> {
       return;
     }
     if (!mounted) return;
+    usageFunnel('ask', 'consent');
     usageFeature('ask_sent');
+    usageFunnel('ask', 'sent');
     setState(() {
       _asking = true;
       _answer = null;
@@ -109,6 +111,7 @@ class _AskPageState extends State<AskPage> {
             _answer = '${j['answer'] ?? ''}'.trim();
             _disclaimer = '${j['disclaimer'] ?? ''}'.trim();
           });
+          if (_answer!.isNotEmpty) usageFunnel('ask', 'answer');
         }
       } else if (mounted) {
         // Silence read as "nothing happened". Say which of the two it was.
@@ -227,6 +230,7 @@ class _AskPageState extends State<AskPage> {
       final j = await fetchJson('/data/brief/${c.iso.toLowerCase()}.json');
       if (mounted) {
         final brief = _Brief.fromJson(j as Map<String, dynamic>);
+        usageFunnel('ask', 'brief');
         setState(() {
           _brief = brief;
           _ties.clear();

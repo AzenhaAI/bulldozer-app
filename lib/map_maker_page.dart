@@ -106,6 +106,7 @@ class _MapMakerPageState extends State<MapMakerPage> with UsageScreen<MapMakerPa
   @override
   void initState() {
     super.initState();
+    usageFunnel('map', 'open');
     loadWorldGeo().then((g) {
       if (mounted) setState(() => _geo = g);
     });
@@ -246,6 +247,7 @@ class _MapMakerPageState extends State<MapMakerPage> with UsageScreen<MapMakerPa
         text: '${_title.text.trim()} — made with BullDozer · azenha.ai/bulldozer',
       ));
       usageFeature('map_shared');
+      usageFunnel('map', 'share');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -339,6 +341,7 @@ class _MapMakerPageState extends State<MapMakerPage> with UsageScreen<MapMakerPa
                     sub: (e) => e.source,
                     onPick: (e) {
                       usageContentDataset(e.slug);
+                      usageFunnel('map', 'pick');
                       _pick(e);
                     },
                   ),

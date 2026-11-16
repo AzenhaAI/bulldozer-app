@@ -206,6 +206,12 @@ class SharePreviewPage extends StatefulWidget {
 }
 
 class _SharePreviewPageState extends State<SharePreviewPage> {
+  @override
+  void initState() {
+    super.initState();
+    usageFunnel('share', 'preview');
+  }
+
   final _boundaryKey = GlobalKey();
   bool _busy = false;
 
@@ -234,6 +240,7 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
           ))
           .timeout(const Duration(seconds: 60), onTimeout: () => ShareResult.unavailable);
       usageFeature('chart_shared');
+      usageFunnel('share', 'shared');
     } on TimeoutException {
       _fail('Creating the image took too long. Please try again.');
     } catch (_) {
