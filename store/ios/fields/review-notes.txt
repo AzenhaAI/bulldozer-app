@@ -24,13 +24,25 @@ nothing and the figures stay on screen; "Allow" continues and is remembered.
 Any number in an answer that is not in our data is rejected on the server, and
 every answer carries a note that AI can be wrong.
 
+LINKS FROM THE WEBSITE (NEW IN 1.40)
+Indicator pages on our website open in the app when it is installed (Universal
+Links for azenha.ai/bulldozer/dataset/* and /bulldozer/economy/). To see it,
+open https://azenha.ai/bulldozer/dataset/imf-govt-debt in Notes or Messages on
+a device with the app. Without the app the same link opens the web page.
+
 PRIVACY
-There is no analytics or crash SDK, no advertising identifier and no login.
-Release reminders are local notifications scheduled on the device. Network
-traffic is anonymous HTTPS GETs for the public feed and Wikipedia summaries,
-plus the Ask AI question after the user allows it. That question is not linked
-to the user, carries no identifier, is not stored by us and is not used for
-tracking; the App Privacy label declares it as Other User Content, used for App
-Functionality.
+There is no third-party analytics or crash SDK, no advertising identifier and
+no login. New in 1.40: the app counts anonymous daily totals (which screens and
+features are used, error types, device language and theme) with its own small
+module and sends them to our server (usage.azenha.ai, stored in the EU). There
+is no device, account or advertising identifier, nothing the user types is
+included, and the IP address is not kept. It can be switched off in the menu:
+"Share anonymous usage statistics". The App Privacy label declares Product
+Interaction, Other Usage Data and Crash Data, not linked to the user and not
+used for tracking.
+Release reminders are local notifications scheduled on the device. The Ask AI
+question is sent only after the user allows it; it is not linked to the user,
+carries no identifier, is not stored by us and is not used for tracking; the
+label declares it as Other User Content, used for App Functionality.
 
 Published by Azenha AI — agent@azenha.ai

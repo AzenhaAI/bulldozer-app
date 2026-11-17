@@ -73,7 +73,7 @@ PRIVACY FIRST
 No account, no sign-up, no ads, no tracking. The app simply shows you the data.
 
 ABOUT THE DATA
-Figures come from public datasets and international surveys, credited on screen, with country summaries from Wikipedia (CC BY-SA), served through the open BullDozer feed at shpara.com/bulldozer.
+Figures come from public datasets and international surveys, credited on screen, with country summaries from Wikipedia (CC BY-SA), served through the open BullDozer feed at azenha.ai/bulldozer.
 ```
 
 ## What's New (1.28.0 — first release)
@@ -108,13 +108,18 @@ Free, no account, no ads, no tracking.
 
 # App Privacy
 
-**Data Not Collected.** Verified by audit: every network call is a GET to
-`shpara.com/bulldozer/data/*`, the Wikipedia REST summary (country name only)
-or Wikimedia Commons images; favourites, quiz progress and theme stay on the
-device; no analytics or ads SDK exists in the dependency tree.
+Published 17 Nov 2026 for 1.40 (anonymous usage statistics). All types are
+**Data Not Linked to You** and **not used for tracking**; no ATT prompt.
 
-- Privacy Policy URL: `https://shpara.com/bulldozer/privacy/`
-- Support URL: `https://shpara.com/bulldozer/support/`
+- User Content → Other User Content: App Functionality (Ask AI question).
+- Usage Data → Product Interaction: Analytics.
+- Usage Data → Other Usage Data: Analytics (install channel, device settings).
+- Diagnostics → Crash Data: App Functionality, Analytics.
+
+Details and the code audit: `store/USAGE-ANALYTICS-PRIVACY-DRAFT.md`.
+
+- Privacy Policy URL: `https://azenha.ai/bulldozer/privacy/`
+- Support URL: `https://azenha.ai/bulldozer/support/`
 
 # Notes for Reviewer
 
@@ -122,13 +127,13 @@ device; no analytics or ads SDK exists in the dependency tree.
 BullDozer: World in Numbers is a fully native Flutter app — there is no webview anywhere in the binary. Every chart, the flat world choropleth and the spinning globe, the values scatter, the animated bubble player, country profiles, data stories and the quiz are rendered natively. There is no account, no login, no in-app purchase, no advertising and no user-generated content; no demo credentials are needed — every screen is reachable from a cold launch.
 
 DATA AND LICENSING
-Figures come from public statistical datasets (WHO, World Bank, Eurostat, international surveys), served through our own open feed at shpara.com/bulldozer and credited on the screens where they appear. Country summaries are fetched from the Wikipedia REST API and labelled "Wikipedia · CC BY-SA" with a link to the article. Brand values on the business screens are credited to Kantar BrandZ / Forbes; brand logos come from Wikimedia Commons and are used for identification only. Coat-of-arms images likewise come from Wikimedia Commons.
+Figures come from public statistical datasets (WHO, World Bank, Eurostat, international surveys), served through our own open feed at azenha.ai/bulldozer and credited on the screens where they appear. Country summaries are fetched from the Wikipedia REST API and labelled "Wikipedia · CC BY-SA" with a link to the article. Brand values on the business screens are credited to Kantar BrandZ / Forbes; brand logos come from Wikimedia Commons and are used for identification only. Coat-of-arms images likewise come from Wikimedia Commons.
 
 AGE RATING
 The catalog includes WHO public-health statistics such as alcohol consumption, tobacco use and suicide rates — numerical, educational data with no depiction or promotion; the questionnaire is answered accordingly.
 
 PRIVACY
-The app collects no data. All requests are anonymous GETs for public JSON/CSV; favourites, quiz progress and the theme choice are stored on the device only. Privacy policy: https://shpara.com/bulldozer/privacy/ — also linked from the app's side menu.
+Superseded in 1.40: the app sends anonymous usage counts. The notes sent to App Review are store/ios/fields/review-notes.txt (pushed 17 Nov 2026).
 
 TESTING NOTE
 First launch needs a connection to load the catalog; data is then cached for offline use. Notifications are only requested when the user taps the bell on a data release, never at launch.
