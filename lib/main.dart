@@ -38,7 +38,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Anonymous daily counters (usage.dart); before runApp so the first screen
   // counts. One prefs read and a small write: no visible delay.
-  await initUsage();
+  // Bounded: the first run asks Play for the install source (up to 3 s), and
+  // the first frame must not wait for that, nor an iOS link that arrives
+  // with it. The counters finish starting in the background.
+  await initUsage().timeout(const Duration(milliseconds: 700), onTimeout: () {});
   AskReview.noteLaunch(); // the rating prompt waits for a returning reader
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)

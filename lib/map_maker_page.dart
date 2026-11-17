@@ -14,6 +14,7 @@ import 'widgets/brand_footer.dart';
 import 'widgets/choropleth.dart' show WorldGeo, GeoCountry, loadWorldGeo;
 import 'widgets/load_error.dart';
 import 'widgets/search_sheet.dart';
+import 'ask_review.dart';
 import 'usage.dart';
 
 /// Map maker (Edu): a poster map in a handful of named colour classes, the
@@ -242,12 +243,15 @@ class _MapMakerPageState extends State<MapMakerPage> with UsageScreen<MapMakerPa
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/bulldozer_map.png');
       await file.writeAsBytes(bytes);
-      await SharePlus.instance.share(ShareParams(
+      final res = await SharePlus.instance.share(ShareParams(
         files: [XFile(file.path)],
         text: '${_title.text.trim()} — made with BullDozer · azenha.ai/bulldozer',
       ));
-      usageFeature('map_shared');
-      usageFunnel('map', 'share');
+      if (AskReview.shared(res)) {
+        usageFeature('map_shared');
+        usageFunnel('map', 'share');
+        AskReview.goodMoment();
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context)

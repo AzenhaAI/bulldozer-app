@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -27,10 +28,12 @@ import 'stats_basics_page.dart';
 ///   https://azenha.ai/bulldozer/economy/          Economy this week
 /// ```
 ///
-/// Their path starts with "bulldozer", which is skipped like "open". A site
-/// indicator the app does not carry (the RLMS and Bank of Russia series) opens
-/// in an in-app browser view instead, which does not hand the link back to the
-/// app.
+/// Their path starts with "bulldozer", which is skipped like "open". An
+/// indicator missing from the catalog this build started with is looked up in
+/// the site's fresh catalog first (an indicator added since); one the app does
+/// not carry at all (the RLMS and Bank of Russia series) opens on the site in
+/// an in-app view. Android only routes the prefixes of the app's own sources
+/// here (AndroidManifest.xml), so those pages normally stay in the browser.
 ///
 /// Flutter's deep linking (FlutterDeepLinkingEnabled / flutter_deeplinking_enabled)
 /// hands the URL's path to the Navigator as a route name ("/economy"); the
@@ -89,7 +92,7 @@ Route<dynamic> deepLinkRoute(RouteSettings s) {
       if (seg.length > 1) {
         final hit = catalog.where((e) => e.slug == seg[1]);
         if (hit.isNotEmpty) return screen(DatasetPage(entry: hit.first));
-        if (fromSite) return _closing(() => _openOnSite('dataset/${seg[1]}/'));
+        if (fromSite) return _siteDataset(seg[1]);
       }
   }
   // Unknown or stale link: stay where the reader is. The Navigator has to
@@ -122,10 +125,49 @@ Route<dynamic> _closing(VoidCallback then, {bool toRoot = false}) => PageRouteBu
       return const SizedBox.shrink();
     });
 
-/// A site page the app has no screen for, shown in an in-app browser view
-/// (SFSafariViewController / Custom Tab): a plain browser hand-off would bring
-/// the verified link straight back to the app.
+/// A site indicator not in the catalog this build started with: refresh the
+/// catalog (a cold start still has the baked one), then open it, or show the
+/// site's page if the app does not carry it.
+Route<dynamic> _siteDataset(String slug) {
+  var started = false;
+  return PageRouteBuilder(
+      opaque: false,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder: (ctx, _, _) {
+        final self = ModalRoute.of(ctx);
+        if (!started) {
+          started = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            try {
+              await loadCatalog().timeout(const Duration(seconds: 4));
+            } catch (_) {}
+            if (!ctx.mounted || self == null || !self.isActive) return;
+            final nav = Navigator.of(ctx);
+            final hit = catalog.where((e) => e.slug == slug);
+            if (hit.isNotEmpty) {
+              nav.replace(
+                  oldRoute: self,
+                  newRoute: MaterialPageRoute(builder: (_) => DatasetPage(entry: hit.first)));
+            } else {
+              nav.removeRoute(self);
+              _openOnSite('dataset/$slug/');
+            }
+          });
+        }
+        return const SizedBox.shrink();
+      });
+}
+
+/// A site page the app has no screen for, shown inside the app. Not handed to
+/// a browser: the link is the app's own (Universal Links / App Links), so the
+/// system would bring it straight back here. iOS shows it in an
+/// SFSafariViewController, which never does; on Android a Custom Tab is an
+/// ordinary view intent that would, so it opens in the in-app web view.
 void _openOnSite(String path) {
   final uri = Uri.https('azenha.ai', '/bulldozer/$path');
-  launchUrl(uri, mode: LaunchMode.inAppBrowserView).catchError((_) => false);
+  final mode = defaultTargetPlatform == TargetPlatform.android
+      ? LaunchMode.inAppWebView
+      : LaunchMode.inAppBrowserView;
+  launchUrl(uri, mode: mode).catchError((_) => false);
 }

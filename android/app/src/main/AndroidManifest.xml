@@ -41,13 +41,70 @@
             <!-- azenha.ai indicator pages and Economy this week open here when
                  the app is installed (App Links, verified by
                  /.well-known/assetlinks.json on azenha.ai). The rest of the
-                 site stays in the browser. -->
+                 site stays in the browser. Indicators are listed by slug
+                 prefix, one per source the app carries: the site's RLMS and
+                 Bank of Russia pages (rlms-, cbr-) are not in the app, and a
+                 link the app hands on must not come straight back to it.
+                 test/deep_links_test.dart checks the list against the catalog. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="azenha.ai"/>
-                <data android:pathPrefix="/bulldozer/dataset/"/>
+                <data android:pathPrefix="/bulldozer/dataset/ab-"/>
+                <data android:pathPrefix="/bulldozer/dataset/afro-"/>
+                <data android:pathPrefix="/bulldozer/dataset/apnic-"/>
+                <data android:pathPrefix="/bulldozer/dataset/bigmac-"/>
+                <data android:pathPrefix="/bulldozer/dataset/bis-"/>
+                <data android:pathPrefix="/bulldozer/dataset/brandz-"/>
+                <data android:pathPrefix="/bulldozer/dataset/cb-"/>
+                <data android:pathPrefix="/bulldozer/dataset/company-"/>
+                <data android:pathPrefix="/bulldozer/dataset/cpi-"/>
+                <data android:pathPrefix="/bulldozer/dataset/cses-"/>
+                <data android:pathPrefix="/bulldozer/dataset/dhs-"/>
+                <data android:pathPrefix="/bulldozer/dataset/dnr-"/>
+                <data android:pathPrefix="/bulldozer/dataset/eb-"/>
+                <data android:pathPrefix="/bulldozer/dataset/ehis-"/>
+                <data android:pathPrefix="/bulldozer/dataset/epi-"/>
+                <data android:pathPrefix="/bulldozer/dataset/ess-"/>
+                <data android:pathPrefix="/bulldozer/dataset/evs-"/>
+                <data android:pathPrefix="/bulldozer/dataset/findex-"/>
+                <data android:pathPrefix="/bulldozer/dataset/fiw-"/>
+                <data android:pathPrefix="/bulldozer/dataset/forbes-"/>
+                <data android:pathPrefix="/bulldozer/dataset/fraser-"/>
+                <data android:pathPrefix="/bulldozer/dataset/gapminder-"/>
+                <data android:pathPrefix="/bulldozer/dataset/gpi-"/>
+                <data android:pathPrefix="/bulldozer/dataset/hofstede-"/>
+                <data android:pathPrefix="/bulldozer/dataset/iccs-"/>
+                <data android:pathPrefix="/bulldozer/dataset/icils-"/>
+                <data android:pathPrefix="/bulldozer/dataset/imf-"/>
+                <data android:pathPrefix="/bulldozer/dataset/inform-"/>
+                <data android:pathPrefix="/bulldozer/dataset/issp-"/>
+                <data android:pathPrefix="/bulldozer/dataset/lapop-"/>
+                <data android:pathPrefix="/bulldozer/dataset/lb-"/>
+                <data android:pathPrefix="/bulldozer/dataset/lits-"/>
+                <data android:pathPrefix="/bulldozer/dataset/maddison-"/>
+                <data android:pathPrefix="/bulldozer/dataset/majestic-"/>
+                <data android:pathPrefix="/bulldozer/dataset/mlab-"/>
+                <data android:pathPrefix="/bulldozer/dataset/oecd-"/>
+                <data android:pathPrefix="/bulldozer/dataset/owid-"/>
+                <data android:pathPrefix="/bulldozer/dataset/pew-"/>
+                <data android:pathPrefix="/bulldozer/dataset/pirls-"/>
+                <data android:pathPrefix="/bulldozer/dataset/pisa-"/>
+                <data android:pathPrefix="/bulldozer/dataset/pwt-"/>
+                <data android:pathPrefix="/bulldozer/dataset/qog-"/>
+                <data android:pathPrefix="/bulldozer/dataset/sdr2-"/>
+                <data android:pathPrefix="/bulldozer/dataset/silc-"/>
+                <data android:pathPrefix="/bulldozer/dataset/timss-"/>
+                <data android:pathPrefix="/bulldozer/dataset/unhcr-"/>
+                <data android:pathPrefix="/bulldozer/dataset/v-"/>
+                <data android:pathPrefix="/bulldozer/dataset/wb-"/>
+                <data android:pathPrefix="/bulldozer/dataset/wgm-"/>
+                <data android:pathPrefix="/bulldozer/dataset/who-"/>
+                <data android:pathPrefix="/bulldozer/dataset/whr-"/>
+                <data android:pathPrefix="/bulldozer/dataset/wri-"/>
+                <data android:pathPrefix="/bulldozer/dataset/wrp-"/>
+                <data android:pathPrefix="/bulldozer/dataset/wvs-"/>
                 <data android:path="/bulldozer/economy/"/>
                 <data android:path="/bulldozer/economy"/>
             </intent-filter>

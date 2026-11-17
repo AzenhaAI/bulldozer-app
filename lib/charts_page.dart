@@ -676,14 +676,14 @@ class _DatasetPageState extends State<DatasetPage> with UsageScreen<DatasetPage>
   void initState() {
     super.initState();
     usageDataset(widget.entry.slug);
-    AskReview.datasetOpened();
     _load();
   }
 
   @override
   void dispose() {
-    // Back from an indicator: a calm moment for the rating prompt, if due.
-    AskReview.datasetClosed();
+    // Back from an indicator that showed its chart (not an error or offline
+    // page): a calm moment for the rating prompt, if due.
+    if (_ds != null) AskReview.datasetClosed();
     super.dispose();
   }
 
@@ -692,6 +692,7 @@ class _DatasetPageState extends State<DatasetPage> with UsageScreen<DatasetPage>
     try {
       final ds = await fetchDataset(widget.entry.slug);
       setState(() {
+        if (_ds == null) AskReview.datasetOpened();
         _ds = ds;
         _period = _defaultPeriod(ds);
       });

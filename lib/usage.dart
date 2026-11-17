@@ -8,9 +8,12 @@
 // Names only ever come from code or the catalog (screen names, dataset slugs,
 // ISO codes). Nothing the reader types reaches an event name.
 
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:play_install_referrer/play_install_referrer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,10 +30,10 @@ SharedPreferences? _prefs;
 Future<void> initUsage() async {
   try {
     final prefs = _prefs = await SharedPreferences.getInstance();
-    // Any saved setting means the app ran before this build: such installs
-    // count as active, but stay out of the retention cohorts.
+    // Any trace of an earlier version means the app ran before this build:
+    // such installs count as active, but stay out of the retention cohorts.
     final firstRun = !prefs.containsKey(_kStore);
-    final existing = prefs.getKeys().any((k) => k != _kStore);
+    final existing = firstRun && await _ranBefore(prefs);
     // Readers who already used the app have long since opened a chart; their
     // first chart after the update is not an activation.
     if (firstRun && existing) await prefs.setBool(_kFirstChart, true);
@@ -131,6 +134,24 @@ void usageFirstChart() {
   if (!UsageStats.enabled) return;
   p.setBool(_kFirstChart, true);
   UsageStats.event('activation.first_chart');
+}
+
+/// Did a version before 1.40 run on this device? 1.39 kept few settings in
+/// SharedPreferences (AI consent, quiz count, offline download); most readers
+/// have only its files: theme, favourites, reminders (support directory) and
+/// the cached catalog (cache directory, written on every start).
+Future<bool> _ranBefore(SharedPreferences prefs) async {
+  if (prefs.getKeys().any((k) => k != _kStore)) return true;
+  if (kIsWeb) return false;
+  try {
+    final support = (await getApplicationSupportDirectory()).path;
+    for (final f in ['bd_theme.json', 'bd_favorites.json', 'bd_reminders.json']) {
+      if (File('$support/$f').existsSync()) return true;
+    }
+    final cache = (await getApplicationCacheDirectory()).path;
+    if (File('$cache/bd__data_catalog.json').existsSync()) return true;
+  } catch (_) {}
+  return false;
 }
 
 // --- Screens ----------------------------------------------------------------

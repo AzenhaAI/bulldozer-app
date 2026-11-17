@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Asking for a rating, on Apple's terms rather than ours.
@@ -29,6 +31,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 1.39 asked after the third finished quiz, once per install; an install
 /// asked then counts as asked when 1.40 first runs.
 class AskReview {
+  /// Did the share sheet send something? A dismissed sheet is not a share.
+  /// Android reports `unavailable` on systems that cannot say.
+  static bool shared(ShareResult r) =>
+      r.status == ShareResultStatus.success ||
+      (defaultTargetPlatform == TargetPlatform.android && r.status == ShareResultStatus.unavailable);
+
   static const _kLaunches = 'review_launches';
   static const _kFirstSeen = 'review_first_seen';
   static const _kLastAsked = 'review_last_asked';
@@ -42,6 +50,7 @@ class AskReview {
   static const capDays = 90;
 
   static final _plugin = InAppReview.instance;
+  static bool _asking = false; // two pages closing at once ask once
 
   /// The rule, apart from storage and the plugin (tested on its own).
   static bool eligible({
@@ -100,6 +109,8 @@ class AskReview {
   }
 
   static Future<void> _ask() async {
+    if (_asking) return;
+    _asking = true;
     try {
       final p = await SharedPreferences.getInstance();
       final now = DateTime.now();
@@ -115,7 +126,10 @@ class AskReview {
       await p.setString(_kLastAsked, now.toIso8601String());
       await p.remove(_kGood);
       await _plugin.requestReview();
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _asking = false;
+    }
   }
 
   /// The menu row. Opens the store page with the review sheet already up.

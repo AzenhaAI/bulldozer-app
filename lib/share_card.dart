@@ -233,16 +233,18 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
       // On iOS the call returns when the sheet is dismissed; on Android once
       // it is up. Either way a call that has not returned after a minute is
       // an open sheet, not a failure — release the button quietly.
-      await SharePlus.instance
+      final res = await SharePlus.instance
           .share(ShareParams(
             files: [XFile(file, mimeType: 'image/png')],
             text: '${widget.title} — BullDozer Stats · azenha.ai/bulldozer',
             sharePositionOrigin: origin,
           ))
           .timeout(const Duration(seconds: 60), onTimeout: () => ShareResult.unavailable);
-      usageFeature('chart_shared');
-      usageFunnel('share', 'shared');
-      AskReview.goodMoment();
+      if (AskReview.shared(res)) {
+        usageFeature('chart_shared');
+        usageFunnel('share', 'shared');
+        AskReview.goodMoment();
+      }
     } on TimeoutException {
       _fail('Creating the image took too long. Please try again.');
     } catch (_) {

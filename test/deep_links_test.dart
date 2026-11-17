@@ -1,6 +1,8 @@
 import 'package:bulldozer_app/catalog_store.dart';
 import 'package:bulldozer_app/deep_links.dart';
 import 'package:bulldozer_app/stats_basics_page.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -139,5 +141,20 @@ void main() {
       await t.pump(const Duration(milliseconds: 400));
       expect(find.text('tabs'), findsOneWidget);
     });
+  });
+
+  test('Android App Links cover every catalog indicator and no site-only one', () {
+    final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+    final prefixes = RegExp(r'pathPrefix="/bulldozer/dataset/([a-z0-9]+-)"')
+        .allMatches(manifest)
+        .map((m) => m.group(1)!)
+        .toList();
+    expect(prefixes, isNotEmpty);
+    for (final e in catalog) {
+      expect(prefixes.any(e.slug.startsWith), isTrue, reason: e.slug);
+    }
+    for (final p in ['rlms-', 'cbr-']) {
+      expect(prefixes, isNot(contains(p)));
+    }
   });
 }

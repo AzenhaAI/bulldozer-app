@@ -134,10 +134,12 @@ class CsvExport {
     final dir = await getTemporaryDirectory();
     final f = File('${dir.path}/$filename');
     await f.writeAsBytes(bytes);
-    await SharePlus.instance
+    final res = await SharePlus.instance
         .share(ShareParams(files: [XFile(f.path)], text: text));
-    usageFeature('csv_export');
-    AskReview.goodMoment();
+    if (AskReview.shared(res)) {
+      usageFeature('csv_export');
+      AskReview.goodMoment();
+    }
   }
 
   static void _toast(BuildContext context, String msg) {

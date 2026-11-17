@@ -13,6 +13,7 @@ import 'theme.dart';
 import 'widgets/brand_footer.dart';
 import 'widgets/load_error.dart';
 import 'widgets/search_sheet.dart';
+import 'ask_review.dart';
 import 'usage.dart';
 
 /// People chart maker (Edu): every country as a column of 100 small figures,
@@ -317,11 +318,14 @@ class _PeopleChartPageState extends State<PeopleChartPage> with UsageScreen<Peop
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/bulldozer_people.png');
       await file.writeAsBytes(bytes);
-      await SharePlus.instance.share(ShareParams(
+      final res = await SharePlus.instance.share(ShareParams(
         files: [XFile(file.path)],
         text: '${_title.text.trim()} — made with BullDozer · azenha.ai/bulldozer',
       ));
-      usageFeature('chart_shared');
+      if (AskReview.shared(res)) {
+        usageFeature('chart_shared');
+        AskReview.goodMoment();
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't create the image.")));
