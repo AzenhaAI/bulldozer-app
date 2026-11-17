@@ -33,6 +33,7 @@ void main() {
     Future<String?> Function()? source,
     Map<String, List<String>> experiments = const {},
     bool flush = true,
+    bool robot = false,
   }) async {
     stored = keep;
     await UsageStats.init(
@@ -43,6 +44,7 @@ void main() {
       existingUser: existing,
       installSource: source,
       experiments: experiments,
+      testDevice: robot ? () async => true : null,
       platform: 'ios',
       now: () => now,
       client: MockClient((req) async {
@@ -287,5 +289,15 @@ void main() {
     expect((sent.single['days'] as List).length, 14);
     onSend = null;
     await UsageStats.setEnabled(true);
+  });
+
+  test('store test robots count, store and send nothing', () async {
+    await start(robot: true);
+    UsageStats.screen('home');
+    UsageStats.event('feature.x');
+    UsageStats.funnel('onboarding', 'start');
+    await UsageStats.flush();
+    expect(sent, isEmpty);
+    expect(stored, isNull);
   });
 }
