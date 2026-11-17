@@ -5,6 +5,7 @@ import 'charts_page.dart' show DatasetPage;
 import 'economy_week_page.dart';
 import 'quiz_page.dart';
 import 'stats_basics_page.dart';
+import 'usage.dart';
 
 /// Links into the app, for App Store in-app events, Google Play promotional
 /// content and anything else that wants to open one screen:
@@ -37,6 +38,7 @@ final shellTabRequest = ValueNotifier<int?>(null);
 Widget Function()? deepLinkShell;
 
 Route<dynamic> deepLinkRoute(RouteSettings s) {
+  usageLinkRoute(s.name);
   final uri = Uri.tryParse(s.name ?? '');
   final shell = deepLinkShell;
   if (uri != null && uri.hasScheme && shell != null) {

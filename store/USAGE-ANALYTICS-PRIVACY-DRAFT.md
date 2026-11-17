@@ -10,7 +10,8 @@ Source of truth for the wording: `~/Projects/_stores/usage/README.md`,
 
 ## What the app does (for whoever approves this)
 
-- Once a day it sends one batch to `https://usage.azenha.ai/v1/batch`
+- When the app is opened or left, it sends the unsent tallies (if any) to
+  `https://usage.azenha.ai/v1/batch`
   (Cloudflare Worker, D1 database in the EU): app, platform, app version,
   install date (day only; `null` for installs that predate analytics),
   whether the app was opened that day, and daily tallies.

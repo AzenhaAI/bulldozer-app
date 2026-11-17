@@ -7,9 +7,10 @@
 // "Usage Data > Product Interaction, Not linked to you, Analytics"):
 // - No identifier of any kind: no device ID, install ID, user ID or
 //   advertising ID. The only thing stored on the device is the install date.
-// - The app sends one small batch per day with tallies such as
-//   {"screen.map": 3, "onboarding.done": 1} and whether it was opened that
-//   day. The server keeps aggregates only.
+// - Whenever the app is opened or left, it sends the day's unsent tallies
+//   such as {"screen.map": 3, "onboarding.done": 1} and whether it was opened
+//   that day (nothing is sent when there is nothing new). The server keeps
+//   aggregates only.
 // - The user can switch it off in Settings (UsageStats.setEnabled(false));
 //   unsent tallies are deleted at once.
 //
@@ -29,7 +30,8 @@
 // What the big trackers (AppsFlyer, Adjust, AppMetrica, Yandex Metrica) are
 // known for, done without identifiers:
 // - install source (attribution): `installSource` at init, e.g. the Play
-//   install referrer's utm_source or a deep-link `src`; retention is split by it;
+//   install referrer's utm_source; a deep-link `src` that arrives after start
+//   (iOS delivers links late) goes through linkSource(); retention is split by it;
 // - A/B experiments: `experiments` at init; each install gets one arm,
 //   stored locally; retention is split by arm; read it with variant();
 // - funnels: funnel('onboarding', 'step') counts each step once per install;
@@ -96,6 +98,9 @@ class UsageStats with WidgetsBindingObserver {
     return c.length > max ? c.substring(0, max) : c;
   }
   Timer? _saveTimer;
+  bool _tagsSent = false; // cohort tags already left the device: frozen now
+  Timer? _holdTimer; // first run: wait briefly for a late deep link
+  static const _firstRunHold = Duration(seconds: 5);
 
   /// Call once after WidgetsFlutterBinding.ensureInitialized().
   ///
@@ -119,6 +124,7 @@ class UsageStats with WidgetsBindingObserver {
     @visibleForTesting String? platform,
   }) async {
     final s = _i;
+    s._holdTimer?.cancel();
     s._app = app;
     s._version = version;
     s._read = read;
@@ -130,7 +136,8 @@ class UsageStats with WidgetsBindingObserver {
     if (now != null) s._now = now;
     s._platform = platform ?? _platformName();
     final firstRun = await s._load(existingUser);
-    if (firstRun && !existingUser) {
+    final newInstall = firstRun && !existingUser;
+    if (newInstall) {
       await s._assignCohortTags(installSource, experiments);
     }
     s._markOpened();
@@ -138,10 +145,32 @@ class UsageStats with WidgetsBindingObserver {
     s._startSession();
     WidgetsBinding.instance.removeObserver(s);
     WidgetsBinding.instance.addObserver(s);
-    unawaited(s._flush());
+    if (newInstall && s._tags['source'] == 'unknown') {
+      // On iOS a launch link reaches the app only after start-up
+      // (pushRouteInformation), so give linkSource() a moment before the
+      // first batch fixes the cohort tags.
+      s._holdTimer = Timer(_firstRunHold, () => unawaited(s._flush()));
+    } else {
+      unawaited(s._flush());
+    }
   }
 
   static bool get enabled => _i._enabled;
+
+  /// Install source from a deep link that arrived after init, e.g. the `src`
+  /// query of the first route seen in onGenerateRoute or a link listener.
+  /// Applies only to a new install whose source is still 'unknown' and whose
+  /// cohort tags have not been sent yet; ignored otherwise, so a cohort never
+  /// changes segment after its first batch.
+  static Future<void> linkSource(String? src) async {
+    final s = _i;
+    if (s._app == null || s._installDay == null || s._tagsSent) return;
+    if (s._tags['source'] != 'unknown') return;
+    final clean = _clean(src ?? '', 32);
+    if (clean.isEmpty) return;
+    s._tags['source'] = clean;
+    await s._save();
+  }
 
   /// Settings switch "Share anonymous usage statistics".
   static Future<void> setEnabled(bool on) async {
@@ -222,7 +251,10 @@ class UsageStats with WidgetsBindingObserver {
   }
 
   /// Send what is pending now (also runs when the app goes to background).
-  static Future<void> flush() => _i._flush();
+  static Future<void> flush() {
+    _i._holdTimer?.cancel();
+    return _i._flush();
+  }
 
   // ---------------------------------------------------------------------------
 
@@ -366,6 +398,7 @@ class UsageStats with WidgetsBindingObserver {
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
       _endForeground();
+      _holdTimer?.cancel();
       unawaited(_flush());
     }
   }
@@ -402,19 +435,28 @@ class UsageStats with WidgetsBindingObserver {
 
   Future<void> _send() async {
     if (!_enabled || _app == null) return;
+    if (_holdTimer?.isActive ?? false) return; // first-run hold, see init
     _dropOld();
     if (_pending.isEmpty) return;
     final days = _pending.keys.toList()..sort();
     for (var i = 0; i < days.length; i += _chunkDays) {
+      // Switched off mid-send: pending was cleared, stop here.
+      if (!_enabled) break;
       final chunk = days.sublist(i, (i + _chunkDays).clamp(0, days.length));
       // Snapshot what is sent; events counted meanwhile stay pending.
-      final sent = {for (final d in chunk) d: _pending[d]!.copy()};
+      final sent = {
+        for (final d in chunk)
+          if (_pending[d] != null) d: _pending[d]!.copy(),
+      };
+      if (sent.isEmpty) continue;
+      final withTags = _installDay != null && _tags.isNotEmpty;
+      if (withTags) _tagsSent = true;
       final body = jsonEncode({
         'app': _app,
         'platform': _platform,
         'version': _version,
         'install_day': _installDay,
-        if (_installDay != null && _tags.isNotEmpty) 'tags': _tags,
+        if (withTags) 'tags': _tags,
         'days': [
           for (final e in sent.entries)
             {'day': e.key, 'active': e.value.active, 'counts': e.value.counts},
@@ -467,6 +509,7 @@ class UsageStats with WidgetsBindingObserver {
         'install_day': _installDay ?? 'legacy',
         'active_sent': _activeSentDay,
         'tags': _tags,
+        'tags_sent': _tagsSent,
         'funnel': _funnelDone.toList(),
         'aud_day': _audienceDay,
         'week': _weekMarked,
@@ -499,6 +542,7 @@ class UsageStats with WidgetsBindingObserver {
       _enabled = true;
       _installDay = existingUser ? null : _today;
       _activeSentDay = null;
+      _tagsSent = false;
       await _save();
       return true;
     }
@@ -507,6 +551,8 @@ class UsageStats with WidgetsBindingObserver {
     _installDay = (inst is String && inst != 'legacy') ? inst : null;
     final a = j['active_sent'];
     _activeSentDay = a is String ? a : null;
+    // Older saves have no flag; a delivered day means tags went out too.
+    _tagsSent = j['tags_sent'] == true || _activeSentDay != null;
     final p = j['pending'];
     if (p is Map) {
       p.forEach((k, v) {
