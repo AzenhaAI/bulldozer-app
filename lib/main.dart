@@ -41,7 +41,14 @@ Future<void> main() async {
   // Bounded: the first run asks Play for the install source (up to 3 s), and
   // the first frame must not wait for that, nor an iOS link that arrives
   // with it. The counters finish starting in the background.
-  await initUsage().timeout(const Duration(milliseconds: 700), onTimeout: () {});
+  // The saved theme loads first as well: a page a link opens is built with
+  // the palette of the moment and a quiz opened in light mode showed dark
+  // text on the light page, and the switch rebuilt the tabs mid-load
+  // (simulator QA, 17 Nov 2026). One small file read.
+  await Future.wait([
+    initUsage().timeout(const Duration(milliseconds: 700), onTimeout: () {}),
+    loadTheme().timeout(const Duration(milliseconds: 500), onTimeout: () {}),
+  ]);
   AskReview.noteLaunch(); // the rating prompt waits for a returning reader
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
@@ -49,7 +56,6 @@ Future<void> main() async {
   OfflineStore.load(); // date of the last "Download all data", for the menu row
   loadFavorites(); // starred countries/indicators from disk
   initNotify(); // local release reminders (Ativa-style, no push server)
-  loadTheme(); // light/dark preference from disk
 }
 
 /// Caps how wide the body grows and centres it.

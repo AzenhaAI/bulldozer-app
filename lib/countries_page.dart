@@ -84,9 +84,9 @@ class _CountriesPageState extends State<CountriesPage> {
       final list = await fetchCountryIndex();
       list.sort((a, b) => a.name.compareTo(b.name));
       _cache = list;
-      setState(() => _countries = list);
+      if (mounted) setState(() => _countries = list);
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     }
   }
 
