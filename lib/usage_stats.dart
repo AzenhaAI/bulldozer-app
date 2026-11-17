@@ -101,6 +101,8 @@ class UsageStats with WidgetsBindingObserver {
   Timer? _saveTimer;
   bool _tagsSent = false; // cohort tags already left the device: frozen now
   Timer? _holdTimer; // first run: wait briefly for a late deep link
+  bool _ready = false; // init finished: storage is loaded and writable
+  bool? _enabledChoice; // setEnabled() made while init was still running
   static const _firstRunHold = Duration(seconds: 5);
 
   /// Call once after WidgetsFlutterBinding.ensureInitialized().
@@ -127,6 +129,7 @@ class UsageStats with WidgetsBindingObserver {
   }) async {
     final s = _i;
     s._holdTimer?.cancel();
+    s._ready = false;
     if (testDevice != null) {
       var robot = false;
       try {
@@ -139,6 +142,8 @@ class UsageStats with WidgetsBindingObserver {
         // count nothing, store nothing, send nothing.
         s._app = null;
         s._sinks.clear();
+        s._pending.clear();
+        s._enabledChoice = null;
         WidgetsBinding.instance.removeObserver(s);
         return;
       }
@@ -158,6 +163,21 @@ class UsageStats with WidgetsBindingObserver {
     if (newInstall) {
       await s._assignCohortTags(installSource, experiments);
     }
+    // A switch flipped while init was running (the app does not wait for
+    // init, and a first run can take seconds) wins over what was stored.
+    final choice = s._enabledChoice;
+    s._enabledChoice = null;
+    if (choice != null) {
+      s._enabled = choice;
+      if (!choice) s._pending.clear();
+    }
+    s._ready = true;
+    if (choice != null) {
+      for (final k in s._sinks) {
+        await k.setEnabled(choice);
+      }
+      await s._save();
+    }
     s._markOpened();
     s._bgAt = null;
     s._startSession();
@@ -174,6 +194,12 @@ class UsageStats with WidgetsBindingObserver {
   }
 
   static bool get enabled => _i._enabled;
+
+  /// True once init() has finished and counts are being kept (false before
+  /// that, and on store test robots). An app-side "once per install" flag,
+  /// e.g. for an activation event, should only be set when this is true;
+  /// counts made before init are dropped.
+  static bool get ready => _i._ready && _i._app != null;
 
   /// For init(testDevice: ...): true on Google's test robots (Play pre-launch
   /// report, Firebase Test Lab), which set the system flag
@@ -204,10 +230,17 @@ class UsageStats with WidgetsBindingObserver {
   }
 
   /// Settings switch "Share anonymous usage statistics".
+  /// Safe before or during init: the choice is kept and applied (and saved)
+  /// when init finishes, over whatever was stored.
   static Future<void> setEnabled(bool on) async {
     final s = _i;
     s._enabled = on;
     if (!on) s._pending.clear();
+    if (!s._ready) {
+      // Storage is not loaded yet; init applies and saves this choice.
+      s._enabledChoice = on;
+      return;
+    }
     for (final k in s._sinks) {
       await k.setEnabled(on);
     }

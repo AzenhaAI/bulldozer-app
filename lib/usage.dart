@@ -157,9 +157,10 @@ void usageCountry(String iso3) {
 void usageFirstChart() {
   final p = _prefs;
   if (p == null || p.getBool(_kFirstChart) == true) return;
-  // While the reader has switched statistics off nothing is counted, and the
-  // flag stays unset so the activation is not lost by a later switch-on.
-  if (!UsageStats.enabled) return;
+  // Before init has finished, or while the reader has switched statistics
+  // off, nothing is counted: the flag stays unset so the activation is not
+  // lost (a chart opened during start-up, a later switch-on).
+  if (!UsageStats.ready || !UsageStats.enabled) return;
   p.setBool(_kFirstChart, true);
   UsageStats.event('activation.first_chart');
 }
