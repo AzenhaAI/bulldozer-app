@@ -1,5 +1,6 @@
 // Tests for usage_stats.dart. Copy next to the module as test/usage_stats_test.dart
 // and adjust the import to the app's package name.
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
@@ -291,6 +292,42 @@ void main() {
     await UsageStats.setEnabled(true);
   });
 
+  test('a switch-off while init is running wins and is saved', () async {
+    final src = Completer<String?>();
+    final init = start(source: () => src.future, flush: false);
+    expect(UsageStats.ready, isFalse);
+    await UsageStats.setEnabled(false);
+    src.complete('play_ad');
+    await init;
+    expect(UsageStats.ready, isTrue);
+    expect(UsageStats.enabled, isFalse);
+    final saved = jsonDecode(stored!) as Map;
+    expect(saved['enabled'], false);
+    expect(saved['pending'], isEmpty);
+    UsageStats.event('feature.x');
+    await UsageStats.flush();
+    expect(sent, isEmpty);
+    await start(keep: stored);
+    expect(UsageStats.enabled, isFalse, reason: 'the choice survives a restart');
+    expect(sent, isEmpty);
+    await UsageStats.setEnabled(true);
+  });
+
+  test('a switch-on while init is running overrides a stored off', () async {
+    await start();
+    await UsageStats.setEnabled(false);
+    final off = stored;
+    sent.clear();
+    final init = start(keep: off, flush: false);
+    await UsageStats.setEnabled(true);
+    await init;
+    expect(UsageStats.enabled, isTrue);
+    expect((jsonDecode(stored!) as Map)['enabled'], true);
+    UsageStats.event('feature.x');
+    await UsageStats.flush();
+    expect(sent, isNotEmpty);
+  });
+
   test('store test robots count, store and send nothing', () async {
     await start(robot: true);
     UsageStats.screen('home');
@@ -299,5 +336,6 @@ void main() {
     await UsageStats.flush();
     expect(sent, isEmpty);
     expect(stored, isNull);
+    expect(UsageStats.ready, isFalse);
   });
 }
