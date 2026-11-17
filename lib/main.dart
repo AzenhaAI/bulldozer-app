@@ -315,7 +315,7 @@ class _HomeShellState extends State<HomeShell> with UsageScreen<HomeShell> {
                 title: Text('Share anonymous usage statistics',
                     style: TextStyle(fontSize: 15, color: kText)),
                 subtitle: Text(
-                    'Daily counts of screens and features, with no ID of you or your device.',
+                    'Daily counts of screens, features and errors, with no ID of you or your device.',
                     style: TextStyle(fontSize: 12, color: kTextDim)),
                 value: UsageStats.enabled,
                 activeThumbColor: kAmber,

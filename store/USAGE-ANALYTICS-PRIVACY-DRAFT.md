@@ -10,7 +10,8 @@ Source of truth for the wording: `~/Projects/_stores/usage/README.md`,
 
 ## What the app does (for whoever approves this)
 
-- Once a day it sends one batch to `https://usage.azenha.ai/v1/batch`
+- At every cold start, return to the app and move to the background it sends the
+  tallies so far to `https://usage.azenha.ai/v1/batch`
   (Cloudflare Worker, D1 database in the EU): app, platform, app version,
   install date (day only; `null` for installs that predate analytics),
   whether the app was opened that day, and daily tallies.
@@ -32,27 +33,14 @@ Source of truth for the wording: `~/Projects/_stores/usage/README.md`,
 - Menu → "Share anonymous usage statistics" (on by default). Switching it off
   stops counting and deletes the unsent tallies.
 
-## 1. Privacy policy paragraph (BullDozer page on azenha.ai; add PT/RU translations)
+## 1. Privacy policy (live on azenha.ai/bulldozer/privacy since 17 Nov 2026)
 
-> **Anonymous usage statistics.** The app counts, per day, which screens
-> and features were used and whether the app was opened. It also counts app
-> errors (the kind of error and where in the app's code it happened, never
-> its content), coarse device settings (app language, phone or tablet, dark
-> or light theme, large text) and, on the first run, the channel the app was
-> installed from (for example a Google Play campaign). It keeps its install
-> date on your device. It sends these counts to our server
-> (Cloudflare, EU) without any identifier: no device ID, account, IP
-> address or advertising ID is stored. We use the totals only to improve
-> the app. You can turn this off in the menu -> Share anonymous usage
-> statistics.
-
-Notes:
-- BullDozer has no separate Settings screen; the switch sits in the side
-  menu (the drawer opened from the top-right button). The README's wording
-  says "Settings ->"; above it is adapted to "the menu ->".
-- The second sentence (errors, device settings, install source) is not in
-  the README, whose paragraph predates those counts. Kirill accepted it on
-  16 Nov 2026. The paragraph goes on the website with the release.
+Section "Anonymous usage statistics (version 1.40 and later)" of
+`~/Projects/bulldozer/src/pages/privacy.astro` is the text of record. It was
+rewritten after an audit of the code on 17 Nov 2026: the install day is sent,
+sends happen on open/leave (not once a day), and it names screen order, time
+in app, sessions, app version and system, the phone's language, and that it is
+on by default. English only, like the rest of the site.
 
 ## 2. App Store Connect → App Privacy (replaces "Data Not Collected")
 
@@ -63,6 +51,9 @@ stops being true with this release.
   - Purpose: **Analytics**.
   - Linked to the user's identity: **No**.
   - Used for tracking: **No**.
+- Data Types → **Usage Data** → **Other Usage Data** (install channel, device
+  settings: not strictly product interaction).
+  - Purpose: **Analytics**. Linked: **No**. Tracking: **No**.
 - Data Types → **Diagnostics** → **Crash Data** (for `catchErrors()`).
   - Purposes: **App Functionality** and **Analytics**.
   - Linked to the user's identity: **No**.
@@ -83,8 +74,8 @@ After approval, update the "# App Privacy" section of
 - Does your app collect or share any of the required user data types? **Yes**.
 - Is all of the user data collected by your app encrypted in transit? **Yes**.
 - Do you provide a way for users to request that their data is deleted?
-  Answer per the form's options: collection can be stopped in the app; nothing
-  stored on the server is linked to a person.
+  **No**: nothing stored on the server is linked to a person; collection can
+  be stopped in the app.
 - Data type: **App activity → App interactions**.
   - Collected: **Yes**. Shared: **No**.
   - Processed ephemerally: **No**.
@@ -95,6 +86,11 @@ After approval, update the "# App Privacy" section of
   - Processed ephemerally: **No**.
   - Required or optional: **Optional**.
   - Purpose: **Analytics**.
+- Data type: **App info and performance → Diagnostics** (FlutterError.onError
+  also counts errors that do not crash the app).
+  - Collected: **Yes**. Shared: **No**. Ephemeral: **No**. **Optional**.
+  - Purpose: **Analytics**.
+- Device or other IDs: **not collected** (no identifier; `install_day` is a date).
 - New SDK on Android: Google Play Install Referrer library
   (`com.android.installreferrer`, via the `play_install_referrer` package).
   It reads the referrer from the Play Store app on the device through a
