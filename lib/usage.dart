@@ -55,6 +55,8 @@ Future<void> initUsage() async {
       write: (s) => prefs.setString(_kStore, s),
       existingUser: existing,
       installSource: _installSource,
+      // Play pre-launch report robots (Firebase Test Lab) count nothing.
+      testDevice: UsageStats.androidTestLab,
     );
     // Uncaught Dart errors as error.<type>.<file>_<line>; never the message.
     UsageStats.catchErrors();

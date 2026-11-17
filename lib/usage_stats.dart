@@ -49,6 +49,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
@@ -119,12 +120,29 @@ class UsageStats with WidgetsBindingObserver {
     Future<String?> Function()? installSource,
     Map<String, List<String>> experiments = const {},
     List<UsageSink> sinks = const [],
+    Future<bool> Function()? testDevice,
     @visibleForTesting http.Client? client,
     @visibleForTesting DateTime Function()? now,
     @visibleForTesting String? platform,
   }) async {
     final s = _i;
     s._holdTimer?.cancel();
+    if (testDevice != null) {
+      var robot = false;
+      try {
+        robot = await testDevice().timeout(const Duration(seconds: 1));
+      } catch (_) {
+        robot = false;
+      }
+      if (robot) {
+        // Store test robots (Play pre-launch report / Firebase Test Lab):
+        // count nothing, store nothing, send nothing.
+        s._app = null;
+        s._sinks.clear();
+        WidgetsBinding.instance.removeObserver(s);
+        return;
+      }
+    }
     s._app = app;
     s._version = version;
     s._read = read;
@@ -156,6 +174,19 @@ class UsageStats with WidgetsBindingObserver {
   }
 
   static bool get enabled => _i._enabled;
+
+  /// For init(testDevice: ...): true on Google's test robots (Play pre-launch
+  /// report, Firebase Test Lab), which set the system flag
+  /// "firebase.test.lab". Needs the small MainActivity channel from the
+  /// README ("azenha/usage" -> isTestLab); without it, or off Android, false.
+  static Future<bool> androidTestLab() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return false;
+    try {
+      return await const MethodChannel('azenha/usage').invokeMethod<bool>('isTestLab') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
 
   /// Install source from a deep link that arrived after init, e.g. the `src`
   /// query of the first route seen in onGenerateRoute or a link listener.
