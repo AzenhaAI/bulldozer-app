@@ -1,0 +1,3 @@
+• Indicator pages on azenha.ai now open straight in the app when it is installed, and pages only the website has open on the website.
+• The rating prompt now waits for a good moment, such as after a share or a strong quiz score, and only asks readers who keep coming back.
+• New: anonymous usage statistics, with no identifier of you or your device, to learn which screens help. Turn them off in the menu: Share anonymous usage statistics.

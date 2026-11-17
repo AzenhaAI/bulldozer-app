@@ -1,7 +1,7 @@
 # Google Play — step by step (BullDozer)
 
 Upload artifact: `store/android/bulldozer-v1.27.0.aab`
-Package: `com.shpara.bulldozer_app` · version 1.27.0 (code 43)
+Package: `ai.azenha.bulldozer` · current release 1.40.0 (code 89)
 Signed with YOUR upload key — `android/upload-keystore.jks`
 (backup: `~/Documents/BullDozer_signing_keys/upload-keystore.jks`). Keep it forever.
 
@@ -23,9 +23,15 @@ play.google.com/console — signed in, $25 paid, identity verified.
 - Category: **Education**. Contact email: confirm which to expose.
 
 ## 4. Policy / content
-- **Privacy policy URL**: `https://shpara.com/bulldozer/privacy`  ✅ LIVE (200)
-- **Data safety** form: **No data collected / no data shared** (app only reads
-  public JSON from shpara.com/bulldozer; no accounts, no ads, no tracking).
+- **Privacy policy URL**: `https://azenha.ai/bulldozer/privacy/`
+- **Data safety** form (saved 17 Nov 2026 for 1.40, anonymous usage statistics):
+  collected, none shared, encrypted in transit, no accounts, no deletion
+  request (nothing on the server is linked to a person).
+  - App activity → App interactions: Optional, Analytics, not ephemeral.
+  - App activity → Other user-generated content: unchanged (Ask AI).
+  - App info and performance → Crash logs, Diagnostics: Optional, Analytics.
+  - Device or other IDs: not collected. Details:
+    `store/USAGE-ANALYTICS-PRIVACY-DRAFT.md`.
 - Content rating questionnaire → **Everyone**.
 - Target audience: 13+ (or all ages). No ads.
 
