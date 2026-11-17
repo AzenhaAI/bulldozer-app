@@ -104,4 +104,40 @@ void main() {
     expect(deepLinkRoute(const RouteSettings(name: '/economy')), isA<MaterialPageRoute>());
     expect(deepLinkRoute(const RouteSettings(name: '/dataset/nope')), isNot(isA<MaterialPageRoute>()));
   });
+
+  group('azenha.ai pages (Universal Links / App Links, 1.40)', () {
+    test('an indicator page opens the same indicator', () {
+      for (final e in catalog.take(50)) {
+        final r = deepLinkRoute(RouteSettings(name: '/bulldozer/dataset/${e.slug}/'));
+        expect(r, isA<MaterialPageRoute>(), reason: e.slug);
+      }
+      expect(deepLinkRoute(const RouteSettings(name: '/bulldozer/economy/')), isA<MaterialPageRoute>());
+      expect(deepLinkRoute(const RouteSettings(name: '/bulldozer/economy/?src=web')), isA<MaterialPageRoute>());
+    });
+
+    test('a site indicator the app does not carry stays out of the app', () {
+      final r = deepLinkRoute(const RouteSettings(name: '/bulldozer/dataset/rlms-not-in-app/'));
+      expect(r, isNot(isA<MaterialPageRoute>()));
+    });
+
+    test('an Android cold start from the site brings the tabs first', () {
+      deepLinkShell = () => const Text('tabs');
+      addTearDown(() => deepLinkShell = null);
+      final slug = catalog.first.slug;
+      final r = deepLinkRoute(RouteSettings(name: 'https://azenha.ai/bulldozer/dataset/$slug/'));
+      expect(r, isA<MaterialPageRoute>());
+      expect(r.settings.name, '/');
+    });
+
+    testWidgets('Back from a site link returns to the tabs', (t) async {
+      await t.pumpWidget(app('/bulldozer/dataset/${catalog.first.slug}/'));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      final nav = t.state<NavigatorState>(find.byType(Navigator));
+      expect(nav.canPop(), isTrue);
+      nav.popUntil((r) => r.isFirst);
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('tabs'), findsOneWidget);
+    });
+  });
 }

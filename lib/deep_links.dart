@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'catalog_store.dart';
 import 'charts_page.dart' show DatasetPage;
@@ -16,6 +17,20 @@ import 'stats_basics_page.dart';
 ///   bulldozerstats://open/quiz             the country quiz
 ///   bulldozerstats://open/basics           Statistics basics
 /// ```
+///
+/// Since 1.40 the site's own pages open here too, when the app is installed
+/// (Universal Links on iOS, App Links on Android; the azenha.ai/.well-known
+/// files list the paths):
+///
+/// ```text
+///   https://azenha.ai/bulldozer/dataset/<slug>/   the same indicator
+///   https://azenha.ai/bulldozer/economy/          Economy this week
+/// ```
+///
+/// Their path starts with "bulldozer", which is skipped like "open". A site
+/// indicator the app does not carry (the RLMS and Bank of Russia series) opens
+/// in an in-app browser view instead, which does not hand the link back to the
+/// app.
 ///
 /// Flutter's deep linking (FlutterDeepLinkingEnabled / flutter_deeplinking_enabled)
 /// hands the URL's path to the Navigator as a route name ("/economy"); the
@@ -56,6 +71,8 @@ Route<dynamic> deepLinkRoute(RouteSettings s) {
   }
   var seg = Uri.tryParse(s.name ?? '')?.pathSegments.where((p) => p.isNotEmpty).toList() ?? const <String>[];
   if (seg.isNotEmpty && seg.first == 'open') seg = seg.sublist(1);
+  final fromSite = seg.isNotEmpty && seg.first == 'bulldozer';
+  if (fromSite) seg = seg.sublist(1);
   final page = seg.isEmpty ? '' : seg.first.toLowerCase();
 
   Route<dynamic> screen(Widget w) => MaterialPageRoute(settings: s, builder: (_) => w);
@@ -72,6 +89,7 @@ Route<dynamic> deepLinkRoute(RouteSettings s) {
       if (seg.length > 1) {
         final hit = catalog.where((e) => e.slug == seg[1]);
         if (hit.isNotEmpty) return screen(DatasetPage(entry: hit.first));
+        if (fromSite) return _closing(() => _openOnSite('dataset/${seg[1]}/'));
       }
   }
   // Unknown or stale link: stay where the reader is. The Navigator has to
@@ -103,3 +121,11 @@ Route<dynamic> _closing(VoidCallback then, {bool toRoot = false}) => PageRouteBu
       });
       return const SizedBox.shrink();
     });
+
+/// A site page the app has no screen for, shown in an in-app browser view
+/// (SFSafariViewController / Custom Tab): a plain browser hand-off would bring
+/// the verified link straight back to the app.
+void _openOnSite(String path) {
+  final uri = Uri.https('azenha.ai', '/bulldozer/$path');
+  launchUrl(uri, mode: LaunchMode.inAppBrowserView).catchError((_) => false);
+}

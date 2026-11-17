@@ -38,6 +38,19 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="bulldozerstats" android:host="open"/>
             </intent-filter>
+            <!-- azenha.ai indicator pages and Economy this week open here when
+                 the app is installed (App Links, verified by
+                 /.well-known/assetlinks.json on azenha.ai). The rest of the
+                 site stays in the browser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="azenha.ai"/>
+                <data android:pathPrefix="/bulldozer/dataset/"/>
+                <data android:path="/bulldozer/economy/"/>
+                <data android:path="/bulldozer/economy"/>
+            </intent-filter>
         </activity>
         <!-- flutter_local_notifications scheduled + boot receivers -->
         <receiver android:exported="false"

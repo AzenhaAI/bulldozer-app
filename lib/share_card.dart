@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'api.dart';
 import 'theme.dart';
+import 'ask_review.dart';
 import 'usage.dart';
 
 /// A branded, share-ready card: BullDozer mark, a title, a mini ranked bar
@@ -241,6 +242,7 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
           .timeout(const Duration(seconds: 60), onTimeout: () => ShareResult.unavailable);
       usageFeature('chart_shared');
       usageFunnel('share', 'shared');
+      AskReview.goodMoment();
     } on TimeoutException {
       _fail('Creating the image took too long. Please try again.');
     } catch (_) {

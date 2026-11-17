@@ -39,6 +39,7 @@ Future<void> main() async {
   // Anonymous daily counters (usage.dart); before runApp so the first screen
   // counts. One prefs read and a small write: no visible delay.
   await initUsage();
+  AskReview.noteLaunch(); // the rating prompt waits for a returning reader
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
   loadManifest(); // freshness + resource counts from the site's discovery doc

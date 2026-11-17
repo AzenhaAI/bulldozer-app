@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'api.dart';
 import 'theme.dart';
+import 'ask_review.dart';
 import 'usage.dart';
 
 /// CSV export — the site already serves `/data/{slug}.csv`, so a dataset
@@ -136,6 +137,7 @@ class CsvExport {
     await SharePlus.instance
         .share(ShareParams(files: [XFile(f.path)], text: text));
     usageFeature('csv_export');
+    AskReview.goodMoment();
   }
 
   static void _toast(BuildContext context, String msg) {

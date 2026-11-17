@@ -22,6 +22,7 @@ import 'widgets/freshness.dart';
 import 'widgets/hero_extras.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
+import 'ask_review.dart';
 import 'usage.dart';
 
 // Topic taxonomy mirrors the site's lib/topics.ts
@@ -675,7 +676,15 @@ class _DatasetPageState extends State<DatasetPage> with UsageScreen<DatasetPage>
   void initState() {
     super.initState();
     usageDataset(widget.entry.slug);
+    AskReview.datasetOpened();
     _load();
+  }
+
+  @override
+  void dispose() {
+    // Back from an indicator: a calm moment for the rating prompt, if due.
+    AskReview.datasetClosed();
+    super.dispose();
   }
 
   Future<void> _load() async {

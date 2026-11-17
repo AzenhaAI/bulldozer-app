@@ -1,1 +1,4 @@
 #include "Generated.xcconfig"
+// Universal Links (applinks:azenha.ai). Set here rather than in project.pbxproj:
+// only the Runner target is based on these files.
+CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements
