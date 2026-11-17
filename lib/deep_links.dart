@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart' show closeInAppWebView;
 
 import 'api.dart' show kSiteUrl, openSitePage;
 import 'ask_review.dart';
@@ -58,6 +59,9 @@ Widget Function()? deepLinkShell;
 Route<dynamic> deepLinkRoute(RouteSettings s) {
   usageLinkRoute(s.name);
   AskReview.hold(); // pages may close under the link: no rating prompt now
+  // A site page we opened in the in-app browser would sit on top of the
+  // screen this link opens (QA, 17 Nov 2026). Nothing open: a no-op.
+  closeInAppWebView().catchError((_) {});
   final uri = Uri.tryParse(s.name ?? '');
   final shell = deepLinkShell;
   if (uri != null && uri.hasScheme && shell != null) {
