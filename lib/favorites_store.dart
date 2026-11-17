@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'usage.dart';
 
 /// Starred countries (ISO3) and indicators (dataset slugs), persisted as a
 /// small JSON file in the app's support directory (same pattern as the
@@ -58,6 +59,7 @@ void toggleFavCountry(String iso) {
   final v = favoritesNotifier.value;
   final next = Set<String>.from(v.countries);
   next.contains(iso) ? next.remove(iso) : next.add(iso);
+  if (next.contains(iso)) usageFeature('favorite_added');
   favoritesNotifier.value = Favorites(next, v.datasets);
   _save();
 }
@@ -66,6 +68,7 @@ void toggleFavDataset(String slug) {
   final v = favoritesNotifier.value;
   final next = Set<String>.from(v.datasets);
   next.contains(slug) ? next.remove(slug) : next.add(slug);
+  if (next.contains(slug)) usageFeature('favorite_added');
   favoritesNotifier.value = Favorites(v.countries, next);
   _save();
 }

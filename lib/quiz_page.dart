@@ -6,6 +6,7 @@ import 'api.dart';
 import 'ask_review.dart';
 import 'theme.dart';
 import 'widgets/load_error.dart';
+import 'usage.dart';
 
 /// The quiz as a screen of its own: QuizPage was a tab once and has no
 /// Scaffold. The menu and the bulldozerstats://open/quiz link both open this;
@@ -34,7 +35,10 @@ class QuizPage extends StatefulWidget {
   State<QuizPage> createState() => _QuizPageState();
 }
 
-class _QuizPageState extends State<QuizPage> {
+class _QuizPageState extends State<QuizPage> with UsageScreen<QuizPage> {
+  @override
+  String get usageScreenName => 'quiz';
+
   static List<QuizCountry>? _pool; // fetched once per app run
   static int _best = 0;
 
@@ -69,6 +73,7 @@ class _QuizPageState extends State<QuizPage> {
       _score = 0;
       _results.clear();
       _setupRound();
+      usageFunnel('quiz', 'start');
       setState(() => _loading = false);
     } catch (e) {
       setState(() {
@@ -108,12 +113,15 @@ class _QuizPageState extends State<QuizPage> {
       _results.add(correct);
       if (correct) _score += _worth;
     });
+    usageFunnel('quiz', 'answer');
   }
 
   void _next() {
     if (_round + 1 >= _roundsThisGame) {
       if (_score > _best) _best = _score;
       setState(() => _round = _roundsThisGame); // finished screen
+      usageFeature('quiz_done');
+      usageFunnel('quiz', 'done');
       // A finished round is someone who stayed. Fire-and-forget: AskReview
       // decides whether this is the third one, iOS decides whether to draw
       // anything, and nothing here waits on either.

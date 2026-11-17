@@ -4,6 +4,7 @@ import 'api.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/load_error.dart';
+import 'usage.dart';
 
 /// "Economy this week": the site's weekly table of headline indicators for
 /// 43 economies (output, prices, jobs, external and fiscal balances, bond
@@ -166,7 +167,10 @@ class EconomyWeekPage extends StatefulWidget {
   State<EconomyWeekPage> createState() => _EconomyWeekPageState();
 }
 
-class _EconomyWeekPageState extends State<EconomyWeekPage> {
+class _EconomyWeekPageState extends State<EconomyWeekPage> with UsageScreen<EconomyWeekPage> {
+  @override
+  String get usageScreenName => 'economy_week';
+
   late Future<EconomyWeek> _f = fetchEconomyWeek();
   int _set = 0;
   String _sortKey = 'gdp';

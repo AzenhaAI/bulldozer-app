@@ -4,6 +4,7 @@ import 'api.dart';
 import 'flags.dart';
 import 'theme.dart';
 import 'widgets/load_error.dart';
+import 'usage.dart';
 
 /// City-livability rankings (mirrors the site's /cities). One metric at a
 /// time, switchable via chips; ranked bar list of cities.
@@ -13,7 +14,10 @@ class CitiesPage extends StatefulWidget {
   State<CitiesPage> createState() => _CitiesPageState();
 }
 
-class _CitiesPageState extends State<CitiesPage> {
+class _CitiesPageState extends State<CitiesPage> with UsageScreen<CitiesPage> {
+  @override
+  String get usageScreenName => 'cities';
+
   CitiesData? _data;
   String? _error;
   int _metric = 0;

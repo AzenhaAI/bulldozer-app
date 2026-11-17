@@ -6,6 +6,7 @@ import 'charts_page.dart';
 import 'countries_page.dart';
 import 'flags.dart';
 import 'theme.dart';
+import 'usage.dart';
 
 /// Global search — one field that matches both countries and indicators,
 /// reachable from the Home header.
@@ -105,7 +106,10 @@ const _popularSlugs = [
 ];
 const _popularIsos = ['USA', 'CHN', 'IND', 'DEU', 'BRA', 'PRT', 'JPN', 'NGA'];
 
-class _SearchPageState extends State<SearchPage> {
+class _SearchPageState extends State<SearchPage> with UsageScreen<SearchPage> {
+  @override
+  String get usageScreenName => 'search';
+
   final _ctrl = TextEditingController();
   String _q = '';
   List<Country> _countries = [];
