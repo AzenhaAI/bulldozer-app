@@ -32,8 +32,10 @@ a device with the app. Without the app the same link opens the web page.
 
 PRIVACY
 There is no third-party analytics or crash SDK, no advertising identifier and
-no login. New in 1.40: the app counts anonymous daily totals (which screens and
-features are used, error types, device language and theme) with its own small
+no login. New in 1.40: the app counts anonymous daily totals (which screens are
+used and in what order, features, which indicators and countries are opened,
+time in app, error type and location, device language, phone or tablet, dark
+or light mode, large text, and the install source on the first run) with its own small
 module and sends them to our server (usage.azenha.ai, stored in the EU). There
 is no device, account or advertising identifier, nothing the user types is
 included, and the IP address is not kept. It can be switched off in the menu:
@@ -44,5 +46,7 @@ Release reminders are local notifications scheduled on the device. The Ask AI
 question is sent only after the user allows it; it is not linked to the user,
 carries no identifier, is not stored by us and is not used for tracking; the
 label declares it as Other User Content, used for App Functionality.
+The Edu tab's "App analytics" card links to an article about analytics tools;
+the app itself contains none of them.
 
 Published by Azenha AI — agent@azenha.ai

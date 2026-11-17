@@ -97,5 +97,8 @@ void linkSourceTests() {
     expect(linkSourceForTest('bulldozerstats://open/economy?src=telegram'),
         'telegram');
     expect(linkSourceForTest('/quiz?src='), isNull);
+    // Free-form values never reach the server: they could label one install.
+    expect(linkSourceForTest('/quiz?src=someone_42'), 'other');
+    expect(linkSourceForTest('/quiz?src=Telegram'), 'telegram');
   });
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'offline_bundle.dart';
 
@@ -28,6 +29,22 @@ String inAppSite(String url) {
   final base = i < 0 ? url : url.substring(0, i);
   final frag = i < 0 ? '' : url.substring(i);
   return '$base${base.contains('?') ? '&' : '?'}app=1$frag';
+}
+
+/// Opens a page of our own site inside the app, marked ?app=1 so the site
+/// hides its "get the app" card. On Android, pages the app's own App Links
+/// claim (indicator pages, Economy this week) open in the in-app web view: a
+/// Custom Tab is an ordinary view intent, so the verified link would bring
+/// the reader straight back into the app instead of to the page.
+Future<void> openSitePage(String url) async {
+  final claimed =
+      url.startsWith('$kSiteUrl/dataset/') || url.startsWith('$kSiteUrl/economy');
+  final mode = !kIsWeb && defaultTargetPlatform == TargetPlatform.android && claimed
+      ? LaunchMode.inAppWebView
+      : LaunchMode.inAppBrowserView;
+  try {
+    await launchUrl(Uri.parse(inAppSite(url)), mode: mode);
+  } catch (_) {}
 }
 
 Directory? _cacheDir;

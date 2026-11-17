@@ -22,4 +22,12 @@ void main() {
   test('no first-run date, no prompt', () {
     expect(AskReview.eligible(now: now, launches: 9, firstSeen: null, lastAsked: null), isFalse);
   });
+
+  test('a good moment counts for 3 days only', () {
+    final at = DateTime(2026, 11, 17, 12);
+    expect(AskReview.fresh(null, at), isFalse);
+    expect(AskReview.fresh(at, at.add(const Duration(days: 2))), isTrue);
+    expect(AskReview.fresh(at, at.add(const Duration(days: 3))), isFalse);
+    expect(AskReview.fresh(at, at.subtract(const Duration(hours: 1))), isFalse);
+  });
 }

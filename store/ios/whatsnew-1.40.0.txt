@@ -1,3 +1,4 @@
-• Indicator pages on azenha.ai now open straight in the app when it is installed, and pages only the website has open on the website.
-• The rating prompt now waits for a good moment, such as after a share or a strong quiz score, and only asks readers who keep coming back.
-• New: anonymous usage statistics, with no identifier of you or your device, to learn which screens help. Turn them off in the menu: Share anonymous usage statistics.
+• Links to indicator pages and Economy this week on azenha.ai now open straight in the app when it is installed. Pages the app does not carry stay on the website.
+• We ask for a rating less often and only at a good moment, such as after a share or a strong quiz score, and only once you have used the app for a few days.
+• Anonymous usage statistics: daily counts of screens, features and errors, with no ID of you or your device. On by default; switch off in the menu: Share anonymous usage statistics.
+• New Edu read, App analytics: where App Store, Google Play and website numbers come from, how late each arrives, and the usual traps.

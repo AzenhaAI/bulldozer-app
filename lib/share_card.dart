@@ -239,7 +239,9 @@ class _SharePreviewPageState extends State<SharePreviewPage> {
             text: '${widget.title} — BullDozer Stats · azenha.ai/bulldozer',
             sharePositionOrigin: origin,
           ))
-          .timeout(const Duration(seconds: 60), onTimeout: () => ShareResult.unavailable);
+          .timeout(const Duration(seconds: 60),
+              // A sheet left open is not a share (unavailable counts as one).
+              onTimeout: () => const ShareResult('', ShareResultStatus.dismissed));
       if (AskReview.shared(res)) {
         usageFeature('chart_shared');
         usageFunnel('share', 'shared');

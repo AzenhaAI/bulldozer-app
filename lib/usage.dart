@@ -77,7 +77,7 @@ Future<String?> _installSource() async {
       final ref = (await PlayInstallReferrer.installReferrer).installReferrer;
       if (ref != null && ref.isNotEmpty) {
         final src = Uri.splitQueryString(ref)['utm_source'];
-        if (src != null && src.isNotEmpty) return src;
+        if (src != null && src.isNotEmpty) return _channel(src);
       }
     } catch (_) {
       // Not installed from Play (sideloaded, emulator): fall through.
@@ -105,7 +105,21 @@ void usageLinkRoute(String? route) {
 
 String? _linkSource(String route) {
   final src = Uri.tryParse(route)?.queryParameters['src'];
-  return (src == null || src.isEmpty) ? null : src;
+  return (src == null || src.isEmpty) ? null : _channel(src);
+}
+
+/// The channels we name in our own links. Anything else becomes 'other': the
+/// source travels with every batch of an install, so a free-form value in a
+/// crafted link (?src=someone) would label one person's counts. Add a name
+/// here before using it in a campaign.
+const _kChannels = {
+  'google-play', 'site', 'telegram', 'flyer', 'flyer_a6', 'channel_layout',
+  'appstore', 'event', 'email', 'qr',
+};
+
+String _channel(String src) {
+  final s = src.trim().toLowerCase();
+  return _kChannels.contains(s) ? s : 'other';
 }
 
 /// A step of a multi-step flow, counted once per install

@@ -712,8 +712,7 @@ class _CountryPageState extends State<CountryPage> with UsageScreen<CountryPage>
           style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: kAmber),
           icon: const Icon(Icons.menu_book_outlined, size: 17),
           label: const Text('Method and full notes'),
-          onPressed: () => launchUrl(Uri.parse(inAppSite('$kSiteUrl/dataset/${ds.slug}/')),
-              mode: LaunchMode.inAppBrowserView),
+          onPressed: () => openSitePage('$kSiteUrl/dataset/${ds.slug}/'),
         ),
         if (ds.url.startsWith('http'))
           TextButton.icon(

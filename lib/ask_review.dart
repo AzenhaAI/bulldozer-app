@@ -23,9 +23,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// moment that went well:
 /// * a quiz round finished with a good score;
 /// * an indicator closed after a chart was shared or a CSV saved
-///   ([goodMoment] marks those; the prompt waits for the share sheet to be
-///   gone and the reader back in the app);
-/// * an indicator closed once 5 or more have been opened.
+///   ([goodMoment] marks those, for 3 days; the prompt waits until the
+///   reader is back on the app's own screens);
+/// * an indicator closed once 5 or more have been read (open 15 s or more).
+/// Never while a link from outside is taking the reader somewhere ([hold]).
 /// Never on the first launch, never over a sheet or an error, never as a gate.
 /// Our own cap is once per 90 days, under the platforms' own quotas.
 /// 1.39 asked after the third finished quiz, once per install; an install
@@ -40,7 +41,8 @@ class AskReview {
   static const _kLaunches = 'review_launches';
   static const _kFirstSeen = 'review_first_seen';
   static const _kLastAsked = 'review_last_asked';
-  static const _kGood = 'review_good_moment';
+  static const _kGood = 'review_good_at'; // when; expires after goodDays
+  static const _kGoodLegacy = 'review_good_moment'; // 1.40 drafts: a bool
   static const _kOpened = 'review_datasets_opened';
   static const _kLegacyAsked = 'review_asked'; // 1.39: asked once, no date
 
@@ -48,9 +50,22 @@ class AskReview {
   static const minDays = 3;
   static const minDatasets = 5;
   static const capDays = 90;
+  static const goodDays = 3;
+  static const minRead = Duration(seconds: 15);
 
   static final _plugin = InAppReview.instance;
   static bool _asking = false; // two pages closing at once ask once
+  static DateTime? _openedAt; // the indicator page on screen
+  static DateTime? _quietUntil;
+
+  /// A link from outside is moving the reader (pages close under it): do not
+  /// ask for the next few seconds.
+  static void hold([Duration d = const Duration(seconds: 3)]) =>
+      _quietUntil = DateTime.now().add(d);
+
+  /// A good moment marked at [at] still counts at [now].
+  static bool fresh(DateTime? at, DateTime now) =>
+      at != null && now.difference(at).inDays < goodDays && !now.isBefore(at);
 
   /// The rule, apart from storage and the plugin (tested on its own).
   static bool eligible({
@@ -78,11 +93,11 @@ class AskReview {
   }
 
   /// A chart shared or a CSV saved. The prompt itself waits for the next calm
-  /// moment: on Android the share call returns while the sheet is still up.
+  /// moment, when the reader closes the indicator page.
   static Future<void> goodMoment() async {
     try {
       final p = await SharedPreferences.getInstance();
-      await p.setBool(_kGood, true);
+      await p.setString(_kGood, DateTime.now().toIso8601String());
     } catch (_) {}
   }
 
@@ -92,23 +107,28 @@ class AskReview {
   }
 
   /// An indicator page opened.
-  static Future<void> datasetOpened() async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      await p.setInt(_kOpened, (p.getInt(_kOpened) ?? 0) + 1);
-    } catch (_) {}
-  }
+  static void datasetOpened() => _openedAt = DateTime.now();
 
   /// An indicator page closed: the reader is back in the app with nothing
-  /// over it.
+  /// over it. It counts as read after [minRead]; a glance from a link does not.
   static Future<void> datasetClosed() async {
     try {
+      final now = DateTime.now();
       final p = await SharedPreferences.getInstance();
-      if ((p.getBool(_kGood) ?? false) || (p.getInt(_kOpened) ?? 0) >= minDatasets) await _ask();
+      final opened = _openedAt;
+      _openedAt = null;
+      if (opened != null && now.difference(opened) >= minRead) {
+        await p.setInt(_kOpened, (p.getInt(_kOpened) ?? 0) + 1);
+      }
+      if (p.containsKey(_kGoodLegacy)) await p.remove(_kGoodLegacy);
+      final good = fresh(DateTime.tryParse(p.getString(_kGood) ?? ''), now);
+      if (good || (p.getInt(_kOpened) ?? 0) >= minDatasets) await _ask();
     } catch (_) {}
   }
 
   static Future<void> _ask() async {
+    final quiet = _quietUntil;
+    if (quiet != null && DateTime.now().isBefore(quiet)) return;
     if (_asking) return;
     _asking = true;
     try {

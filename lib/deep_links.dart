@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import 'api.dart' show kSiteUrl, openSitePage;
+import 'ask_review.dart';
 import 'catalog_store.dart';
 import 'charts_page.dart' show DatasetPage;
 import 'economy_week_page.dart';
@@ -57,6 +57,7 @@ Widget Function()? deepLinkShell;
 
 Route<dynamic> deepLinkRoute(RouteSettings s) {
   usageLinkRoute(s.name);
+  AskReview.hold(); // pages may close under the link: no rating prompt now
   final uri = Uri.tryParse(s.name ?? '');
   final shell = deepLinkShell;
   if (uri != null && uri.hasScheme && shell != null) {
@@ -141,9 +142,13 @@ Route<dynamic> _siteDataset(String slug) {
         if (!started) {
           started = true;
           WidgetsBinding.instance.addPostFrameCallback((_) async {
-            try {
-              await loadCatalog().timeout(const Duration(seconds: 4));
-            } catch (_) {}
+            // Sources only the website carries: no point waiting for the
+            // catalog (the iOS link pattern also covers them).
+            if (!_kSiteOnly.any(slug.startsWith)) {
+              try {
+                await loadCatalog().timeout(const Duration(seconds: 4));
+              } catch (_) {}
+            }
             if (!ctx.mounted || self == null || !self.isActive) return;
             final nav = Navigator.of(ctx);
             final hit = catalog.where((e) => e.slug == slug);
@@ -157,19 +162,16 @@ Route<dynamic> _siteDataset(String slug) {
             }
           });
         }
-        return const SizedBox.shrink();
+        // Shown while the catalog refreshes (up to 4 s, offline included).
+        return const Center(child: CircularProgressIndicator());
       });
 }
 
+/// Indicator prefixes the website has and the app does not (household survey
+/// microdata and the Bank of Russia); Android's App Links leave them out.
+const _kSiteOnly = ['rlms-', 'cbr-'];
+
 /// A site page the app has no screen for, shown inside the app. Not handed to
 /// a browser: the link is the app's own (Universal Links / App Links), so the
-/// system would bring it straight back here. iOS shows it in an
-/// SFSafariViewController, which never does; on Android a Custom Tab is an
-/// ordinary view intent that would, so it opens in the in-app web view.
-void _openOnSite(String path) {
-  final uri = Uri.https('azenha.ai', '/bulldozer/$path');
-  final mode = defaultTargetPlatform == TargetPlatform.android
-      ? LaunchMode.inAppWebView
-      : LaunchMode.inAppBrowserView;
-  launchUrl(uri, mode: mode).catchError((_) => false);
-}
+/// system would bring it straight back here. See [openSitePage].
+void _openOnSite(String path) => openSitePage('$kSiteUrl/$path');
