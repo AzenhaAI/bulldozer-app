@@ -1,5 +1,5 @@
 // Tests for usage_stats.dart. Copy next to the module as test/usage_stats_test.dart
-// (import adjusted to this package).
+// and adjust the import to the app's package name.
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
@@ -25,12 +25,14 @@ void main() {
   late List<Map<String, dynamic>> sent;
   late int status;
   late DateTime now;
+  void Function()? onSend;
 
   Future<void> start({
     bool existing = false,
     String? keep,
     Future<String?> Function()? source,
     Map<String, List<String>> experiments = const {},
+    bool flush = true,
   }) async {
     stored = keep;
     await UsageStats.init(
@@ -45,14 +47,16 @@ void main() {
       now: () => now,
       client: MockClient((req) async {
         sent.add(jsonDecode(req.body) as Map<String, dynamic>);
+        onSend?.call();
         return http.Response('', status);
       }),
     );
-    await UsageStats.flush();
+    if (flush) await UsageStats.flush();
   }
 
   setUp(() {
     sent = [];
+    onSend = null;
     status = 204;
     now = DateTime(2026, 11, 16, 10);
   });
@@ -244,5 +248,44 @@ void main() {
     sent.clear();
     await UsageStats.flush();
     expect(sent, isEmpty);
+  });
+
+  test('late deep-link source applies only before the first batch', () async {
+    await start(source: () async => null, flush: false);
+    expect(sent, isEmpty, reason: 'first run waits briefly for a late link');
+    await UsageStats.linkSource('Flyer A6');
+    await UsageStats.flush();
+    expect((sent.single['tags'] as Map)['source'], 'flyer_a6');
+    await UsageStats.linkSource('other');
+    UsageStats.event('feature.x');
+    await UsageStats.flush();
+    expect((sent.last['tags'] as Map)['source'], 'flyer_a6');
+  });
+
+  test('a known install source is never replaced by a link', () async {
+    await start(source: () async => 'play_ad', flush: false);
+    await UsageStats.linkSource('flyer');
+    await UsageStats.flush();
+    expect((sent.single['tags'] as Map)['source'], 'play_ad');
+  });
+
+  test('switching off during a multi-chunk send stops quietly', () async {
+    status = 503;
+    await start();
+    for (var d = 1; d <= 20; d++) {
+      now = DateTime(2026, 11, 16 + d, 9);
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await UsageStats.flush();
+      await UsageStats.flush();
+    }
+    status = 204;
+    sent.clear();
+    onSend = () => UsageStats.setEnabled(false);
+    await UsageStats.flush();
+    expect(sent, hasLength(1), reason: 'first chunk only, then stop');
+    expect((sent.single['days'] as List).length, 14);
+    onSend = null;
+    await UsageStats.setEnabled(true);
   });
 }

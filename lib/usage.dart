@@ -8,6 +8,7 @@
 // Names only ever come from code or the catalog (screen names, dataset slugs,
 // ISO codes). Nothing the reader types reaches an event name.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -88,6 +89,17 @@ Future<String?> _installSource() async {
 /// a plain launch, '/quiz?src=x' (iOS) or the whole URL (Android cold start).
 @visibleForTesting
 String? linkSourceForTest(String route) => _linkSource(route);
+
+/// A link that reached the Navigator after start-up. iOS hands a cold-start
+/// link over late (defaultRouteName is always '/'), so [_installSource] never
+/// sees its `src`. The module takes it only for a new install whose source is
+/// still unknown and whose first batch has not gone out; it ignores every
+/// later call, so the first link with a `src` wins.
+void usageLinkRoute(String? route) {
+  if (route == null) return;
+  final src = _linkSource(route);
+  if (src != null) unawaited(UsageStats.linkSource(src));
+}
 
 String? _linkSource(String route) {
   final src = Uri.tryParse(route)?.queryParameters['src'];
