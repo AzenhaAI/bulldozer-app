@@ -22,6 +22,7 @@ import 'widgets/freshness.dart';
 import 'widgets/hero_extras.dart';
 import 'widgets/skeleton.dart';
 import 'widgets/trend_chart.dart';
+import 'usage.dart';
 
 // Topic taxonomy mirrors the site's lib/topics.ts
 /// Alphabetical key for a topic — the display label without its emoji prefix.
@@ -659,7 +660,10 @@ class DatasetPage extends StatefulWidget {
   State<DatasetPage> createState() => _DatasetPageState();
 }
 
-class _DatasetPageState extends State<DatasetPage> {
+class _DatasetPageState extends State<DatasetPage> with UsageScreen<DatasetPage> {
+  @override
+  String get usageScreenName => 'dataset';
+
   Dataset? _ds;
   Object? _error;
   String? _period;
@@ -670,6 +674,7 @@ class _DatasetPageState extends State<DatasetPage> {
   @override
   void initState() {
     super.initState();
+    usageDataset(widget.entry.slug);
     _load();
   }
 

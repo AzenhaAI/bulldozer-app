@@ -13,6 +13,7 @@ import 'theme.dart';
 import 'widgets/brand_footer.dart';
 import 'widgets/load_error.dart';
 import 'widgets/search_sheet.dart';
+import 'usage.dart';
 
 /// People chart maker (Edu): every country as a column of 100 small figures,
 /// the "Times Voter Trends" look testers showed (R14, 28 Oct 2026).
@@ -97,7 +98,10 @@ class _Column {
   const _Column(this.name, this.counts, [this.note = '']);
 }
 
-class _PeopleChartPageState extends State<PeopleChartPage> {
+class _PeopleChartPageState extends State<PeopleChartPage> with UsageScreen<PeopleChartPage> {
+  @override
+  String get usageScreenName => 'people_chart';
+
   _Mode _mode = _Mode.question;
 
   // One question
@@ -317,6 +321,7 @@ class _PeopleChartPageState extends State<PeopleChartPage> {
         files: [XFile(file.path)],
         text: '${_title.text.trim()} — made with BullDozer · azenha.ai/bulldozer',
       ));
+      usageFeature('chart_shared');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't create the image.")));
@@ -419,7 +424,10 @@ class _PeopleChartPageState extends State<PeopleChartPage> {
                       items: shares,
                       label: (e) => e.title,
                       sub: (e) => e.source,
-                      onPick: _pick,
+                      onPick: (e) {
+                        usageContentDataset(e.slug);
+                        _pick(e);
+                      },
                     ),
                   ),
                 ),

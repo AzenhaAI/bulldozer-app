@@ -11,6 +11,7 @@ import 'theme.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/region_legend.dart';
 import 'widgets/search_sheet.dart';
+import 'usage.dart';
 
 /// Explore — scatter one indicator against another across all countries.
 class ExplorePage extends StatefulWidget {
@@ -23,7 +24,10 @@ class ExplorePage extends StatefulWidget {
   State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage> {
+class _ExplorePageState extends State<ExplorePage> with UsageScreen<ExplorePage> {
+  @override
+  String get usageScreenName => 'explore';
+
   bool _mapView = false; // false = scatter, true = bivariate choropleth
 
   CatalogEntry? _x;
@@ -35,6 +39,7 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void initState() {
     super.initState();
+    usageFirstChart();
     _x = _prefer(
         ['gapminder-income', 'imf-gdp-per-capita', 'maddison-gdp-per-capita'],
         0);
@@ -96,6 +101,7 @@ class _ExplorePageState extends State<ExplorePage> {
       label: (e) => e.title,
       sub: (e) => e.source,
       onPick: (e) {
+        usageContentDataset(e.slug);
         setState(() => isX ? _x = e : _y = e);
         _load();
       },

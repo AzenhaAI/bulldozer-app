@@ -31,8 +31,14 @@ import 'story_page.dart';
 import 'theme.dart';
 import 'economy_week_page.dart';
 import 'deep_links.dart';
+import 'usage.dart';
+import 'usage_stats.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Anonymous daily counters (usage.dart); before runApp so the first screen
+  // counts. One prefs read and a small write: no visible delay.
+  await initUsage();
   runApp(const BulldozerApp());
   loadCatalog(); // refresh the dataset catalog from the site (cached, non-blocking)
   loadManifest(); // freshness + resource counts from the site's discovery doc
@@ -108,6 +114,7 @@ class BulldozerApp extends StatelessWidget {
         // whole URL on an Android cold start, where deepLinkRoute brings
         // the tabs itself; either way Back returns to the tabs.
         onGenerateRoute: deepLinkRoute,
+        navigatorObservers: [usageRouteObserver],
       ),
     );
   }
@@ -133,23 +140,37 @@ class HomeShell extends StatefulWidget {
 /// The menu leads with the same name as the tab ("Stats"), with the longer
 /// description under it: "Statistics" in the menu and "Stats" on the bar read
 /// as two different places (reviewers, 15 Nov 2026).
-const _tabs = <(IconData, String, String)>[
-  // icon, bottom-bar label, menu description ('' = none)
-  (Icons.home_outlined, 'Home', ''),
-  (Icons.auto_awesome_outlined, 'Ask AI', 'A brief on any country'),
-  (Icons.bar_chart_outlined, 'Stats', 'Statistics'),
-  (Icons.business_center_outlined, 'Biz', 'Business & markets'),
-  (Icons.how_to_vote_outlined, 'Polls', 'Surveys and opinion'),
-  (Icons.public_outlined, 'Geo', 'Countries, compare, maps'),
-  (Icons.school_outlined, 'Edu', 'Learn and make'),
+const _tabs = <(IconData, String, String, String)>[
+  // icon, bottom-bar label, menu description ('' = none), usage screen name
+  (Icons.home_outlined, 'Home', '', 'home'),
+  (Icons.auto_awesome_outlined, 'Ask AI', 'A brief on any country', 'ask'),
+  (Icons.bar_chart_outlined, 'Stats', 'Statistics', 'charts'),
+  (Icons.business_center_outlined, 'Biz', 'Business & markets', 'biz'),
+  (Icons.how_to_vote_outlined, 'Polls', 'Surveys and opinion', 'polls'),
+  (Icons.public_outlined, 'Geo', 'Countries, compare, maps', 'countries'),
+  (Icons.school_outlined, 'Edu', 'Learn and make', 'edu'),
 ];
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with UsageScreen<HomeShell> {
   // Kept outside the state: switching theme rebuilds the shell under a new
   // key, and a plain field sent the reader back to Home from whatever tab
   // they had the theme switch on.
   int get _tab => _shellTab;
   set _tab(int v) => _shellTab = v;
+
+  // The tabs live in an IndexedStack, so no page opens when a tab is picked:
+  // the shell counts the open tab as the screen.
+  @override
+  String get usageScreenName => _tabs[_tab].$4;
+
+  @override
+  bool get usageQuietRebuild => true;
+
+  void _goTab(int i) {
+    final again = i == _tab; // a tap on the open tab is not another view
+    setState(() => _tab = i);
+    if (!again) usageScreen(usageScreenName);
+  }
 
   @override
   void initState() {
@@ -167,7 +188,7 @@ class _HomeShellState extends State<HomeShell> {
     final i = shellTabRequest.value;
     if (i == null || !mounted) return;
     shellTabRequest.value = null;
-    setState(() => _tab = i);
+    _goTab(i);
   }
 
   @override
@@ -184,7 +205,7 @@ class _HomeShellState extends State<HomeShell> {
           builder: (_, _, _) => IndexedStack(
             index: _tab,
             children: [
-              HomePage(onGoToTab: (i) => setState(() => _tab = i)),
+              HomePage(onGoToTab: _goTab),
               // A tester asked for it; see ask_page.dart.
               const AskPage(),
               ChartsPage(
@@ -237,9 +258,9 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         indicatorColor: Colors.transparent,
-        onDestinationSelected: (i) => setState(() => _tab = i),
+        onDestinationSelected: _goTab,
         destinations: [
-          for (final (icon, label, _) in _tabs)
+          for (final (icon, label, _, _) in _tabs)
             NavigationDestination(
                 icon: Icon(icon),
                 selectedIcon: _NavPill(icon),
@@ -272,7 +293,7 @@ class _HomeShellState extends State<HomeShell> {
               child: brandTagline,
             ),
             Divider(color: kBorder, height: 1),
-            for (final (n, (icon, label, about)) in _tabs.indexed)
+            for (final (n, (icon, label, about, _)) in _tabs.indexed)
               _menuItem(context, icon, label, about, n),
             Divider(color: kBorder, height: 1),
             ListTile(
@@ -284,6 +305,24 @@ class _HomeShellState extends State<HomeShell> {
                 Navigator.pop(context);
                 toggleTheme();
               },
+            ),
+            // Anonymous daily counts (usage.dart). Off deletes what is unsent.
+            StatefulBuilder(
+              builder: (context, setLocal) => SwitchListTile(
+                secondary: Icon(Icons.insights_outlined,
+                    color: kTextDim, size: 22),
+                title: Text('Share anonymous usage statistics',
+                    style: TextStyle(fontSize: 15, color: kText)),
+                subtitle: Text(
+                    'Daily counts of screens and features, with no ID of you or your device.',
+                    style: TextStyle(fontSize: 12, color: kTextDim)),
+                value: UsageStats.enabled,
+                activeThumbColor: kAmber,
+                onChanged: (on) async {
+                  await UsageStats.setEnabled(on);
+                  setLocal(() {});
+                },
+              ),
             ),
             ListTile(
               leading: Icon(Icons.scatter_plot_outlined,
@@ -468,7 +507,7 @@ class _HomeShellState extends State<HomeShell> {
           : Text(about, style: TextStyle(fontSize: 12, color: kTextDim)),
       selected: selected,
       onTap: () {
-        setState(() => _tab = tab);
+        _goTab(tab);
         Navigator.pop(context);
       },
     );
@@ -1194,6 +1233,7 @@ class _DownloadAllDialogState extends State<_DownloadAllDialog> {
         },
         cancelled: () => _cancelled,
       );
+      if (!_cancelled) usageFeature('offline_bundle');
       if (!mounted) return;
       setState(() {
         _running = false;

@@ -12,6 +12,7 @@ import 'widgets/sample_stats.dart';
 import 'widgets/load_error.dart';
 import 'widgets/choropleth.dart';
 import 'widgets/region_legend.dart';
+import 'usage.dart';
 
 /// Declarative spec for a native data story. The two flagship stories are
 /// data-backed, so we render them natively from their datasets (ranking +
@@ -77,13 +78,17 @@ class StoryPage extends StatefulWidget {
   State<StoryPage> createState() => _StoryPageState();
 }
 
-class _StoryPageState extends State<StoryPage> {
+class _StoryPageState extends State<StoryPage> with UsageScreen<StoryPage> {
+  @override
+  String get usageScreenName => 'story';
+
   Dataset? _main, _x;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    usageFirstChart();
     _load();
   }
 

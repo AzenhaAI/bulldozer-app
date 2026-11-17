@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'api.dart';
 import 'theme.dart';
+import 'usage.dart';
 
 /// CSV export — the site already serves `/data/{slug}.csv`, so a dataset
 /// download is a straight fetch + share. Country exports are built on device
@@ -134,6 +135,7 @@ class CsvExport {
     await f.writeAsBytes(bytes);
     await SharePlus.instance
         .share(ShareParams(files: [XFile(f.path)], text: text));
+    usageFeature('csv_export');
   }
 
   static void _toast(BuildContext context, String msg) {
