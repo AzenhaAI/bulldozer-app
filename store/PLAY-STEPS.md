@@ -29,7 +29,7 @@ play.google.com/console — signed in, $25 paid, identity verified.
   request (nothing on the server is linked to a person).
   - App activity → App interactions: Optional, Analytics, not ephemeral.
   - App activity → Other user-generated content: unchanged (Ask AI).
-  - App info and performance → Crash logs, Diagnostics: Optional, Analytics.
+  - App info and performance → Crash logs, Diagnostics: Optional, App functionality + Analytics (same as App Store Crash Data).
   - Device or other IDs: not collected. Details:
     `store/USAGE-ANALYTICS-PRIVACY-DRAFT.md`.
 - Content rating questionnaire → **Everyone**.
